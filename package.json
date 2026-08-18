@@ -1,0 +1,22 @@
+{
+  "name": "flagshipeditor",
+  "version": "0.1.0",
+  "description": "FlagshipEditor — AI Music Video Editor Plugin for After Effects",
+  "author": "Issandre & HeliMAn",
+  "license": "MIT",
+  "scripts": {
+    "dev": "bolt-cep dev",
+    "build": "bolt-cep build",
+    "zxp": "bolt-cep zxp",
+    "zip": "bolt-cep zip"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

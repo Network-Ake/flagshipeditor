@@ -1,0 +1,131 @@
+{
+  "style_name": "ninetive",
+  "display_name": "Ninetive",
+  "cut_strategy": {
+    "intro": {
+      "cut_interval": "4_beat",
+      "variation": "smooth_build",
+      "double_time_on_drop": false
+    },
+    "verse": {
+      "cut_interval": "2_beat",
+      "variation": "smooth",
+      "double_time_on_drop": false
+    },
+    "chorus": {
+      "cut_interval": "1_beat",
+      "variation": "energetic_smooth",
+      "double_time_on_drop": true
+    },
+    "drop": {
+      "cut_interval": "0.5_beat",
+      "variation": "fast_smooth",
+      "double_time_on_drop": true
+    },
+    "bridge": {
+      "cut_interval": "4_beat",
+      "variation": "slow",
+      "double_time_on_drop": false
+    },
+    "outro": {
+      "cut_interval": "4_beat",
+      "variation": "fade",
+      "double_time_on_drop": false
+    }
+  },
+  "zoom_punch": {
+    "enabled": true,
+    "scale_target": 125,
+    "scale_duration_frames": 6,
+    "ease_out_frames": 15,
+    "sections": ["chorus", "drop"]
+  },
+  "whip_pan": {
+    "enabled": false,
+    "displacement_px": 1500,
+    "duration_frames": 6,
+    "sections": []
+  },
+  "text_overlays": {
+    "enabled": true,
+    "font": "Helvetica Neue",
+    "size": 42,
+    "color": "#FFFFFF",
+    "position": "bottom_center",
+    "animation": "fade",
+    "sections": ["chorus"]
+  },
+  "color_grading": {
+    "global_lut": "ninetive_clean.cube",
+    "params": {
+      "temperature_k": 5200,
+      "contrast": 10,
+      "saturation": 5
+    },
+    "section_luts": {}
+  },
+  "camera_shake": {
+    "frequency_hz": 15,
+    "displacement_px": 6,
+    "sections": ["drop"]
+  },
+  "freeze_frame": {
+    "enabled": false,
+    "duration_frames": 4,
+    "sections": [],
+    "trigger": "beat"
+  },
+  "speed_ramp": {
+    "enabled": true,
+    "speed_in": 150,
+    "speed_out": 75,
+    "ramp_duration_beats": 2,
+    "sections": ["verse", "bridge"]
+  },
+  "light_leaks": {
+    "enabled": false
+  },
+  "vhs_overlay": {
+    "enabled": false
+  },
+  "glitch_effect": {
+    "enabled": false,
+    "sections": []
+  },
+  "element_3d": {
+    "enabled": false,
+    "solid_name": "FlagshipEditor_3D_Solid",
+    "parallax_depth": 0.15
+  },
+  "face_mask": {
+    "enabled": false
+  },
+  "smoke_fog": {
+    "enabled": false
+  },
+  "slow_mo": {
+    "enabled": true,
+    "speed_factor": 0.5,
+    "sections": ["bridge"],
+    "trigger": "punchline"
+  },
+  "beat_flash": {
+    "enabled": false,
+    "opacity_peak": 30,
+    "duration_frames": 2,
+    "sections": []
+  },
+  "depth_blur": {
+    "enabled": true,
+    "blur_radius": 15,
+    "focus_area": "center",
+    "sections": ["verse", "bridge"]
+  },
+  "selective_color": {
+    "enabled": true,
+    "target_color": "red",
+    "saturation_boost": 30,
+    "desaturate_rest": 40,
+    "sections": ["chorus"]
+  }
+}

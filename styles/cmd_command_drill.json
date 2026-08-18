@@ -1,0 +1,129 @@
+{
+  "style_name": "cmd_command_drill",
+  "display_name": "CMD COMMAND — UK Drill",
+  "cut_strategy": {
+    "intro": {
+      "cut_interval": "4_beat",
+      "variation": "slow_build",
+      "double_time_on_808": false
+    },
+    "verse": {
+      "cut_interval": "1_beat",
+      "variation": "drill_speed",
+      "double_time_on_808": true
+    },
+    "chorus": {
+      "cut_interval": "0.5_beat",
+      "variation": "aggressive",
+      "double_time_on_808": true
+    },
+    "drop": {
+      "cut_interval": "0.25_beat",
+      "variation": "max_aggression",
+      "double_time_on_808": true
+    },
+    "bridge": {
+      "cut_interval": "2_beat",
+      "variation": "slow_mo",
+      "double_time_on_808": false
+    },
+    "outro": {
+      "cut_interval": "4_beat",
+      "variation": "fade",
+      "double_time_on_808": false
+    }
+  },
+  "zoom_punch": {
+    "enabled": true,
+    "scale_target": 130,
+    "scale_duration_frames": 3,
+    "ease_out_frames": 8,
+    "sections": ["drop", "chorus"]
+  },
+  "whip_pan": {
+    "enabled": true,
+    "displacement_px": 2000,
+    "duration_frames": 4,
+    "sections": ["verse", "drop"]
+  },
+  "text_overlays": {
+    "enabled": false,
+    "font": "Arial Black",
+    "size": 48,
+    "color": "#FFFFFF",
+    "position": "bottom_left",
+    "sections": []
+  },
+  "color_grading": {
+    "global_lut": "cmd_command_dark_cold.cube",
+    "params": {
+      "temperature_k": 4500,
+      "contrast": 20,
+      "saturation": -15
+    },
+    "section_luts": {
+      "drop": "cmd_command_dark_cold.cube",
+      "verse": "cmd_command_dark_cold.cube",
+      "chorus": "cmd_command_dark_cold.cube"
+    }
+  },
+  "camera_shake": {
+    "frequency_hz": 30,
+    "displacement_px": 15,
+    "sections": ["drop", "chorus"]
+  },
+  "freeze_frame": {
+    "enabled": true,
+    "duration_frames": 6,
+    "sections": ["drop"],
+    "trigger": "punchline"
+  },
+  "speed_ramp": {
+    "enabled": true,
+    "speed_in": 100,
+    "speed_out": 200,
+    "ramp_duration_beats": 2,
+    "sections": ["verse", "bridge"]
+  },
+  "light_leaks": {
+    "enabled": false
+  },
+  "vhs_overlay": {
+    "enabled": false
+  },
+  "glitch_effect": {
+    "enabled": true,
+    "duration_frames": 3,
+    "displacement_px": 15,
+    "sections": ["drop", "verse"],
+    "trigger": "808"
+  },
+  "element_3d": {
+    "enabled": true,
+    "solid_name": "FlagshipEditor_3D_Solid",
+    "parallax_depth": 0.4
+  },
+  "face_mask": {
+    "enabled": true,
+    "blur_radius": 30,
+    "tracking": true
+  },
+  "smoke_fog": {
+    "enabled": true,
+    "opacity": 25,
+    "density": 0.3,
+    "color": "#1a1a2e"
+  },
+  "slow_mo": {
+    "enabled": true,
+    "speed_factor": 0.25,
+    "sections": ["bridge"],
+    "trigger": "punchline"
+  },
+  "beat_flash": {
+    "enabled": true,
+    "opacity_peak": 40,
+    "duration_frames": 2,
+    "sections": ["drop"]
+  }
+}
