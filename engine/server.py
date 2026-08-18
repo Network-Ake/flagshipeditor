@@ -14,10 +14,23 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
 
-# Import analysis modules
+# Import analysis modules (graceful degradation if deps not installed)
 sys.path.insert(0, str(Path(__file__).parent))
-from beat_analysis import analyze_track
-from clip_analysis import classify_clip
+
+LIBROSA_AVAILABLE = False
+OPENCV_AVAILABLE = False
+
+try:
+    from beat_analysis import analyze_track
+    LIBROSA_AVAILABLE = True
+except ImportError:
+    pass
+
+try:
+    from clip_analysis import classify_clip
+    OPENCV_AVAILABLE = True
+except ImportError:
+    pass
 
 app = FastAPI(title="FlagshipEditor Backend", version="0.1.0")
 
@@ -39,11 +52,18 @@ class ClipRequest(BaseModel):
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "version": "0.1.0"}
+    return {
+        "status": "ok",
+        "version": "0.1.0",
+        "librosa": LIBROSA_AVAILABLE,
+        "opencv": OPENCV_AVAILABLE,
+    }
 
 
 @app.post("/analyze-beat")
 async def analyze_beat(req: BeatRequest):
+    if not LIBROSA_AVAILABLE:
+        raise HTTPException(status_code=503, detail="librosa not installed. Run: pip install librosa scikit-learn")
     try:
         result = analyze_track(req.audioPath)
         return result
@@ -53,6 +73,8 @@ async def analyze_beat(req: BeatRequest):
 
 @app.post("/analyze-clip")
 async def analyze_clip_endpoint(req: ClipRequest):
+    if not OPENCV_AVAILABLE:
+        raise HTTPException(status_code=503, detail="opencv not installed. Run: pip install opencv-python")
     try:
         result = classify_clip(req.videoPath)
         return result
