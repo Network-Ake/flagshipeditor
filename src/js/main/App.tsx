@@ -4,10 +4,11 @@ import StyleSelector from "./components/StyleSelector";
 import Parameters from "./components/Parameters";
 import Element3DPanel from "./components/Element3DPanel";
 import AnalysisView from "./components/AnalysisView";
+import ReviewMode from "./components/ReviewMode";
 import { evalTS } from "./lib/bolt";
 import { runBeatAnalysis, runClipAnalysis } from "./lib/python";
 
-type Tab = "media" | "style" | "params" | "3d" | "analysis";
+type Tab = "media" | "style" | "params" | "3d" | "review" | "analysis";
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>("media");
@@ -17,6 +18,7 @@ const App: React.FC = () => {
   const [analysis, setAnalysis] = useState<BeatAnalysis | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [status, setStatus] = useState<string>("");
+  const [cutDecisions, setCutDecisions] = useState<any[]>([]);
 
   const handleGenerate = useCallback(async () => {
     if (!audioPath || clips.length === 0) {
@@ -32,9 +34,11 @@ const App: React.FC = () => {
       const clipData = await Promise.all(
         clips.map((c) => runClipAnalysis(c.path))
       );
-      setStatus("⚡ Generating comp...");
+      setStatus("🤖 Selecting best shots...");
+      // Shot selection will be called per section by the comp builder
+      setStatus("⚡ Generating comp (non-destructive pre-comp)...");
       await evalTS("buildComp", beatData, clipData, selectedStyle, audioPath);
-      setStatus("✅ Comp generated! Add your effects and Element 3D.");
+      setStatus("✅ Comp generated! Review your cuts, then add effects and Element 3D.");
     } catch (err) {
       setStatus(`❌ Error: ${err}`);
     } finally {
@@ -66,6 +70,7 @@ const App: React.FC = () => {
           ["style", "🎨 Style"],
           ["params", "🎛 Params"],
           ["3d", "🧊 3D"],
+          ["review", "👁 Review"],
           ["analysis", "📊 Analysis"],
         ] as [Tab, string][]).map(([tab, label]) => (
           <button
@@ -105,6 +110,25 @@ const App: React.FC = () => {
         )}
         {activeTab === "params" && <Parameters />}
         {activeTab === "3d" && <Element3DPanel />}
+        {activeTab === "review" && (
+          <ReviewMode
+            cuts={cutDecisions}
+            onSwap={(index, newClipPath) => {
+              const updated = [...cutDecisions];
+              updated[index] = { ...updated[index], clipPath: newClipPath };
+              setCutDecisions(updated);
+            }}
+            onLock={(index) => {
+              const updated = [...cutDecisions];
+              updated[index] = { ...updated[index], locked: !updated[index].locked };
+              setCutDecisions(updated);
+            }}
+            onRegenerateSection={(sectionType) => {
+              setStatus(`🔄 Regenerating ${sectionType}...`);
+              // TODO: call backend to re-select shots for this section only
+            }}
+          />
+        )}
         {activeTab === "analysis" && <AnalysisView analysis={analysis} />}
       </div>
 

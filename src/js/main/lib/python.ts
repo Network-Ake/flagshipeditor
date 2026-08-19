@@ -46,6 +46,23 @@ export async function runClipAnalysis(videoPath: string): Promise<ClipInfo> {
   return res.json();
 }
 
+export async function selectShots(
+  clips: ClipInfo[],
+  beatTimes: number[],
+  sectionType: string,
+  styleConfig: Record<string, unknown> = {},
+  usedRecently: string[] = []
+): Promise<any[]> {
+  const res = await fetch(`${PYTHON_SERVER}/select-shots`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ clips, beatTimes, sectionType, styleConfig, usedRecently }),
+  });
+  if (!res.ok) throw new Error(`Shot selection failed: ${res.statusText}`);
+  const data = await res.json();
+  return data.selections;
+}
+
 export async function checkPythonServer(): Promise<boolean> {
   try {
     const res = await fetch(`${PYTHON_SERVER}/health`);

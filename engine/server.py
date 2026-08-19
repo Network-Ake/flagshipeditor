@@ -32,6 +32,13 @@ try:
 except ImportError:
     pass
 
+SHOT_SELECTOR_AVAILABLE = False
+try:
+    from shot_selector import select_best_clips, score_clip
+    SHOT_SELECTOR_AVAILABLE = True
+except ImportError:
+    pass
+
 app = FastAPI(title="FlagshipEditor Backend", version="0.1.0")
 
 app.add_middleware(
@@ -50,6 +57,14 @@ class ClipRequest(BaseModel):
     videoPath: str
 
 
+class ShotSelectionRequest(BaseModel):
+    clips: list  # List of clip_info dicts
+    beatTimes: list  # List of beat times in seconds
+    sectionType: str
+    styleConfig: dict = {}
+    usedRecently: list = []
+
+
 @app.get("/health")
 async def health():
     return {
@@ -57,6 +72,7 @@ async def health():
         "version": "0.1.0",
         "librosa": LIBROSA_AVAILABLE,
         "opencv": OPENCV_AVAILABLE,
+        "shot_selector": SHOT_SELECTOR_AVAILABLE,
     }
 
 
@@ -85,6 +101,23 @@ async def analyze_clip_endpoint(req: ClipRequest):
 @app.post("/start")
 async def start_server():
     return {"status": "already running"}
+
+
+@app.post("/select-shots")
+async def select_shots(req: ShotSelectionRequest):
+    if not SHOT_SELECTOR_AVAILABLE:
+        raise HTTPException(status_code=503, detail="shot_selector not available. Run: pip install opencv-python numpy scipy")
+    try:
+        result = select_best_clips(
+            req.clips,
+            req.beatTimes,
+            req.sectionType,
+            req.styleConfig,
+            req.usedRecently
+        )
+        return {"selections": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":
