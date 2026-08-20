@@ -4,7 +4,7 @@ import StyleSelector from "./components/StyleSelector";
 import Parameters from "./components/Parameters";
 import Element3DPanel from "./components/Element3DPanel";
 import AnalysisView from "./components/AnalysisView";
-import ReviewMode from "./components/ReviewMode";
+import { ReviewMode } from "./components/ReviewMode";
 import { evalTS } from "./lib/bolt";
 import { runBeatAnalysis, runClipAnalysis } from "./lib/python";
 

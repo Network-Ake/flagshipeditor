@@ -4,10 +4,10 @@
 // @include './lib/json2.js'
 // @include './aeft/aeft.ts'
 
-import { buildComp } from "./aeft/aeft";
+import { buildComp as buildComposition } from "./aeft/aeft";
 
 // Expose functions to evalTS
-export const buildComp = buildComp;
+export const buildComp = buildComposition;
 export const getHostInfo = () => {
   return {
     name: app.appName,

@@ -1,45 +1,52 @@
-import { defineConfig } from "bolt-cep";
+import type { CEP_Config } from "vite-cep-plugin";
 
-export default defineConfig({
-  id: "com.akestudio.flagshipeditor",
-  name: "FlagshipEditor",
+const config: CEP_Config = {
   version: "0.1.0",
-  hosts: [
-    {
-      name: "AEFT",
-      version: "25.0",
-      debug: true,
-    },
-  ],
+  id: "com.akestudio.flagshipeditor",
+  displayName: "FlagshipEditor",
+  symlink: "local",
+  port: 3000,
+  servePort: 5000,
+  startingDebugPort: 8860,
+  extensionManifestVersion: 6.0,
+  requiredRuntimeVersion: 9.0,
+  hosts: [{ name: "AEFT", version: "[24.0,99.9]" }],
+  type: "Panel",
+  parameters: ["--v=0", "--enable-nodejs", "--mixed-context"],
+  width: 420,
+  height: 720,
   panels: [
     {
+      mainPath: "./main/index.html",
       name: "main",
-      title: "FlagshipEditor",
-      type: "Panel",
+      panelDisplayName: "FlagshipEditor",
+      autoVisible: true,
       width: 420,
       height: 720,
-      minSize: [320, 500],
-      maxSize: [600, 1200],
-      icons: {
-        normal: "assets/icon-normal.png",
-        rollOver: "assets/icon-rollover.png",
-      },
     },
     {
+      mainPath: "./settings/index.html",
       name: "settings",
-      title: "FlagshipEditor Settings",
-      type: "Panel",
+      panelDisplayName: "FlagshipEditor Settings",
+      autoVisible: false,
       width: 380,
       height: 500,
-      minSize: [300, 400],
-      maxSize: [500, 700],
     },
   ],
+  build: { jsxBin: "off", sourceMap: false },
   zxp: {
-    publisher: "ake-studio",
-    countryCode: "CA",
-    certPath: "./cert/cert.p12",
-    certPassword: "",
+    country: "CA",
+    province: "QC",
+    org: "ake-studio",
+    password: "flagshipeditor",
+    tsa: ["http://timestamp.digicert.com/"],
+    allowSkipTSA: true,
+    sourceMap: false,
+    jsxBin: "off",
   },
-  copyAssets: ["styles", "luts", "assets", "python", "ffmpeg"],
-});
+  installModules: [],
+  copyAssets: [],
+  copyZipAssets: [],
+};
+
+export default config;
