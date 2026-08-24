@@ -150,7 +150,7 @@ function cuts() {
   assert.equal(begun.started, true);
   assert.equal(begun.width, 2160, "Comp width must come from the analysed media profile");
   assert.equal(begun.height, 3840, "Comp height must come from the analysed media profile");
-  assert.equal(begun.fps, 23.976, "Comp frame rate must come from the analysed media profile");
+  assert.equal(begun.fps, 24, "Comp frame rate must snap 23.976 to 24");
 
   const appended = unwrap(context.appendCutBatch(cuts()), "appendCutBatch");
   assert.equal(appended.added, 3);
@@ -467,7 +467,7 @@ function cuts() {
   );
   assert.equal(second.width, 3840, "The second build must detect the footage imported by the first");
   assert.equal(second.height, 2160);
-  assert.equal(second.fps, 23.976);
+  assert.equal(second.fps, 24);
   unwrap(context.abortComp(), "abortComp");
 }
 

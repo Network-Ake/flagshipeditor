@@ -339,6 +339,17 @@ function writeSectionMarkers(comp: any, sections: SectionSpan[], warnings: strin
 // Detect the edit format from the analysed media first: the Python engine
 // already probed every clip, which is more reliable than guessing from
 // whichever item happens to sit first in the project panel.
+// Snap fractional frame rates (59.94, 29.97, 23.976) to their integer
+// counterparts so the comp runs at a clean fps and audio stays sample-
+// accurate. 59.94 → 60, 29.97 → 30, 23.976 → 24.
+function snapFps(value: number): number {
+  if (value <= 0) return 30;
+  var rounded = Math.round(value);
+  // Only snap when within 0.15 of the integer (59.94 → 60, not 58 → 60).
+  if (Math.abs(value - rounded) < 0.15) return rounded;
+  return rounded;
+}
+
 function resolveCompProfile(project: any, mediaProfile: MediaProfile): MediaProfile {
   var width = 1920;
   var height = 1080;
@@ -352,7 +363,7 @@ function resolveCompProfile(project: any, mediaProfile: MediaProfile): MediaProf
       width = Math.round(profileWidth);
       height = Math.round(profileHeight);
     }
-    if (profileFps > 0) fps = profileFps;
+    if (profileFps > 0) fps = snapFps(profileFps);
     if (profileWidth > 0 && profileHeight > 0 && profileFps > 0) {
       return { width: width, height: height, fps: fps };
     }
@@ -365,7 +376,7 @@ function resolveCompProfile(project: any, mediaProfile: MediaProfile): MediaProf
       height = scanned.height;
     }
     if (scanned.fps > 0 && !(mediaProfile && toNumber(mediaProfile.fps, 0) > 0)) {
-      fps = scanned.fps;
+      fps = snapFps(scanned.fps);
     }
   }
   return { width: width, height: height, fps: fps };
