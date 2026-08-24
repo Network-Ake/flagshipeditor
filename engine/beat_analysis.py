@@ -3,24 +3,121 @@ FlagshipEditor — Beat Analysis Engine
 Uses librosa for advanced beat detection, section segmentation, and music analysis.
 """
 
+import os
+import sys
+import json
+import time
+import hashlib
+import sqlite3
+from pathlib import Path
+from typing import Dict, List, Any, Optional
+
 import librosa
 import numpy as np
-from typing import Dict, List, Any
+from scipy.signal import butter, sosfilt, sosfiltfilt
+from scipy.sparse import diags
+
+# Beat analysis cache (same dir as clip analysis cache)
+_BEAT_CACHE_DIR = Path(
+    os.environ.get(
+        "FLAGSHIPEDITOR_CACHE",
+        str(Path(os.environ.get("LOCALAPPDATA", "/tmp")) / "ake-studio" / "FlagshipEditor" / "cache")
+        if sys.platform == "win32"
+        else str(Path(os.environ.get("HOME", "/tmp")) / "Library" / "Caches" / "FlagshipEditor" / "cache"),
+    )
+)
+_BEAT_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+_BEAT_CACHE_DB = _BEAT_CACHE_DIR / "beat_analysis.sqlite3"
 
 
-def analyze_track(audio_path: str) -> Dict[str, Any]:
+def _beat_cache_connection() -> sqlite3.Connection:
+    conn = sqlite3.connect(str(_BEAT_CACHE_DB))
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS beat_cache (
+            cache_key TEXT PRIMARY KEY,
+            source_path TEXT NOT NULL,
+            source_size INTEGER NOT NULL,
+            source_mtime_ns INTEGER NOT NULL,
+            result_json TEXT NOT NULL,
+            created_at REAL NOT NULL
+        )
+        """
+    )
+    return conn
+
+
+def _beat_cache_key(audio_path: str) -> tuple:
+    """Return (absolute_path, size, mtime_ns, cache_key)."""
+    st = os.stat(audio_path)
+    key_str = f"{st.st_size}:{st.st_mtime_ns}:{audio_path}"
+    return (
+        os.path.abspath(audio_path),
+        st.st_size,
+        st.st_mtime_ns,
+        hashlib.sha256(key_str.encode()).hexdigest(),
+    )
+
+
+def _correct_tempo(tempo: float) -> float:
+    """Correct tempo doubling/halving to stay in typical music range (60-200 BPM)."""
+    if tempo < 60:
+        tempo *= 2
+    elif tempo > 200:
+        tempo /= 2
+    return round(tempo, 2)
+
+
+def frequency_filter(y: np.ndarray, sr: int, cutoff: float, filter_type: str) -> np.ndarray:
+    """Apply a stable Butterworth low-pass or high-pass filter."""
+    sos = butter(5, cutoff, btype=filter_type, fs=sr, output="sos")
+    try:
+        return sosfiltfilt(sos, y)
+    except ValueError:
+        # Very short audio can be shorter than scipy's zero-phase padding.
+        return sosfilt(sos, y)
+
+
+def analyze_track(audio_path: str, progress_callback: Optional[Any] = None) -> Dict[str, Any]:
     """
     Full audio analysis: BPM, beats, downbeats, sections, energy, 808, hi-hats, key.
+    Results are cached in SQLite for instant re-analysis.
+    Optional progress_callback(step: str, pct: float) for UI progress reporting.
     """
+    # Check cache first
+    abs_path, size, mtime_ns, cache_key = _beat_cache_key(audio_path)
+    try:
+        with _beat_cache_connection() as conn:
+            row = conn.execute(
+                "SELECT result_json FROM beat_cache WHERE cache_key = ?",
+                (cache_key,),
+            ).fetchone()
+            if row:
+                return json.loads(row[0])
+    except Exception:
+        pass
+
+    def _progress(step: str, pct: float):
+        if progress_callback:
+            try:
+                progress_callback(step, pct)
+            except Exception:
+                pass
+
+    _progress("Loading audio", 0.05)
     y, sr = librosa.load(audio_path, sr=22050)
 
+    _progress("Detecting beats", 0.15)
     # Beat tracking
-    tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
+    tempo_result, beats = librosa.beat.beat_track(y=y, sr=sr)
+    tempo = float(np.asarray(tempo_result).reshape(-1)[0])
+    tempo = _correct_tempo(tempo)
     beat_times = librosa.frames_to_time(beats, sr=sr)
 
     # Downbeat detection (estimate: every 4th beat in 4/4)
     downbeats = [beat_times[i] for i in range(0, len(beat_times), 4)]
 
+    _progress("Detecting sections", 0.30)
     # Section detection via structural segmentation
     mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
     try:
@@ -34,38 +131,55 @@ def analyze_track(audio_path: str) -> Dict[str, Any]:
         mfcc_scaled = scaler.fit_transform(mfcc.T)
 
         # Cluster into sections
-        n_sections = min(6, max(3, int(len(beat_times) / 16)))
-        clusterer = AgglomerativeClustering(n_clusters=n_sections)
+        n_sections = min(6, max(1, int(len(beat_times) / 16)), mfcc_scaled.shape[0])
+        if n_sections < 2:
+            raise ValueError("Audio is too short for clustered segmentation")
+        frame_count = mfcc_scaled.shape[0]
+        connectivity = diags(
+            [np.ones(frame_count - 1), np.ones(frame_count - 1)],
+            offsets=[-1, 1],
+            shape=(frame_count, frame_count),
+            format="csr",
+        )
+        clusterer = AgglomerativeClustering(
+            n_clusters=n_sections,
+            connectivity=connectivity,
+        )
         labels = clusterer.fit_predict(mfcc_scaled)
 
         # Convert frame labels to section boundaries
         sections = labels_to_sections(labels, frame_times, y, sr)
-    except ImportError:
+    except (ImportError, ValueError):
         # Fallback: simple energy-based segmentation
         sections = simple_segmentation(y, sr, beat_times, tempo)
 
+    _progress("Computing energy", 0.60)
     # Energy curve (RMS)
     rms = librosa.feature.rms(y=y, frame_length=2048, hop_length=512)[0]
     rms_times = librosa.frames_to_time(np.arange(len(rms)), sr=sr, hop_length=512)
 
+    _progress("Detecting 808s", 0.70)
     # 808 detection (sub-bass onsets < 80Hz)
-    bass_filtered = librosa.effects.low_pass(y, sr, cutoff=80)
+    bass_filtered = frequency_filter(y, sr, 80, "lowpass")
     bass_onsets = librosa.onset.onset_detect(
         y=bass_filtered, sr=sr, units="time", hop_length=512
     )
 
+    _progress("Detecting hi-hats", 0.80)
     # Hi-hat detection (high frequency onsets > 8kHz)
-    hihat_filtered = librosa.effects.high_pass(y, sr, cutoff=8000)
+    hihat_filtered = frequency_filter(y, sr, 8000, "highpass")
     hihat_onsets = librosa.onset.onset_detect(
         y=hihat_filtered, sr=sr, units="time", hop_length=512
     )
 
+    _progress("Detecting key", 0.90)
     # Key detection
     chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     key, mode = estimate_key(chroma)
 
-    return {
-        "tempo": float(tempo),
+    _progress("Finalizing", 0.95)
+    result = {
+        "tempo": tempo,
         "beats": beat_times.tolist(),
         "downbeats": downbeats,
         "sections": sections,
@@ -76,6 +190,20 @@ def analyze_track(audio_path: str) -> Dict[str, Any]:
         "mode": mode,
         "duration": float(len(y) / sr),
     }
+
+    # Save to cache
+    try:
+        with _beat_cache_connection() as conn:
+            conn.execute(
+                "INSERT OR REPLACE INTO beat_cache (cache_key, source_path, source_size, source_mtime_ns, result_json, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+                (cache_key, abs_path, size, mtime_ns, json.dumps(result), time.time()),
+            )
+            conn.commit()
+    except Exception:
+        pass
+
+    _progress("Done", 1.0)
+    return result
 
 
 def labels_to_sections(labels, frame_times, y, sr):
@@ -177,9 +305,7 @@ def simple_segmentation(y, sr, beat_times, tempo):
         section_type = classify_section_type(y, sr, start, end)
         sections.append({"type": section_type, "start": float(start), "end": float(end)})
 
-    sections[0]["type"] = "intro"
-    sections[-1]["type"] = "outro"
-    return sections
+    return assign_section_types(sections, y, sr)
 
 
 def estimate_key(chroma):

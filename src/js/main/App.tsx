@@ -6,9 +6,18 @@ import Element3DPanel from "./components/Element3DPanel";
 import AnalysisView from "./components/AnalysisView";
 import { ReviewMode } from "./components/ReviewMode";
 import { evalTS } from "./lib/bolt";
-import { runBeatAnalysis, runClipAnalysis } from "./lib/python";
+import { runBeatAnalysis, runClipAnalysis, BeatAnalysis, ClipInfo } from "./lib/python";
 
 type Tab = "media" | "style" | "params" | "3d" | "review" | "analysis";
+
+const TABS: { id: Tab; icon: string; label: string }[] = [
+  { id: "media", icon: "📁", label: "Media" },
+  { id: "style", icon: "🎨", label: "Style" },
+  { id: "params", icon: "🎛", label: "Params" },
+  { id: "3d", icon: "🧊", label: "3D" },
+  { id: "review", icon: "👁", label: "Review" },
+  { id: "analysis", icon: "📊", label: "Analysis" },
+];
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>("media");
@@ -17,7 +26,7 @@ const App: React.FC = () => {
   const [selectedStyle, setSelectedStyle] = useState<string>("cmd_command_drill");
   const [analysis, setAnalysis] = useState<BeatAnalysis | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [status, setStatus] = useState<string>("");
+  const [status, setStatus] = useState<string>("Ready");
   const [cutDecisions, setCutDecisions] = useState<any[]>([]);
 
   const handleGenerate = useCallback(async () => {
@@ -46,119 +55,101 @@ const App: React.FC = () => {
     }
   }, [audioPath, clips, selectedStyle]);
 
+  const statusState = isGenerating ? "busy" : status.startsWith("❌") ? "error" : status.startsWith("⚠️") ? "warning" : "ready";
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      {/* Header */}
-      <div style={{
-        padding: "10px 14px",
-        background: "#0f0f1e",
-        borderBottom: "1px solid #2a2a4a",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-      }}>
-        <span style={{ fontWeight: 700, fontSize: 15, color: "#7c1629" }}>
-          FlagshipEditor™
-        </span>
-        <span style={{ fontSize: 11, color: "#666" }}>v0.1.0</span>
-      </div>
+    <div className="app-shell">
+      {/* Sidebar */}
+      <aside className="app-sidebar">
+        <div className="sidebar-logo">F</div>
+        <nav className="sidebar-nav">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              className={`sidebar-item ${activeTab === tab.id ? "active" : ""}`}
+              onClick={() => setActiveTab(tab.id)}
+              aria-label={tab.label}
+            >
+              <span className="sidebar-icon">{tab.icon}</span>
+              <span className="sidebar-tooltip">{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+      </aside>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", borderBottom: "1px solid #2a2a4a" }}>
-        {([
-          ["media", "📁 Media"],
-          ["style", "🎨 Style"],
-          ["params", "🎛 Params"],
-          ["3d", "🧊 3D"],
-          ["review", "👁 Review"],
-          ["analysis", "📊 Analysis"],
-        ] as [Tab, string][]).map(([tab, label]) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              flex: 1,
-              padding: "8px 4px",
-              background: activeTab === tab ? "#1a1a2e" : "transparent",
-              border: "none",
-              borderBottom: activeTab === tab ? "2px solid #7c1629" : "2px solid transparent",
-              color: activeTab === tab ? "#e0e0e0" : "#666",
-              cursor: "pointer",
-              fontSize: 11,
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      {/* Main area */}
+      <main className="app-main">
+        {/* Top bar */}
+        <header className="app-topbar">
+          <div className="topbar-brand">
+            <span className="brand-name">FlagshipEditor</span>
+            <span className="version-badge">v0.1.0</span>
+          </div>
+          <div className="topbar-actions">
+            <button className="icon-btn" aria-label="Settings" title="Settings">
+              ⚙️
+            </button>
+          </div>
+        </header>
 
-      {/* Content */}
-      <div style={{ flex: 1, overflow: "auto", padding: "12px" }}>
-        {activeTab === "media" && (
-          <MediaImport
-            clips={clips}
-            setClips={setClips}
-            audioPath={audioPath}
-            setAudioPath={setAudioPath}
-          />
-        )}
-        {activeTab === "style" && (
-          <StyleSelector
-            selected={selectedStyle}
-            onSelect={setSelectedStyle}
-          />
-        )}
-        {activeTab === "params" && <Parameters />}
-        {activeTab === "3d" && <Element3DPanel />}
-        {activeTab === "review" && (
-          <ReviewMode
-            cuts={cutDecisions}
-            onSwap={(index, newClipPath) => {
-              const updated = [...cutDecisions];
-              updated[index] = { ...updated[index], clipPath: newClipPath };
-              setCutDecisions(updated);
-            }}
-            onLock={(index) => {
-              const updated = [...cutDecisions];
-              updated[index] = { ...updated[index], locked: !updated[index].locked };
-              setCutDecisions(updated);
-            }}
-            onRegenerateSection={(sectionType) => {
-              setStatus(`🔄 Regenerating ${sectionType}...`);
-              // TODO: call backend to re-select shots for this section only
-            }}
-          />
-        )}
-        {activeTab === "analysis" && <AnalysisView analysis={analysis} />}
-      </div>
-
-      {/* Footer */}
-      <div style={{
-        padding: "10px 14px",
-        background: "#0f0f1e",
-        borderTop: "1px solid #2a2a4a",
-      }}>
-        <div style={{ fontSize: 11, color: "#888", marginBottom: 8, minHeight: 16 }}>
-          {status}
+        {/* Content */}
+        <div className="app-content">
+          {activeTab === "media" && (
+            <MediaImport
+              clips={clips}
+              setClips={setClips}
+              audioPath={audioPath}
+              setAudioPath={setAudioPath}
+            />
+          )}
+          {activeTab === "style" && (
+            <StyleSelector
+              selected={selectedStyle}
+              onSelect={setSelectedStyle}
+            />
+          )}
+          {activeTab === "params" && <Parameters />}
+          {activeTab === "3d" && <Element3DPanel />}
+          {activeTab === "review" && (
+            <ReviewMode
+              cuts={cutDecisions}
+              onSwap={(index, newClipPath) => {
+                const updated = [...cutDecisions];
+                updated[index] = { ...updated[index], clipPath: newClipPath };
+                setCutDecisions(updated);
+              }}
+              onLock={(index) => {
+                const updated = [...cutDecisions];
+                updated[index] = { ...updated[index], locked: !updated[index].locked };
+                setCutDecisions(updated);
+              }}
+              onRegenerateSection={(sectionType) => {
+                setStatus(`🔄 Regenerating ${sectionType}...`);
+                // TODO: call backend to re-select shots for this section only
+              }}
+            />
+          )}
+          {activeTab === "analysis" && <AnalysisView analysis={analysis} />}
         </div>
-        <button
-          onClick={handleGenerate}
-          disabled={isGenerating}
-          style={{
-            width: "100%",
-            padding: "10px",
-            background: isGenerating ? "#333" : "#7c1629",
-            color: "#fff",
-            border: "none",
-            borderRadius: 4,
-            cursor: isGenerating ? "wait" : "pointer",
-            fontSize: 13,
-            fontWeight: 600,
-          }}
-        >
-          {isGenerating ? "⏳ Generating..." : "⚡ GENERATE EDIT"}
-        </button>
-      </div>
+
+        {/* Bottom bar */}
+        <footer className="app-bottombar">
+          <div className="status-row">
+            <span className={`status-dot ${statusState}`} />
+            <span className="status-text">{status}</span>
+          </div>
+          <button
+            className="generate-btn"
+            onClick={handleGenerate}
+            disabled={isGenerating}
+          >
+            <span className="generate-btn-content">
+              {isGenerating && <span className="spinner" />}
+              {isGenerating ? "Generating..." : "⚡ GENERATE EDIT"}
+            </span>
+          </button>
+        </footer>
+      </main>
     </div>
   );
 };

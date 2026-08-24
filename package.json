@@ -1,15 +1,22 @@
 {
   "name": "flagshipeditor",
-  "version": "0.1.0",
+  "version": "0.1.9",
   "description": "FlagshipEditor — AI Music Video Editor Plugin for After Effects",
   "author": "Issandre & HeliMAn",
   "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "rimraf dist/* && vite build",
-    "zxp": "rimraf dist/* && cross-env ZXP_PACKAGE=true vite build",
-    "zip": "rimraf dist/* && cross-env ZIP_PACKAGE=true vite build"
+    "build": "rimraf dist/cep && vite build && node scripts/postbuild.mjs",
+    "zxp": "rimraf dist/cep dist/zxp && cross-env ZXP_PACKAGE=true vite build && node scripts/postbuild.mjs",
+    "generate:luts": "node scripts/generate-luts.mjs",
+    "zip": "npm run build && node scripts/package-windows.mjs",
+    "test:ae-bridge": "node scripts/test-ae-bridge.mjs",
+    "test:engine-contracts": "python3 scripts/test-engine-contracts.py",
+    "test:analysis-jobs": "python3 scripts/test-analysis-jobs.py",
+    "test:ui-recovery": "node scripts/test-ui-job-recovery.mjs",
+    "test:prores": "python3 scripts/test-prores-fixtures.py",
+    "test:windows-package": "node scripts/test-windows-package.mjs"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",

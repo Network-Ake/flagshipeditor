@@ -15,7 +15,7 @@ export function createElement3DSolid(comp: any, config: any): void {
       break;
     }
   }
-  if (!hasCamera) {
+  if (!hasCamera && config.auto_camera !== false) {
     var camera = comp.layers.addCamera("FlagshipEditor_Camera", [comp.width / 2, comp.height / 2]);
     camera.property("ADBE Camera Options Group").property("ADBE Camera Zoom").setValue(2000);
 

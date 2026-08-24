@@ -22,6 +22,16 @@ interface CutDecision {
   }>;
 }
 
+const SECTION_COLORS: Record<string, string> = {
+  intro: '#6366f1',
+  verse: '#8b5cf6',
+  hook: '#ec4899',
+  chorus: '#ec4899',
+  bridge: '#f59e0b',
+  outro: '#10b981',
+  default: '#71717a',
+};
+
 export const ReviewMode: React.FC<{
   cuts: CutDecision[];
   onSwap: (index: number, newClipPath: string) => void;
@@ -32,6 +42,10 @@ export const ReviewMode: React.FC<{
 
   const sections = [...new Set(cuts.map(c => c.sectionType))];
 
+  const totalDuration = cuts.length > 0
+    ? Math.max(...cuts.map(c => c.beatTime)) + 2
+    : 1;
+
   return (
     <div className="review-mode">
       <div className="review-header">
@@ -39,7 +53,25 @@ export const ReviewMode: React.FC<{
         <p>{cuts.length} cuts generated · Click any cut to swap or lock</p>
       </div>
 
-      <div className="cuts-timeline">
+      {cuts.length > 0 && (
+        <div className="timeline-strip" aria-label="Cut timeline">
+          {cuts.map((cut, i) => {
+            const width = Math.max(2, (2 / totalDuration) * 100);
+            return (
+              <div
+                key={i}
+                className="timeline-segment"
+                style={{ width: `${width}%` } as React.CSSProperties}
+                data-section={cut.sectionType}
+                title={`${cut.sectionType} @ ${formatTime(cut.beatTime)}`}
+                onClick={() => setSelectedCut(i)}
+              />
+            );
+          })}
+        </div>
+      )}
+
+      <div className="cuts-list">
         {cuts.map((cut, i) => (
           <div
             key={i}
@@ -53,13 +85,17 @@ export const ReviewMode: React.FC<{
               <span className="cut-time">{formatTime(cut.beatTime)}</span>
               <span className="cut-section">{cut.sectionType}</span>
               <div className="cut-score">
-                <div className="score-bar" style={{ width: `${cut.score}%` }} />
+                <div className="score-bar-bg">
+                  <div className="score-bar-fill" style={{ width: `${cut.score}%` } as React.CSSProperties} />
+                </div>
                 <span>{Math.round(cut.score)}/100</span>
               </div>
             </div>
             <button
               className="lock-btn"
               onClick={(e) => { e.stopPropagation(); onLock(i); }}
+              aria-label={cut.locked ? 'Unlock cut' : 'Lock cut'}
+              title={cut.locked ? 'Locked' : 'Unlocked'}
             >
               {cut.locked ? '🔒' : '🔓'}
             </button>

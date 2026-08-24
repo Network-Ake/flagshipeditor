@@ -68,7 +68,8 @@ export function openFile(filter: string = "*"): Promise<string | null> {
       input.type = "file";
       input.accept = filter;
       input.onchange = () => {
-        resolve(input.files?.[0]?.path || null);
+        const file = input.files?.[0];
+        resolve((file as any)?.path || null);
       };
       input.click();
       return;

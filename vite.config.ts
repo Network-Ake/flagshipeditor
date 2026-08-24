@@ -1,10 +1,11 @@
+import fs from "node:fs";
+import path from "node:path";
 import { defineConfig } from "vite";
 
 import react from "@vitejs/plugin-react"; // BOLT_REACT_ONLY
 
 import { cep, CepOptions, runAction } from "vite-cep-plugin";
 import cepConfig from "./cep.config";
-import path from "path";
 import { extendscriptConfig } from "./vite.es.config";
 
 const extensions = [".js", ".ts", ".tsx"];
@@ -42,6 +43,42 @@ const config: CepOptions = {
   packages: cepConfig.installModules || [],
 };
 
+const removeUnusedCepRequireShim = {
+  name: "remove-unused-cep-require-shim",
+  enforce: "post" as const,
+  transformIndexHtml: {
+    order: "post" as const,
+    handler(html: string) {
+      return html.replace(
+        /<script>\s*"use strict";\s*window\.require =[\s\S]*?<\/script>/,
+        "",
+      );
+    },
+  },
+};
+
+const copyStaticCss = {
+  name: "copy-static-css",
+  enforce: "post" as const,
+  transformIndexHtml: {
+    order: "post" as const,
+    handler(html: string) {
+      if (!html.includes('href="./styles.css"') && !html.includes("href='./styles.css'")) {
+        return html.replace("</head>", '  <link rel="stylesheet" href="./styles.css" />\n</head>');
+      }
+      return html;
+    },
+  },
+  writeBundle() {
+    const src = path.resolve(__dirname, "src", "js", "main", "styles.css");
+    const dest = path.resolve(__dirname, "dist", "cep", "main", "styles.css");
+    if (fs.existsSync(src)) {
+      fs.mkdirSync(path.dirname(dest), { recursive: true });
+      fs.copyFileSync(src, dest);
+    }
+  },
+};
+
 if (action) runAction(config, action);
 
 // https://vitejs.dev/config/
@@ -49,6 +86,8 @@ export default defineConfig({
   plugins: [
     react(), // BOLT_REACT_ONLY
     cep(config),
+    removeUnusedCepRequireShim,
+    copyStaticCss,
   ],
   resolve: {
     alias: [{ find: "@esTypes", replacement: path.resolve(__dirname, "src") }],
@@ -70,12 +109,14 @@ export default defineConfig({
     rollupOptions: {
       input,
       output: {
-        manualChunks: {},
-        // esModule: false,
+        // Ship a self-contained browser bundle. A shared CommonJS chunk made
+        // CEP depend on Node's `require`, which crashed CEPHtmlEngine on some
+        // Windows/After Effects installations and left an empty docked panel.
+        inlineDynamicImports: true,
         preserveModules: false,
-        format: "cjs",
-        entryFileNames: "assets/[name]-[hash].cjs",
-        chunkFileNames: "assets/[name]-[hash].cjs",
+        format: "iife",
+        entryFileNames: "assets/[name]-[hash].js",
+        chunkFileNames: "assets/[name]-[hash].js",
       },
     },
     target: "chrome74",

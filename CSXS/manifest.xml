@@ -1,29 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ExtensionManifest Version="12.0" ExtensionBundleId="com.akestudio.flagshipeditor" ExtensionBundleVersion="0.1.0" ExtensionBundleName="FlagshipEditor" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ExtensionManifest Version="6.0" ExtensionBundleId="com.akestudio.flagshipeditor" ExtensionBundleVersion="0.1.9" ExtensionBundleName="FlagshipEditor" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <ExtensionList>
-    <Extension Id="com.akestudio.flagshipeditor.main" Version="0.1.0" />
-    <Extension Id="com.akestudio.flagshipeditor.settings" Version="0.1.0" />
+    <Extension Id="com.akestudio.flagshipeditor.main" Version="0.1.9" />
   </ExtensionList>
   <ExecutionEnvironment>
     <HostList>
-      <Host Name="AEFT" Version="25.0" />
+      <Host Name="AEFT" Version="[24.0,99.9]" />
     </HostList>
     <LocaleList>
       <Locale Code="All" />
     </LocaleList>
     <RequiredRuntimeList>
-      <RequiredRuntime Name="CSXS" Version="12.0" />
+      <RequiredRuntime Name="CSXS" Version="9.0" />
     </RequiredRuntimeList>
   </ExecutionEnvironment>
   <DispatchInfoList>
     <Extension Id="com.akestudio.flagshipeditor.main">
       <DispatchInfo>
         <Resources>
-          <MainPath>./dist/main/index.html</MainPath>
-          <ScriptPath>./dist/jsx/index.js</ScriptPath>
+          <MainPath>./main/index.html</MainPath>
+          <ScriptPath>./jsx/index.js</ScriptPath>
           <CEFCommandLine>
-            <Parameter>--enable-nodejs</Parameter>
-            <Parameter>--mixed-context</Parameter>
             <Parameter>--allow-file-access</Parameter>
             <Parameter>--allow-file-access-from-files</Parameter>
           </CEFCommandLine>
@@ -47,31 +44,6 @@
               <Height>1200</Height>
               <Width>600</Width>
             </MaxSize>
-          </Geometry>
-        </UI>
-      </DispatchInfo>
-    </Extension>
-    <Extension Id="com.akestudio.flagshipeditor.settings">
-      <DispatchInfo>
-        <Resources>
-          <MainPath>./dist/settings/index.html</MainPath>
-          <ScriptPath>./dist/jsx/index.js</ScriptPath>
-          <CEFCommandLine>
-            <Parameter>--enable-nodejs</Parameter>
-            <Parameter>--mixed-context</Parameter>
-          </CEFCommandLine>
-        </Resources>
-        <Lifecycle>
-          <AutoVisible>true</AutoVisible>
-        </Lifecycle>
-        <UI>
-          <Type>Panel</Type>
-          <Menu>FlagshipEditor Settings</Menu>
-          <Geometry>
-            <Size>
-              <Height>500</Height>
-              <Width>380</Width>
-            </Size>
           </Geometry>
         </UI>
       </DispatchInfo>

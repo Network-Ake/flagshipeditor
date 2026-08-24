@@ -18,6 +18,16 @@ interface Props {
   setAudioPath: (path: string) => void;
 }
 
+const SCENE_COLORS: Record<string, string> = {
+  pending: "badge",
+  intro: "badge-accent",
+  verse: "badge",
+  hook: "badge-accent",
+  chorus: "badge-accent",
+  bridge: "badge-warning",
+  outro: "badge",
+};
+
 const MediaImport: React.FC<Props> = ({ clips, setClips, audioPath, setAudioPath }) => {
   const [importing, setImporting] = useState(false);
 
@@ -54,87 +64,86 @@ const MediaImport: React.FC<Props> = ({ clips, setClips, audioPath, setAudioPath
   };
 
   return (
-    <div>
-      <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-        <button
-          onClick={handleImportClips}
-          disabled={importing}
-          style={btnStyle}
-        >
-          {importing ? "..." : "+ Import Clips"}
+    <div className="media-import">
+      {/* Drop zone */}
+      <div className="drop-zone" onClick={handleImportClips}>
+        <div className="drop-zone-icon">📂</div>
+        <div className="drop-zone-text">Drop clips or click to browse</div>
+        <div className="drop-zone-hint">ProRes 422 .mov, .mp4, .m4v</div>
+      </div>
+
+      {/* Quick actions */}
+      <div className="media-actions">
+        <button className="btn btn-secondary btn-sm" onClick={handleImportClips} disabled={importing}>
+          {importing ? "Importing..." : "+ Import Clips"}
         </button>
-        <button onClick={handleImportMusic} style={btnStyle}>
-          + Import Music
+        <button className="btn btn-secondary btn-sm" onClick={handleImportMusic}>
+          🎵 Import Music
         </button>
       </div>
 
-      {/* Clips list */}
-      <div style={{ marginBottom: 12 }}>
-        <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>
-          CLIPS ({clips.length})
+      {/* Clips grid */}
+      <div className="clips-section">
+        <div className="clips-header">
+          <span className="section-title">Clips</span>
+          <span className="badge">{clips.length}</span>
         </div>
+
         {clips.length === 0 ? (
-          <div style={{ fontSize: 11, color: "#555", padding: 8 }}>
-            No clips imported. Import ProRes 422 .mov files.
+          <div className="empty-state">
+            No clips imported yet. Drop files above or click Import Clips.
           </div>
         ) : (
-          clips.map((clip, i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                padding: "6px 8px",
-                background: "#111122",
-                borderRadius: 3,
-                marginBottom: 3,
-                fontSize: 11,
-              }}
-            >
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
-                🎬 {clip.name}
-              </span>
-              <span style={{ color: "#666", marginLeft: 8 }}>
-                {clip.scene_type}
-              </span>
-              <button
-                onClick={() => removeClip(i)}
-                style={{ background: "none", border: "none", color: "#7c1629", cursor: "pointer", marginLeft: 8 }}
-              >
-                ✕
-              </button>
-            </div>
-          ))
+          <div className="clip-grid">
+            {clips.map((clip, i) => (
+              <div key={i} className="clip-card">
+                <div className="clip-thumbnail">🎬</div>
+                <button
+                  className="clip-remove"
+                  onClick={() => removeClip(i)}
+                  aria-label="Remove clip"
+                  title="Remove"
+                >
+                  ✕
+                </button>
+                <div className="clip-info">
+                  <div className="clip-name" title={clip.name}>
+                    {clip.name}
+                  </div>
+                  <div className="clip-meta">
+                    <span className={`badge ${SCENE_COLORS[clip.scene_type] || "badge"}`}>
+                      {clip.scene_type}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 
-      {/* Music */}
-      <div>
-        <div style={{ fontSize: 11, color: "#888", marginBottom: 6 }}>MUSIC</div>
+      {/* Music card */}
+      <div className="music-section">
+        <span className="section-title">Music</span>
         {audioPath ? (
-          <div style={{ padding: "6px 8px", background: "#111122", borderRadius: 3, fontSize: 11 }}>
-            🎵 {audioPath.split(/[/\\]/).pop()}
+          <div className="music-card">
+            <div className="music-icon">🎵</div>
+            <div className="music-info">
+              <div className="music-name" title={audioPath}>
+                {audioPath.split(/[/\\]/).pop()}
+              </div>
+              <div className="music-hint">Audio track</div>
+            </div>
+            <div className="waveform-placeholder" />
           </div>
         ) : (
-          <div style={{ fontSize: 11, color: "#555", padding: 8 }}>
-            No music imported.
+          <div className="empty-state">
+            No music imported. Click Import Music to load a track.
           </div>
         )}
       </div>
     </div>
   );
-};
-
-const btnStyle: React.CSSProperties = {
-  flex: 1,
-  padding: "8px 12px",
-  background: "#1a1a2e",
-  color: "#e0e0e0",
-  border: "1px solid #2a2a4a",
-  borderRadius: 3,
-  cursor: "pointer",
-  fontSize: 12,
 };
 
 export default MediaImport;

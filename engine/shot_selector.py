@@ -10,24 +10,18 @@ from typing import List, Dict, Optional
 def score_clip(clip_info: dict, prev_clip_info: Optional[dict] = None) -> dict:
     """Score a single clip on 6 criteria, return composite score."""
     scores = {}
-    frames = clip_info.get('frames', [])
-    
-    # 1. Composition — rule of thirds, center of interest
-    scores['composition'] = analyze_composition(frames) if frames else 50
-    
-    # 2. Energy — motion + brightness + saturation
-    scores['energy'] = analyze_energy(frames) if frames else 50
+    scores['composition'] = bounded_score(clip_info.get('composition_score'), 50)
+    scores['energy'] = bounded_score(clip_info.get('energy_score'), 50)
     
     # 3. Variety — visual distance from previous clip
-    if prev_clip_info and 'histogram' in clip_info and 'histogram' in prev_clip_info:
-        scores['variety'] = 100 - histogram_correlation(
+    if prev_clip_info and clip_info.get('histogram') and prev_clip_info.get('histogram'):
+        scores['variety'] = histogram_distance(
             clip_info['histogram'], prev_clip_info['histogram']
         )
     else:
         scores['variety'] = 80
     
-    # 4. Sharpness — Laplacian variance
-    scores['sharpness'] = min(100, laplacian_variance(frames) / 100) if frames else 50
+    scores['sharpness'] = bounded_score(clip_info.get('sharpness_score'), 50)
     
     # 5. Stability — penalize shaky clips
     scores['stability'] = 100 - min(100, clip_info.get('motion_intensity', 0) * 2)
@@ -53,8 +47,38 @@ def score_clip(clip_info: dict, prev_clip_info: Optional[dict] = None) -> dict:
         'composite': composite,
         'clip_path': clip_info.get('path', ''),
         'clip_name': clip_info.get('name', ''),
+        'thumbnail_id': clip_info.get('thumbnail_id', ''),
         'scene_type': clip_info.get('scene_type', 'unknown')
     }
+
+
+def bounded_score(value, default=50.0):
+    """Coerce a score to the public 0..100 contract."""
+    try:
+        numeric = float(value)
+        if not np.isfinite(numeric):
+            return float(default)
+        return max(0.0, min(100.0, numeric))
+    except (TypeError, ValueError):
+        return float(default)
+
+
+def histogram_distance(first, second):
+    """Return normalized histogram distance: 0 identical, 100 maximally different."""
+    try:
+        left = np.asarray(first, dtype=np.float64).reshape(-1)
+        right = np.asarray(second, dtype=np.float64).reshape(-1)
+        if left.size == 0 or left.size != right.size:
+            return 50.0
+        left_total = float(left.sum())
+        right_total = float(right.sum())
+        if left_total <= 0 or right_total <= 0:
+            return 50.0
+        left /= left_total
+        right /= right_total
+        return max(0.0, min(100.0, float(np.abs(left - right).sum()) * 50.0))
+    except (TypeError, ValueError):
+        return 50.0
 
 
 def select_best_clips(clips: List[dict], beat_times: list,
@@ -79,18 +103,24 @@ def select_best_clips(clips: List[dict], beat_times: list,
             
             # Penalize recently used clips
             if clip.get('path') in used_recently[-4:]:
-                result['composite'] -= 15
+                result['composite'] = max(0.0, result['composite'] - 15.0)
             
             scored.append(result)
         
         scored.sort(key=lambda x: x['composite'], reverse=True)
         best = scored[0] if scored else {
-            'composite': 0, 'clip_path': '', 'clip_name': '', 'scene_type': 'unknown'
+            'composite': 0, 'clip_path': '', 'clip_name': '',
+            'thumbnail_id': '', 'scene_type': 'unknown'
         }
         best['beat_time'] = beat_time
         best['section_type'] = section_type
         best['alternatives'] = [
-            {'clip_path': s['clip_path'], 'clip_name': s['clip_name'], 'score': s['composite']}
+            {
+                'clip_path': s['clip_path'],
+                'clip_name': s['clip_name'],
+                'score': s['composite'],
+                'thumbnail_id': s.get('thumbnail_id', '')
+            }
             for s in scored[1:4]  # Top 3 alternatives for Review Mode
         ]
         
@@ -152,15 +182,6 @@ def laplacian_variance(frames):
     return float(np.mean(variances)) if variances else 0
 
 
-def histogram_correlation(h1, h2):
-    """Visual similarity between two clips (0=identical, 100=totally different)."""
-    try:
-        corr = cv2.compareHist(h1, h2, cv2.HISTCMP_CORREL)
-        return max(0, min(100, (1 - corr) * 100))
-    except Exception:
-        return 50
-
-
 def face_quality_score(clip_info):
     """Face detection confidence + size + centering."""
     face_ratio = clip_info.get('face_size_ratio', 0)
@@ -170,13 +191,14 @@ def face_quality_score(clip_info):
 
 def filter_clips_for_section(clips, section_type, style_config):
     """Filter clips compatible with a section type."""
+    usable_clips = [clip for clip in clips if clip.get('usable', True) and clip.get('scene_type') != 'unknown']
     section_map = {
-        'intro': ['b_roll_exterior', 'b_roll_studio', 'wide_shot', 'b_roll_low_light', 'b_roll_static'],
-        'verse': ['performance_lip_sync', 'close_up', 'performance'],
-        'chorus': ['performance_lip_sync', 'close_up', 'crowd', 'b_roll_dynamic', 'high_energy'],
-        'drop': ['b_roll_dynamic', 'close_up', 'performance_lip_sync', 'high_energy'],
-        'bridge': ['b_roll_exterior', 'wide_shot', 'b_roll_low_light', 'b_roll_static'],
-        'outro': ['b_roll_exterior', 'wide_shot', 'performance', 'b_roll_static']
+        'intro': ['b_roll_static', 'b_roll_low_light', 'b_roll'],
+        'verse': ['performance', 'close_up'],
+        'chorus': ['close_up', 'performance', 'b_roll_dynamic'],
+        'drop': ['b_roll_dynamic', 'close_up', 'performance'],
+        'bridge': ['b_roll_static', 'b_roll_low_light', 'b_roll'],
+        'outro': ['b_roll_static', 'b_roll', 'performance']
     }
     compatible_types = section_map.get(section_type, ['performance', 'b_roll_dynamic'])
-    return [c for c in clips if c.get('scene_type', 'unknown') in compatible_types or c.get('scene_type') == 'unknown']
+    return [clip for clip in usable_clips if clip.get('scene_type') in compatible_types]

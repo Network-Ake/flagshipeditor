@@ -3,47 +3,50 @@ import React, { useState } from "react";
 const Element3DPanel: React.FC = () => {
   const [parallaxDepth, setParallaxDepth] = useState(0.3);
   const [autoCamera, setAutoCamera] = useState(true);
+  const [elementDetected] = useState(false);
 
   return (
-    <div>
-      <div style={{ fontSize: 11, color: "#888", marginBottom: 8 }}>
-        ELEMENT 3D
+    <div className="element3d-panel">
+      {/* Info card */}
+      <div className="info-card">
+        <div className="info-card-icon">🧊</div>
+        <div className="info-card-content">
+          <div className="info-card-title">Element 3D Integration</div>
+          <div className="info-card-row">
+            <span>Solid:</span>
+            <span>FlagshipEditor_3D_Solid</span>
+          </div>
+          <div className="info-card-row">
+            <span>Camera:</span>
+            <span>FlagshipEditor_Camera</span>
+          </div>
+          <div className="info-card-row push-top">
+            <span className={`status-pill ${elementDetected ? "detected" : "missing"}`}>
+              <span className="status-dot-inline" />
+              {elementDetected ? "Element 3D detected" : "Element 3D not detected"}
+            </span>
+          </div>
+        </div>
       </div>
 
-      <div style={{
-        padding: 10,
-        background: "#111122",
-        borderRadius: 3,
-        marginBottom: 10,
-        fontSize: 11,
-      }}>
-        <div style={{ marginBottom: 4 }}>
-          <span style={{ color: "#888" }}>Solid:</span> FlagshipEditor_3D_Solid (auto)
-        </div>
-        <div style={{ marginBottom: 4 }}>
-          <span style={{ color: "#888" }}>3D Camera:</span> FlagshipEditor_Camera (auto)
-        </div>
-        <div style={{ color: "#7c1629", marginTop: 6 }}>
-          ⚠ Add Element 3D effect manually after generation
-        </div>
-      </div>
+      {/* Auto camera toggle */}
+      <label className="toggle-switch">
+        <input
+          type="checkbox"
+          checked={autoCamera}
+          onChange={(e) => setAutoCamera(e.target.checked)}
+        />
+        <span className="toggle-track">
+          <span className="toggle-thumb" />
+        </span>
+        <span className="toggle-label">Auto-create 3D camera</span>
+      </label>
 
-      <div style={{ marginBottom: 10 }}>
-        <label style={{ display: "flex", alignItems: "center", fontSize: 12, cursor: "pointer" }}>
-          <input
-            type="checkbox"
-            checked={autoCamera}
-            onChange={(e) => setAutoCamera(e.target.checked)}
-            style={{ marginRight: 8, accentColor: "#7c1629" }}
-          />
-          Auto-create 3D camera
-        </label>
-      </div>
-
-      <div style={{ marginBottom: 10 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 4 }}>
-          <span>Parallax depth</span>
-          <span style={{ color: "#7c1629" }}>{parallaxDepth.toFixed(1)}</span>
+      {/* Parallax slider */}
+      <div className="param-row">
+        <div className="slider-label-row">
+          <span className="slider-label">Parallax depth</span>
+          <span className="slider-value">{parallaxDepth.toFixed(1)}</span>
         </div>
         <input
           type="range"
@@ -52,20 +55,17 @@ const Element3DPanel: React.FC = () => {
           step="0.1"
           value={parallaxDepth}
           onChange={(e) => setParallaxDepth(parseFloat(e.target.value))}
-          style={{ width: "100%", accentColor: "#7c1629" }}
+          className="range-slider"
+          data-value="true"
+          style={{ "--value-percent": `${parallaxDepth * 100}%` } as React.CSSProperties}
         />
       </div>
 
-      <div style={{
-        padding: 10,
-        background: "#0f0f1e",
-        borderRadius: 3,
-        fontSize: 11,
-        color: "#888",
-      }}>
-        After generation, select the FlagshipEditor_3D_Solid layer,
-        add the Element 3D effect, and load your 3D model.
-        The camera and parallax are already set up.
+      {/* Info box */}
+      <div className="info-box">
+        After generation, select the <strong>FlagshipEditor_3D_Solid</strong> layer,
+        add the Element 3D effect, and load your 3D model. The camera and parallax
+        are already set up.
       </div>
     </div>
   );

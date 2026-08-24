@@ -23,6 +23,7 @@ export const extendscriptConfig = (
     treeshake: true,
     output: {
       file: outPath,
+      format: "iife",
       sourcemap: isPackage
         ? cepConfig.zxp.sourceMap
         : cepConfig.build?.sourceMap,
@@ -88,4 +89,3 @@ export const extendscriptConfig = (
     watchRollup();
   }
 };
-

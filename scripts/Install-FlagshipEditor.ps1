@@ -1,226 +1,216 @@
 #Requires -Version 5.1
 <#+
 .SYNOPSIS
-Installs FlagshipEditor for the current Windows user.
+Installs the self-contained FlagshipEditor extension and analysis backend.
 
 .DESCRIPTION
-Installs missing prerequisites with winget, builds the CEP extension, creates an
-isolated Python environment for the backend, installs the extension in Adobe's
-per-user CEP directory, and creates an idempotent backend launcher.
-
-Run from an extracted FlagshipEditor project. Administrator rights are not
-normally required because all FlagshipEditor files are installed per-user.
+Validates and installs the bundled CEP extension, portable Python runtime,
+Python dependencies, FFmpeg, and FFprobe for the current Windows user.
+No Python, Node.js, winget, administrator rights, or network connection is
+required on the destination computer.
 #>
 
 [CmdletBinding()]
-param(
-    [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot),
-    [switch]$SkipPrerequisiteInstall,
-    [switch]$SkipBuild
-)
+param([string]$ProjectRoot = "")
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
+if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
+    $scriptPath = $MyInvocation.MyCommand.Path
+    if ([string]::IsNullOrWhiteSpace($scriptPath)) {
+        throw "Cannot determine the installer location. Run INSTALL-FLAGSHIPEDITOR.cmd from the extracted package."
+    }
+    $ProjectRoot = Split-Path -Parent (Split-Path -Parent $scriptPath)
+}
+
+$ProjectRoot = [IO.Path]::GetFullPath($ProjectRoot)
 $ExtensionId = "com.akestudio.flagshipeditor"
+$BackendId = "com.akestudio.flagshipeditor.backend"
+$ExpectedVersion = "0.1.3"
 $CepRoot = Join-Path $env:APPDATA "Adobe\CEP\extensions"
 $ExtensionDir = Join-Path $CepRoot $ExtensionId
 $ApplicationDir = Join-Path $env:LOCALAPPDATA "ake-studio\FlagshipEditor"
 $BackendDir = Join-Path $ApplicationDir "backend"
-$VenvDir = Join-Path $BackendDir ".venv"
+$RuntimeDir = Join-Path $ApplicationDir "runtime"
+$RuntimePythonDir = Join-Path $RuntimeDir "python"
+$RuntimeBinDir = Join-Path $RuntimeDir "bin"
+$PayloadManifest = Join-Path $ProjectRoot "payload-checksums.json"
 
 function Write-Step([string]$Message) {
     Write-Host "`n==> $Message" -ForegroundColor Cyan
 }
 
-function Refresh-ProcessPath {
-    $machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
-    $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-    $env:Path = "$machinePath;$userPath"
-}
-
-function Find-Command([string[]]$Names) {
-    foreach ($name in $Names) {
-        $command = Get-Command $name -ErrorAction SilentlyContinue
-        if ($command) { return $command.Source }
+function Copy-Tree([string]$Source, [string]$Destination) {
+    if (-not (Test-Path -LiteralPath $Source)) {
+        throw "Required package folder is missing: $Source"
     }
-    return $null
-}
-
-function Install-WingetPackage([string]$Id, [string]$DisplayName) {
-    if ($SkipPrerequisiteInstall) {
-        throw "$DisplayName is missing and -SkipPrerequisiteInstall was specified."
-    }
-    $winget = Find-Command @("winget.exe", "winget")
-    if (-not $winget) {
-        throw "$DisplayName is missing and winget is unavailable. Install App Installer from Microsoft Store, then rerun this script."
-    }
-
-    Write-Host "Installing $DisplayName..." -ForegroundColor Yellow
-    & $winget install --id $Id --exact --accept-package-agreements --accept-source-agreements --disable-interactivity
-    if ($LASTEXITCODE -ne 0) {
-        throw "winget could not install $DisplayName (exit code $LASTEXITCODE)."
-    }
-    Refresh-ProcessPath
-}
-
-function Assert-Version([string]$Executable, [string[]]$Arguments, [version]$Minimum, [string]$DisplayName) {
-    $output = (& $Executable @Arguments 2>&1 | Out-String).Trim()
-    $match = [regex]::Match($output, "(\d+\.\d+(?:\.\d+)?)")
-    if (-not $match.Success -or [version]$match.Groups[1].Value -lt $Minimum) {
-        throw "$DisplayName $Minimum or newer is required. Found: $output"
-    }
-    Write-Host "$DisplayName found: $output" -ForegroundColor Green
-}
-
-function Invoke-Checked([string]$Executable, [string[]]$Arguments, [string]$Description) {
-    Write-Host $Description -ForegroundColor Yellow
-    & $Executable @Arguments
-    if ($LASTEXITCODE -ne 0) {
-        throw "$Description failed (exit code $LASTEXITCODE)."
-    }
-}
-
-function Copy-Tree([string]$Source, [string]$Destination, [string[]]$ExcludedDirectories = @()) {
-    if (-not (Test-Path $Source)) { return }
     New-Item -ItemType Directory -Path $Destination -Force | Out-Null
-    $arguments = @($Source, $Destination, "/E", "/PURGE", "/R:2", "/W:1", "/NFL", "/NDL", "/NJH", "/NJS", "/NP")
-    if ($ExcludedDirectories.Count -gt 0) {
-        $arguments += "/XD"
-        $arguments += $ExcludedDirectories
-    }
-    & robocopy @arguments | Out-Null
+    & robocopy $Source $Destination /E /PURGE /R:2 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null
     if ($LASTEXITCODE -gt 7) {
         throw "Copy from '$Source' to '$Destination' failed (robocopy exit code $LASTEXITCODE)."
     }
 }
 
-$ProjectRoot = [IO.Path]::GetFullPath($ProjectRoot)
-if (-not (Test-Path (Join-Path $ProjectRoot "package.json"))) {
-    throw "FlagshipEditor package.json was not found at '$ProjectRoot'. Copy/extract the complete project and rerun the script."
-}
-if (-not (Test-Path (Join-Path $ProjectRoot "CSXS\manifest.xml"))) {
-    throw "CSXS\manifest.xml is missing from '$ProjectRoot'."
-}
-
-Write-Step "Checking Windows prerequisites"
-$node = Find-Command @("node.exe", "node")
-if (-not $node) {
-    Install-WingetPackage "OpenJS.NodeJS.LTS" "Node.js LTS"
-    $node = Find-Command @("node.exe", "node")
-}
-if (-not $node) { throw "Node.js was installed but is not available. Open a new PowerShell window and rerun this script." }
-Assert-Version $node @("--version") ([version]"20.0") "Node.js"
-
-$npm = Find-Command @("npm.cmd", "npm")
-if (-not $npm) { throw "npm was not found. Repair the Node.js installation and rerun this script." }
-
-$python = Find-Command @("py.exe", "python.exe", "python")
-if (-not $python) {
-    Install-WingetPackage "Python.Python.3.12" "Python 3.12"
-    $python = Find-Command @("py.exe", "python.exe", "python")
-}
-if (-not $python) { throw "Python was installed but is not available. Open a new PowerShell window and rerun this script." }
-$pythonArgs = if ([IO.Path]::GetFileName($python) -ieq "py.exe") { @("-3") } else { @() }
-Assert-Version $python ($pythonArgs + @("--version")) ([version]"3.10") "Python"
-
-$ffmpeg = Find-Command @("ffmpeg.exe", "ffmpeg")
-if (-not $ffmpeg) {
-    Install-WingetPackage "Gyan.FFmpeg" "FFmpeg"
-    $ffmpeg = Find-Command @("ffmpeg.exe", "ffmpeg")
-}
-if (-not $ffmpeg) { throw "FFmpeg was installed but is not available. Open a new PowerShell window and rerun this script." }
-Write-Host "FFmpeg found: $((& $ffmpeg -version | Select-Object -First 1))" -ForegroundColor Green
-
-if (-not $SkipBuild) {
-    Write-Step "Installing JavaScript dependencies and building the CEP extension"
-    Push-Location $ProjectRoot
+function Get-BackendHealth {
     try {
-        if (Test-Path (Join-Path $ProjectRoot "package-lock.json")) {
-            Invoke-Checked $npm @("ci", "--no-audit", "--no-fund") "Installing locked npm dependencies"
-        } else {
-            Invoke-Checked $npm @("install", "--no-audit", "--no-fund") "Installing npm dependencies"
-        }
-        Invoke-Checked $npm @("run", "build") "Building FlagshipEditor"
-    } finally {
-        Pop-Location
+        return Invoke-RestMethod -Uri "http://127.0.0.1:18791/health" -TimeoutSec 2
+    } catch {
+        return $null
     }
 }
 
-$distDir = Join-Path $ProjectRoot "dist\cep"
-if (-not (Test-Path (Join-Path $distDir "main\index.html"))) {
-    throw "Build output dist\main\index.html is missing. Rerun without -SkipBuild and resolve any build errors."
-}
-if (-not (Test-Path (Join-Path $distDir "jsx\index.js"))) {
-    throw "Build output dist\jsx\index.js is missing. Rerun without -SkipBuild and resolve any build errors."
+function Test-PayloadIntegrity {
+    if (-not (Test-Path -LiteralPath $PayloadManifest)) {
+        throw "payload-checksums.json is missing. Extract the complete ZIP and rerun the installer."
+    }
+    $entries = @(Get-Content -LiteralPath $PayloadManifest -Raw | ConvertFrom-Json)
+    if ($entries.Count -lt 10) {
+        throw "The package checksum manifest is invalid or incomplete."
+    }
+    foreach ($entry in $entries) {
+        $relativePath = [string]$entry.path
+        $expectedHash = ([string]$entry.sha256).ToLowerInvariant()
+        $filePath = Join-Path $ProjectRoot ($relativePath.Replace("/", "\"))
+        if (-not (Test-Path -LiteralPath $filePath -PathType Leaf)) {
+            throw "Package file is missing: $relativePath"
+        }
+        $actualHash = (Get-FileHash -LiteralPath $filePath -Algorithm SHA256).Hash.ToLowerInvariant()
+        if ($actualHash -ne $expectedHash) {
+            throw "Package integrity check failed: $relativePath"
+        }
+    }
 }
 
-Write-Step "Installing the Python backend"
-New-Item -ItemType Directory -Path $ApplicationDir -Force | Out-Null
-Copy-Tree (Join-Path $ProjectRoot "engine") $BackendDir @(".venv", "__pycache__")
-
-if (-not (Test-Path (Join-Path $VenvDir "Scripts\python.exe"))) {
-    Invoke-Checked $python ($pythonArgs + @("-m", "venv", $VenvDir)) "Creating isolated Python environment"
+function Stop-InstalledBackend {
+    $applicationPrefix = $ApplicationDir.TrimEnd("\") + "\"
+    $processes = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+        $_.ExecutablePath -and $_.ExecutablePath.StartsWith($applicationPrefix, [StringComparison]::OrdinalIgnoreCase)
+    })
+    foreach ($process in $processes) {
+        Stop-Process -Id $process.ProcessId -Force -ErrorAction SilentlyContinue
+    }
+    if ($processes.Count -gt 0) {
+        Start-Sleep -Milliseconds 750
+    }
 }
-$venvPython = Join-Path $VenvDir "Scripts\python.exe"
-Invoke-Checked $venvPython @("-m", "pip", "install", "--upgrade", "pip") "Updating pip"
-Invoke-Checked $venvPython @("-m", "pip", "install", "-r", (Join-Path $BackendDir "requirements.txt")) "Installing Python dependencies"
 
-Write-Step "Installing the CEP extension for the current user"
-New-Item -ItemType Directory -Path $ExtensionDir -Force | Out-Null
-Copy-Tree (Join-Path $ProjectRoot "CSXS") (Join-Path $ExtensionDir "CSXS")
-Copy-Tree $distDir $ExtensionDir
-foreach ($folder in @("styles", "luts", "assets")) {
+Write-Step "Validating the complete offline package"
+Test-PayloadIntegrity
+
+$requiredFiles = @(
+    "dist\cep\CSXS\manifest.xml",
+    "dist\cep\main\index.html",
+    "dist\cep\jsx\index.js",
+    "runtime\python\python.exe",
+    "runtime\python\pythonw.exe",
+    "runtime\bin\ffmpeg.exe",
+    "runtime\bin\ffprobe.exe",
+    "engine\server.py",
+    "engine\VERSION"
+)
+foreach ($relativePath in $requiredFiles) {
+    if (-not (Test-Path -LiteralPath (Join-Path $ProjectRoot $relativePath) -PathType Leaf)) {
+        throw "Required package file is missing: $relativePath"
+    }
+}
+
+if (Get-Process -Name "AfterFX" -ErrorAction SilentlyContinue) {
+    throw "After Effects is running. Close it completely, then run this installer again."
+}
+
+Write-Step "Stopping an older FlagshipEditor backend"
+Stop-InstalledBackend
+$portHealth = Get-BackendHealth
+if ($portHealth) {
+    throw "Port 18791 is already used by another application. Close that application, then rerun the installer."
+}
+
+Write-Step "Installing the After Effects extension"
+Copy-Tree (Join-Path $ProjectRoot "dist\cep") $ExtensionDir
+foreach ($folder in @("styles", "luts")) {
     Copy-Tree (Join-Path $ProjectRoot $folder) (Join-Path $ExtensionDir $folder)
 }
 
-foreach ($csxsVersion in @("9", "10", "11", "12")) {
+foreach ($csxsVersion in @("9", "10", "11", "12", "13")) {
     $registryPath = "HKCU:\Software\Adobe\CSXS.$csxsVersion"
     New-Item -Path $registryPath -Force | Out-Null
     New-ItemProperty -Path $registryPath -Name "PlayerDebugMode" -Value "1" -PropertyType String -Force | Out-Null
 }
 
+Write-Step "Installing the bundled analysis runtime"
+New-Item -ItemType Directory -Path $ApplicationDir -Force | Out-Null
+Copy-Tree (Join-Path $ProjectRoot "engine") $BackendDir
+Copy-Tree (Join-Path $ProjectRoot "runtime\python") $RuntimePythonDir
+Copy-Tree (Join-Path $ProjectRoot "runtime\bin") $RuntimeBinDir
+
 Write-Step "Creating the backend launcher"
 $launcherPs1 = Join-Path $ApplicationDir "Start-FlagshipEditor-Backend.ps1"
 $launcherCmd = Join-Path $ApplicationDir "Start-FlagshipEditor-Backend.cmd"
 $logDir = Join-Path $ApplicationDir "logs"
-$escapedPython = $venvPython.Replace("'", "''")
-$escapedServer = (Join-Path $BackendDir "server.py").Replace("'", "''")
-$escapedBackend = $BackendDir.Replace("'", "''")
-$escapedLogDir = $logDir.Replace("'", "''")
+$pythonwPath = (Join-Path $RuntimePythonDir "pythonw.exe").Replace("'", "''")
+$backendPath = $BackendDir.Replace("'", "''")
+$runtimeBinPath = $RuntimeBinDir.Replace("'", "''")
+$logPath = $logDir.Replace("'", "''")
 $launcherContent = @"
 `$ErrorActionPreference = 'Stop'
-try {
-    Invoke-RestMethod -Uri 'http://127.0.0.1:18791/health' -TimeoutSec 2 | Out-Null
-    Write-Host 'FlagshipEditor backend is already running.' -ForegroundColor Green
-    exit 0
-} catch { }
-`$logDir = '$escapedLogDir'
+`$backendId = '$BackendId'
+`$expectedVersion = '$ExpectedVersion'
+function Get-FlagshipHealth {
+    try { return Invoke-RestMethod -Uri 'http://127.0.0.1:18791/health' -TimeoutSec 2 } catch { return `$null }
+}
+`$health = Get-FlagshipHealth
+if (`$health) {
+    if (`$health.appId -eq `$backendId -and `$health.version -eq `$expectedVersion) {
+        Write-Host 'FlagshipEditor backend is already running.' -ForegroundColor Green
+        exit 0
+    }
+    throw 'Port 18791 is occupied by another application or an incompatible FlagshipEditor backend.'
+}
+`$logDir = '$logPath'
 New-Item -ItemType Directory -Path `$logDir -Force | Out-Null
-`$process = Start-Process -FilePath '$escapedPython' -ArgumentList @('$escapedServer') -WorkingDirectory '$escapedBackend' -WindowStyle Hidden -RedirectStandardOutput (Join-Path `$logDir 'backend.log') -RedirectStandardError (Join-Path `$logDir 'backend-error.log') -PassThru
-for (`$attempt = 0; `$attempt -lt 20; `$attempt++) {
+`$env:PATH = '$runtimeBinPath;' + `$env:PATH
+`$env:FLAGSHIPEDITOR_FFPROBE = '$runtimeBinPath\ffprobe.exe'
+`$process = Start-Process -FilePath '$pythonwPath' -ArgumentList @('server.py') -WorkingDirectory '$backendPath' -WindowStyle Hidden -RedirectStandardOutput (Join-Path `$logDir 'backend.log') -RedirectStandardError (Join-Path `$logDir 'backend-error.log') -PassThru
+for (`$attempt = 0; `$attempt -lt 120; `$attempt++) {
     Start-Sleep -Milliseconds 500
-    try {
-        Invoke-RestMethod -Uri 'http://127.0.0.1:18791/health' -TimeoutSec 2 | Out-Null
+    `$health = Get-FlagshipHealth
+    if (`$health) {
+        if (`$health.appId -ne `$backendId -or `$health.version -ne `$expectedVersion) {
+            Stop-Process -Id `$process.Id -Force -ErrorAction SilentlyContinue
+            throw 'A different service answered on FlagshipEditor port 18791.'
+        }
+        if (-not `$health.librosa -or -not `$health.opencv -or -not `$health.shot_selector -or -not `$health.ffprobe -or -not `$health.ffmpeg) {
+            Stop-Process -Id `$process.Id -Force -ErrorAction SilentlyContinue
+            throw 'The bundled backend failed its dependency self-check. See backend-error.log.'
+        }
         Write-Host "FlagshipEditor backend started (PID `$(`$process.Id))." -ForegroundColor Green
         exit 0
-    } catch {
-        if (`$process.HasExited) { throw "Backend exited with code `$(`$process.ExitCode). See `$logDir\backend-error.log" }
+    }
+    if (`$process.HasExited) {
+        throw "Backend exited with code `$(`$process.ExitCode). See `$logDir\backend-error.log"
     }
 }
-throw "Backend did not become healthy in 10 seconds. See `$logDir\backend-error.log"
+Stop-Process -Id `$process.Id -Force -ErrorAction SilentlyContinue
+throw "Backend did not become healthy in 60 seconds. See `$logDir\backend-error.log"
 "@
 Set-Content -LiteralPath $launcherPs1 -Value $launcherContent -Encoding UTF8
-$cmdContent = "@echo off`r`npowershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File `"$launcherPs1`"`r`npause`r`n"
+$cmdContent = "@echo off`r`npowershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File `"$launcherPs1`"`r`nif errorlevel 1 pause`r`n"
 Set-Content -LiteralPath $launcherCmd -Value $cmdContent -Encoding ASCII
 
 $startMenu = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\FlagshipEditor"
 New-Item -ItemType Directory -Path $startMenu -Force | Out-Null
 Copy-Item -LiteralPath $launcherCmd -Destination (Join-Path $startMenu "Start FlagshipEditor Backend.cmd") -Force
 
-Write-Host "`nFlagshipEditor installation completed successfully." -ForegroundColor Green
+$runKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+$runCommand = "powershell.exe -NoLogo -NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$launcherPs1`""
+New-Item -Path $runKey -Force | Out-Null
+New-ItemProperty -Path $runKey -Name "FlagshipEditorBackend" -Value $runCommand -PropertyType String -Force | Out-Null
+
+Write-Step "Starting and verifying the bundled backend"
+& $launcherPs1
+
+Write-Host "`nFlagshipEditor $ExpectedVersion installed successfully." -ForegroundColor Green
 Write-Host "CEP extension: $ExtensionDir"
-Write-Host "Backend:       $BackendDir"
-Write-Host "Launcher:      $launcherCmd"
+Write-Host "Application:   $ApplicationDir"
 Write-Host "`nRestart After Effects, then open Window > Extensions > FlagshipEditor."
-Write-Host "Start the backend from the Windows Start menu before using AI analysis."
