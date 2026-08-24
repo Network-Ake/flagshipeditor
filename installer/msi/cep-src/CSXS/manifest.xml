@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<ExtensionManifest
+Version="6.0"
+ExtensionBundleId="com.akestudio.flagshipeditor"
+ExtensionBundleVersion="2.0.0"
+ExtensionBundleName="FlagshipEditor"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+>
+<ExtensionList>
+  <Extension Id="com.akestudio.flagshipeditor.main" Version="2.0.0" />
+</ExtensionList>
+<ExecutionEnvironment>
+  <HostList>
+    <Host Name="AEFT" Version="[24.0,99.9]" />
+  </HostList>
+  <LocaleList>
+    <Locale Code="All" />
+  </LocaleList>
+  <RequiredRuntimeList>
+    <RequiredRuntime Name="CSXS" Version="9.0" />
+  </RequiredRuntimeList>
+</ExecutionEnvironment>
+<DispatchInfoList>
+  <Extension Id="com.akestudio.flagshipeditor.main">
+    <DispatchInfo>
+      <Resources>
+        <MainPath>./main/index.html</MainPath>
+        <ScriptPath>./jsx/index.js</ScriptPath>
+        <CEFCommandLine>
+          <Parameter>--v=0</Parameter>
+          <Parameter>--allow-file-access</Parameter>
+          <Parameter>--allow-file-access-from-files</Parameter>
+        </CEFCommandLine>
+      </Resources>
+      <Lifecycle>
+        <AutoVisible>true</AutoVisible>
+      </Lifecycle>
+      <UI>
+        <Type>Panel</Type>
+        <Menu>FlagshipEditor</Menu>
+        <Geometry>
+          <Size>
+            <Width>420</Width>
+            <Height>720</Height>
+          </Size>
+        </Geometry>
+      </UI>
+    </DispatchInfo>
+  </Extension>
+</DispatchInfoList>
+</ExtensionManifest>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <DirectoryRef Id="ENGINEDIR">
+      <Directory Id="dirD563E0B8A410F1430879E2D54EB495BA" Name=".">
+        <Component Win64="$(var.Win64)" Id="cmpB33892FBDDEFFC3368077B4904AD0B3D" Guid="*">
+          <File Id="fil312866D68517FD67A9277BAA16855BB5" KeyPath="yes" Source="$(var.EngineDir)/VERSION"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmp834354949DAF2B99016AA309B6FA6193" Guid="*">
+          <File Id="filD72E95F547F7ECE6C2613B7DD9A9636F" KeyPath="yes" Source="$(var.EngineDir)/analysis_jobs.py"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmpFF0EBE5F821CA58302DA1A5E042CC55F" Guid="*">
+          <File Id="filB0383C8511008DFFC07D91F04D879488" KeyPath="yes" Source="$(var.EngineDir)/backend_launcher.py"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmp011C785937BE05679FD136166496CAD6" Guid="*">
+          <File Id="filF3AF9760950FD6B96EF700241E412140" KeyPath="yes" Source="$(var.EngineDir)/beat_analysis.py"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmpBE33B1727ED093D9EDFA179AD17699B5" Guid="*">
+          <File Id="fil1F7C8ADAE17B3D2306D951F862EA8F36" KeyPath="yes" Source="$(var.EngineDir)/clip_analysis.py"/>
+        </Component>
+      </Directory>
+      <Directory Id="dir829A7151813C1E9843C62AD2D412C727" Name="fixtures">
+        <Component Win64="$(var.Win64)" Id="cmp5375E3705F5D005DDC75016D9E564086" Guid="*">
+          <File Id="fil482BABD011FD2722FCE55430A53A4C54" KeyPath="yes" Source="$(var.EngineDir)/fixtures/prores-422-hq.mov"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmp00269BAE6A4D04C64CDF487D0D43C3A9" Guid="*">
+          <File Id="filCDB10AB85881D9879A26D9B7A527EBF2" KeyPath="yes" Source="$(var.EngineDir)/fixtures/prores-422-standard.mov"/>
+        </Component>
+      </Directory>
+      <Directory Id="dir4F3E609F222E275CB6D50C4C90A14874" Name=".">
+        <Component Win64="$(var.Win64)" Id="cmp136CC9DCAE0BC3DDF860367E04840C50" Guid="*">
+          <File Id="fil4F916D39972137018AD826EDB935A06C" KeyPath="yes" Source="$(var.EngineDir)/media_tools.py"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmp055D69350D8938BBD93BDA992F8733B6" Guid="*">
+          <File Id="filFE49B48D3564BEB41FE913DBDAB699A5" KeyPath="yes" Source="$(var.EngineDir)/requirements-windows.lock"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmp19359A61AE2446B51B549167B014DA2F" Guid="*">
+          <File Id="filD80B85683E89A86D1619B4BC0EE6F7DC" KeyPath="yes" Source="$(var.EngineDir)/requirements.txt"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmpD23E0D3B971806F3C90816A4D09AE326" Guid="*">
+          <File Id="fil3B0895DD79DB5246BC2510E206A9F3F6" KeyPath="yes" Source="$(var.EngineDir)/self_test.py"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmp37F78D9E69DFF05B443A39C32175987B" Guid="*">
+          <File Id="fil0C26042ADEA49A0881A95E5B6A32CAE3" KeyPath="yes" Source="$(var.EngineDir)/server.py"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmp2B8A0F2B327DC16264AE6A07275246ED" Guid="*">
+          <File Id="fil9272E1856D3963371D2E82DEA49471FE" KeyPath="yes" Source="$(var.EngineDir)/shot_selector.py"/>
+        </Component>
+      </Directory>
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="EngineFiles">
+      <ComponentRef Id="cmpB33892FBDDEFFC3368077B4904AD0B3D"/>
+      <ComponentRef Id="cmp834354949DAF2B99016AA309B6FA6193"/>
+      <ComponentRef Id="cmpFF0EBE5F821CA58302DA1A5E042CC55F"/>
+      <ComponentRef Id="cmp011C785937BE05679FD136166496CAD6"/>
+      <ComponentRef Id="cmpBE33B1727ED093D9EDFA179AD17699B5"/>
+      <ComponentRef Id="cmp5375E3705F5D005DDC75016D9E564086"/>
+      <ComponentRef Id="cmp00269BAE6A4D04C64CDF487D0D43C3A9"/>
+      <ComponentRef Id="cmp136CC9DCAE0BC3DDF860367E04840C50"/>
+      <ComponentRef Id="cmp055D69350D8938BBD93BDA992F8733B6"/>
+      <ComponentRef Id="cmp19359A61AE2446B51B549167B014DA2F"/>
+      <ComponentRef Id="cmpD23E0D3B971806F3C90816A4D09AE326"/>
+      <ComponentRef Id="cmp37F78D9E69DFF05B443A39C32175987B"/>
+      <ComponentRef Id="cmp2B8A0F2B327DC16264AE6A07275246ED"/>
+    </ComponentGroup>
+  </Fragment>
+</Wix>
+<!-- generated with msitools 0.106 -->
+<!-- wixl-heat -var var.EngineDir -directory-ref ENGINEDIR -component-group EngineFiles -prefix /private/tmp/claude-501/-Users-issandre-openclaw-workspace-projects-flagshipeditor/b4f421b3-d433-40b6-bc88-3d8e75c12519/scratchpad/msi/stage/engine/ -win64 -->

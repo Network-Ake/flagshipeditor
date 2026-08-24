@@ -1,0 +1,27 @@
+{
+  "style_name": "custom",
+  "display_name": "Custom",
+  "cut_strategy": {
+    "intro": { "cut_interval": "4_beat", "variation": "build" },
+    "verse": { "cut_interval": "1_beat", "variation": "dynamic" },
+    "chorus": { "cut_interval": "0.5_beat", "variation": "high_energy" },
+    "drop": { "cut_interval": "0.25_beat", "variation": "rapid_fire" },
+    "bridge": { "cut_interval": "2_beat", "variation": "slow" },
+    "outro": { "cut_interval": "4_beat", "variation": "fade" }
+  },
+  "zoom_punch": { "enabled": true, "scale_target": 130, "scale_duration_frames": 4, "ease_out_frames": 10, "sections": ["chorus", "drop"] },
+  "whip_pan": { "enabled": true, "displacement_px": 2000, "duration_frames": 5, "sections": ["verse"] },
+  "text_overlays": { "enabled": false, "sections": [] },
+  "color_grading": { "global_lut": null, "params": { "temperature_k": 5000, "contrast": 10, "saturation": 0 }, "section_luts": {} },
+  "camera_shake": { "frequency_hz": 20, "displacement_px": 10, "sections": ["drop"] },
+  "freeze_frame": { "enabled": false, "sections": [] },
+  "speed_ramp": { "enabled": false, "sections": [] },
+  "light_leaks": { "enabled": false },
+  "vhs_overlay": { "enabled": false },
+  "glitch_effect": { "enabled": false, "sections": [] },
+  "element_3d": { "enabled": false, "solid_name": "FlagshipEditor_3D_Solid", "parallax_depth": 0.2 },
+  "face_mask": { "enabled": false },
+  "smoke_fog": { "enabled": false },
+  "slow_mo": { "enabled": false, "sections": [] },
+  "beat_flash": { "enabled": false, "sections": [] }
+}

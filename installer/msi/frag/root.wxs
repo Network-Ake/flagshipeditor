@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <DirectoryRef Id="INSTALLDIR">
+      <Directory Id="dirA3335DB471D9EA219C5966460DFC40EA" Name=".">
+        <Component Win64="$(var.Win64)" Id="cmp9014C7EFE97CFB75596D735442E6D94A" Guid="*">
+          <File Id="fil4781E88087F9BB5D8AFE8EF008540F7A" KeyPath="yes" Source="$(var.RootDir)/Start-FlagshipEditor-Backend.vbs"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmp2E754A85F7B625974A4453A53F878D13" Guid="*">
+          <File Id="filD569A22706961A43ADAA55DF131D3CE0" KeyPath="yes" Source="$(var.RootDir)/Stop-FlagshipEditor-Backend.vbs"/>
+        </Component>
+      </Directory>
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="RootFiles">
+      <ComponentRef Id="cmp9014C7EFE97CFB75596D735442E6D94A"/>
+      <ComponentRef Id="cmp2E754A85F7B625974A4453A53F878D13"/>
+    </ComponentGroup>
+  </Fragment>
+</Wix>
+<!-- generated with msitools 0.106 -->
+<!-- wixl-heat -var var.RootDir -directory-ref INSTALLDIR -component-group RootFiles -prefix /private/tmp/claude-501/-Users-issandre-openclaw-workspace-projects-flagshipeditor/b4f421b3-d433-40b6-bc88-3d8e75c12519/scratchpad/msi/stage/root/ -win64 -->

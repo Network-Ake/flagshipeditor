@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  FlagshipEditor 2.0.0 - Windows installer.
+
+  Per-machine, x64. Two payloads land in two places:
+
+    C:\Program Files\FlagshipEditor            engine, embedded Python, FFmpeg,
+                                               and the windowless VBS launchers
+    C:\Program Files (x86)\Common Files\
+      Adobe\CEP\extensions\
+        com.akestudio.flagshipeditor           the After Effects panel
+
+  The panel is the only entry point a user really needs: it shells out to its own
+  Start-FlagshipEditor-Backend.cmd, which reads InstallDir out of HKLM and hands
+  off to the launcher under Program Files. The Start Menu shortcuts are there for
+  the times the backend has to be driven by hand.
+
+  Built with msitools' wixl, so this stays inside the subset wixl implements:
+  no WixVariable, no SetProperty, no StandardDirectory; RemoveFolder takes its
+  folder from the parent component, Shortcut is never advertised, and a Custom
+  can only be sequenced After another action, never Before one.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <?define AppName        = "FlagshipEditor" ?>
+  <?define AppVersion     = "2.0.0" ?>
+  <?define AppPublisher   = "ake-studio" ?>
+  <?define AppId          = "com.akestudio.flagshipeditor" ?>
+
+  <Product Id="*"
+           Name="$(var.AppName) $(var.AppVersion)"
+           Language="1033"
+           Codepage="1252"
+           Version="$(var.AppVersion)"
+           Manufacturer="$(var.AppPublisher)"
+           UpgradeCode="7F8E9D0A-1B2C-4D3E-9F5A-6B7C8D9E0F1A">
+
+    <Package InstallerVersion="500"
+             Compressed="yes"
+             InstallScope="perMachine"
+             Manufacturer="$(var.AppPublisher)"
+             Description="$(var.AppName) $(var.AppVersion) - AI music video editor for Adobe After Effects"
+             Comments="Installs the FlagshipEditor After Effects panel and its offline analysis backend."
+             Keywords="FlagshipEditor,After Effects,CEP,Installer"
+             Languages="1033"
+             SummaryCodepage="1252" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of $(var.AppName) is already installed. Remove it first, then run this installer again." />
+
+    <Media Id="1" Cabinet="payload.cab" EmbedCab="yes" />
+
+    <Icon Id="FlagshipEditor.ico" SourceFile="$(var.AssetDir)/installer-icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="FlagshipEditor.ico" />
+
+    <!-- ================================ layout =============================== -->
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+
+      <!-- C:\Program Files\FlagshipEditor -->
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLDIR" Name="$(var.AppName)">
+          <Directory Id="ENGINEDIR"  Name="engine" />
+          <Directory Id="RUNTIMEDIR" Name="runtime" />
+        </Directory>
+      </Directory>
+
+      <!--
+        After Effects only scans the 32-bit Common Files tree for system-wide CEP
+        extensions, so this stays on CommonFilesFolder even in an x64 package.
+      -->
+      <Directory Id="CommonFilesFolder">
+        <Directory Id="CepAdobeDir" Name="Adobe">
+          <Directory Id="CepRootDir" Name="CEP">
+            <Directory Id="CepExtensionsDir" Name="extensions">
+              <Directory Id="CEPEXTDIR" Name="$(var.AppId)" />
+            </Directory>
+          </Directory>
+        </Directory>
+      </Directory>
+
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="STARTMENUDIR" Name="$(var.AppName)" />
+      </Directory>
+
+      <!-- Referenced by the shortcuts and the stop custom action. -->
+      <Directory Id="System64Folder" Name="System64" />
+
+    </Directory>
+
+    <!-- =============================== payload =============================== -->
+
+    <Feature Id="Complete"
+             Title="$(var.AppName) $(var.AppVersion)"
+             Description="The After Effects panel and the offline analysis backend."
+             Level="1"
+             Display="expand"
+             ConfigurableDirectory="INSTALLDIR"
+             Absent="disallow">
+      <ComponentGroupRef Id="RootFiles" />
+      <ComponentGroupRef Id="EngineFiles" />
+      <ComponentGroupRef Id="RuntimeFiles" />
+      <ComponentGroupRef Id="CepFiles" />
+      <ComponentRef Id="RegistryComponent" />
+      <ComponentRef Id="CepDebugComponent" />
+      <ComponentRef Id="ShortcutsComponent" />
+    </Feature>
+
+    <UIRef Id="WixUI_FlagshipEditor" />
+
+    <!--
+      A backend left running from a previous install holds pythonw.exe and the
+      DLLs under runtime\ open, which would fail the uninstall half of a major
+      upgrade. Stop-FlagshipEditor-Backend.vbs asks it to shut down over HTTP and
+      falls back to its PID file, and it is only worth running when there is
+      something already installed to stop - either this product (repair, remove)
+      or an older one FindRelatedProducts just turned up.
+
+      wixl cannot emit the Directory form of a custom action, so the path to
+      wscript.exe goes into a property first and the second action runs it from
+      there. Both sit after CostFinalize, which is what resolves [INSTALLDIR],
+      and well before RemoveExistingProducts.
+    -->
+    <CustomAction Id="SetStopBackendExe"
+                  Property="StopBackendExe"
+                  Value="[System64Folder]wscript.exe"
+                  Execute="immediate" />
+
+    <CustomAction Id="StopBackend"
+                  Property="StopBackendExe"
+                  ExeCommand="//nologo &quot;[INSTALLDIR]Stop-FlagshipEditor-Backend.vbs&quot;"
+                  Execute="immediate"
+                  Return="ignore" />
+
+    <InstallExecuteSequence>
+      <Custom Action="SetStopBackendExe" After="CostFinalize">Installed OR WIX_UPGRADE_DETECTED</Custom>
+      <Custom Action="StopBackend" After="SetStopBackendExe">Installed OR WIX_UPGRADE_DETECTED</Custom>
+    </InstallExecuteSequence>
+
+  </Product>
+
+  <!-- ============================= registry ================================= -->
+  <!--
+    Start-FlagshipEditor-Backend.cmd inside the panel reads InstallDir with
+    `reg query ... /reg:64`, so this has to be a 64-bit component.
+  -->
+  <Fragment>
+    <DirectoryRef Id="INSTALLDIR">
+      <Component Id="RegistryComponent" Guid="7C1D4E52-9A83-4F16-B0C7-2E5A8D3F6B41" Win64="yes">
+        <RegistryKey Root="HKLM" Key="Software\$(var.AppPublisher)\$(var.AppName)">
+          <RegistryValue Name="InstallDir"  Type="string" Value="[INSTALLDIR]" KeyPath="yes" />
+          <RegistryValue Name="Version"     Type="string" Value="$(var.AppVersion)" />
+          <RegistryValue Name="EngineDir"   Type="string" Value="[ENGINEDIR]" />
+          <RegistryValue Name="RuntimeDir"  Type="string" Value="[RUNTIMEDIR]" />
+          <RegistryValue Name="CepDir"      Type="string" Value="[CEPEXTDIR]" />
+          <RegistryValue Name="BackendPort" Type="integer" Value="18791" />
+        </RegistryKey>
+        <RemoveFolder Id="RemoveInstallDir" On="uninstall" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- ========================== CEP debug mode ============================== -->
+  <!--
+    The panel ships unsigned, and CEP refuses to load an unsigned extension unless
+    PlayerDebugMode is set. CEP reads it out of HKCU only, once per CSXS runtime
+    generation, so every generation After Effects 2024-2026 can present is covered.
+  -->
+  <Fragment>
+    <DirectoryRef Id="CEPEXTDIR">
+      <Component Id="CepDebugComponent" Guid="B4F2A907-6D31-4C88-95AE-1F0B7E4C2D63" Win64="yes">
+        <RegistryValue Root="HKCU" Key="Software\Adobe\CSXS.9"  Name="PlayerDebugMode" Type="string" Value="1" KeyPath="yes" />
+        <RegistryValue Root="HKCU" Key="Software\Adobe\CSXS.10" Name="PlayerDebugMode" Type="string" Value="1" />
+        <RegistryValue Root="HKCU" Key="Software\Adobe\CSXS.11" Name="PlayerDebugMode" Type="string" Value="1" />
+        <RegistryValue Root="HKCU" Key="Software\Adobe\CSXS.12" Name="PlayerDebugMode" Type="string" Value="1" />
+        <RegistryValue Root="HKCU" Key="Software\Adobe\CSXS.13" Name="PlayerDebugMode" Type="string" Value="1" />
+        <RemoveFolder Id="RemoveCepExtDir" On="uninstall" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- ============================= Start Menu =============================== -->
+  <!--
+    Both launchers are VBS run through wscript.exe, which has no console of its
+    own, so neither shortcut flashes a window.
+  -->
+  <Fragment>
+    <DirectoryRef Id="STARTMENUDIR">
+      <Component Id="ShortcutsComponent" Guid="3E8C1B76-04FA-4D29-A7B5-C9D26F81E430" Win64="yes">
+
+        <Shortcut Id="StartBackendShortcut"
+                  Name="Start FlagshipEditor Backend"
+                  Description="Start the local analysis backend FlagshipEditor uses inside After Effects."
+                  Target="[System64Folder]wscript.exe"
+                  Arguments="//nologo &quot;[INSTALLDIR]Start-FlagshipEditor-Backend.vbs&quot;"
+                  WorkingDirectory="INSTALLDIR"
+                  Icon="FlagshipEditor.ico"
+                  IconIndex="0" />
+
+        <Shortcut Id="StopBackendShortcut"
+                  Name="Stop FlagshipEditor Backend"
+                  Description="Shut the local analysis backend down."
+                  Target="[System64Folder]wscript.exe"
+                  Arguments="//nologo &quot;[INSTALLDIR]Stop-FlagshipEditor-Backend.vbs&quot;"
+                  WorkingDirectory="INSTALLDIR"
+                  Icon="FlagshipEditor.ico"
+                  IconIndex="0" />
+
+        <Shortcut Id="UninstallShortcut"
+                  Name="Uninstall FlagshipEditor"
+                  Description="Remove FlagshipEditor $(var.AppVersion)."
+                  Target="[System64Folder]msiexec.exe"
+                  Arguments="/x [ProductCode]" />
+
+        <RemoveFolder Id="RemoveStartMenuDir" On="uninstall" />
+        <RegistryValue Root="HKLM" Key="Software\$(var.AppPublisher)\$(var.AppName)" Name="StartMenu" Type="string" Value="[STARTMENUDIR]" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+</Wix>
