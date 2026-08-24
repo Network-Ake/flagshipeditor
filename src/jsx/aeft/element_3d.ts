@@ -21,11 +21,9 @@ export function detectElement3D(comp: any): string | null {
   try {
     var parade = probe.property("ADBE Effect Parade");
     for (var i = 0; i < ELEMENT_MATCH_NAMES.length; i++) {
-      try {
-        if (parade.canAddProperty && !parade.canAddProperty(ELEMENT_MATCH_NAMES[i])) continue;
-      } catch (probeError) {
-        // canAddProperty is unavailable here; fall through to addProperty.
-      }
+      // canAddProperty is unreliable across AE versions — it can return false
+      // for third-party effects that are genuinely installed. Always try
+      // addProperty and let the throw distinguish installed from absent.
       try {
         var effect = parade.addProperty(ELEMENT_MATCH_NAMES[i]);
         if (effect) {

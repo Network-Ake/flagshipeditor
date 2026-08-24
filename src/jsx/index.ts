@@ -78,29 +78,43 @@ thisObj.getExtensionRoot = function () {
 };
 
 thisObj.openFileDialog = function (filter: string) {
-  var file = File.openDialog("Select a file", filter, false);
-  return file ? file.fsName : "null";
+  try {
+    var file = File.openDialog("Select a file", filter, false);
+    if (!file) return JSON.stringify({ __result: null });
+    return JSON.stringify({ __result: file.fsName });
+  } catch (e) {
+    return JSON.stringify({ __error: "File dialog failed: " + String(e) });
+  }
 };
 
 thisObj.openFilesDialog = function (filter: string) {
-  var files: any = File.openDialog("Select files", filter, true);
-  if (!files) return "[]";
-  var paths: string[] = [];
-  // ExtendScript may return a File object even when multiSelect is true.
-  // File.length is the byte size, so detect a single file by fsName instead.
-  if (files.fsName) {
-    paths.push(files.fsName);
-    return JSON.stringify(paths);
+  try {
+    var files: any = File.openDialog("Select files", filter, true);
+    if (!files) return JSON.stringify({ __result: [] });
+    var paths: string[] = [];
+    // ExtendScript may return a File object even when multiSelect is true.
+    // File.length is the byte size, so detect a single file by fsName instead.
+    if (files.fsName) {
+      paths.push(files.fsName);
+      return JSON.stringify({ __result: paths });
+    }
+    for (var i = 0; i < files.length; i++) {
+      paths.push(files[i].fsName);
+    }
+    return JSON.stringify({ __result: paths });
+  } catch (e) {
+    return JSON.stringify({ __error: "File dialog failed: " + String(e) });
   }
-  for (var i = 0; i < files.length; i++) {
-    paths.push(files[i].fsName);
-  }
-  return JSON.stringify(paths);
 };
 
 thisObj.openFolderDialog = function () {
-  var folder = Folder.selectDialog("Select a media folder");
-  return folder ? folder.fsName : "null";
+  try {
+    var folder = Folder.selectDialog("Select a media folder");
+    if (!folder) return JSON.stringify({ __result: null });
+    return JSON.stringify({ __result: folder.fsName });
+  } catch (e) {
+    return JSON.stringify({ __error: "Folder dialog failed: " + String(e) });
+  }
 };
 
 // Starting the backend is the one job the panel cannot do itself: CEP runs

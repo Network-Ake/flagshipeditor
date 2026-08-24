@@ -125,20 +125,19 @@ function cuts() {
   };
   assert.deepEqual(
     JSON.parse(context.openFilesDialog("Video files:*.mov,All files:*.*")),
-    ["C:/media/single.mov"],
+    { __result: ["C:/media/single.mov"] },
     "A one-file multi-select result must not collapse to an empty list",
   );
   FileMock.openDialog = () => [new FileMock("C:/media/first.mov"), new FileMock("C:/media/second.mp4")];
-  assert.deepEqual(JSON.parse(context.openFilesDialog("All files:*.*")), [
-    "C:/media/first.mov",
-    "C:/media/second.mp4",
-  ]);
+  assert.deepEqual(JSON.parse(context.openFilesDialog("All files:*.*")), {
+    __result: ["C:/media/first.mov", "C:/media/second.mp4"],
+  });
   FileMock.openDialog = () => null;
-  assert.deepEqual(JSON.parse(context.openFilesDialog("All files:*.*")), []);
+  assert.deepEqual(JSON.parse(context.openFilesDialog("All files:*.*")), { __result: [] });
   FolderMock.selectDialog = () => new FolderMock("C:/media/library");
-  assert.equal(context.openFolderDialog(), "C:/media/library");
+  assert.deepEqual(JSON.parse(context.openFolderDialog()), { __result: "C:/media/library" });
   FolderMock.selectDialog = () => null;
-  assert.equal(context.openFolderDialog(), "null");
+  assert.deepEqual(JSON.parse(context.openFolderDialog()), { __result: null });
 }
 
 // --- Full build with every effect enabled -----------------------------------
