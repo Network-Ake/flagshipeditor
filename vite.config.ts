@@ -43,6 +43,24 @@ const config: CepOptions = {
   packages: cepConfig.installModules || [],
 };
 
+// vite-cep-plugin always emits an <Icons> block, filling it with the string
+// "undefined" when no icons are configured. After Effects then looks for a file
+// literally named "undefined". Stripping it here — in a writeBundle that runs
+// before the cep plugin's, which is where the ZXP is signed — keeps the flaw
+// out of the signed package, not just out of the unsigned dist/cep tree.
+const sanitizeCepManifest = {
+  name: "sanitize-cep-manifest",
+  writeBundle() {
+    const manifestPath = path.resolve(__dirname, "dist", cepDist, "CSXS", "manifest.xml");
+    if (!fs.existsSync(manifestPath)) return;
+    const manifest = fs.readFileSync(manifestPath, "utf8");
+    const cleaned = manifest.replace(/\s*<Icons>[\s\S]*?<\/Icons>/g, (block) =>
+      block.includes("undefined") ? "" : block,
+    );
+    if (cleaned !== manifest) fs.writeFileSync(manifestPath, cleaned, "utf8");
+  },
+};
+
 const removeUnusedCepRequireShim = {
   name: "remove-unused-cep-require-shim",
   enforce: "post" as const,
@@ -85,6 +103,7 @@ if (action) runAction(config, action);
 export default defineConfig({
   plugins: [
     react(), // BOLT_REACT_ONLY
+    sanitizeCepManifest,
     cep(config),
     removeUnusedCepRequireShim,
     copyStaticCss,

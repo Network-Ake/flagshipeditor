@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <?define AppVersion = "2.0.0" ?>
+  <?define AppName = "FlagshipEditor" ?>
+  <?define AppPublisher = "ake-studio" ?>
+  <?define AppId = "com.akestudio.flagshipeditor" ?>
+
+  <Product Id="*"
+           Name="$(var.AppName) $(var.AppVersion)"
+           Language="1033"
+           Version="$(var.AppVersion).0"
+           Manufacturer="$(var.AppPublisher)"
+           UpgradeCode="{7F8E9D0A-1B2C-4D3E-9F5A-6B7C8D9E0F1A}">
+
+    <Package Id="*"
+             Description="$(var.AppName) — AI Music Video Editor for After Effects"
+             Manufacturer="$(var.AppPublisher)"
+             InstallerVersion="200"
+             Compressed="yes"
+             InstallScope="perUser"
+             Platform="x86" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of $(var.AppName) is already installed." />
+    <Media Id="1" Cabinet="payload.cab" EmbedCab="yes" CompressionLevel="high" />
+
+    <!-- Directory structure -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <!-- CEP Extension: %APPDATA%\Adobe\CEP\extensions\com.akestudio.flagshipeditor -->
+      <Directory Id="AppDataFolder">
+        <Directory Id="CEPROOT" Name="Adobe">
+          <Directory Id="CEPEXT" Name="CEP">
+            <Directory Id="CEPAPPDIR" Name="$(var.AppId)" />
+          </Directory>
+        </Directory>
+      </Directory>
+
+      <!-- Runtime: %LOCALAPPDATA%\ake-studio\FlagshipEditor\2.0.0 -->
+      <Directory Id="LocalAppDataFolder">
+        <Directory Id="INSTALLDIR" Name="$(var.AppPublisher)">
+          <Directory Id="APPDIR" Name="$(var.AppName)">
+            <Directory Id="VERSIONDIR" Name="$(var.AppVersion)" />
+          </Directory>
+        </Directory>
+      </Directory>
+
+      <!-- Start Menu -->
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="STARTMENU" Name="$(var.AppPublisher)">
+          <Directory Id="STARTMENUAPP" Name="$(var.AppName)" />
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <!-- Features -->
+    <Feature Id="Complete" Title="$(var.AppName) $(var.AppVersion)" Level="1"
+             Description="AI Music Video Editor plugin for Adobe After Effects.">
+      <ComponentGroupRef Id="CepFiles" />
+      <ComponentGroupRef Id="RuntimeFiles" />
+      <ComponentRef Id="VersionComponent" />
+      <ComponentRef Id="ShortcutComponent" />
+      <ComponentRef Id="UninstallShortcutComponent" />
+      <ComponentRef Id="RegistryComponent" />
+    </Feature>
+
+    <!-- UI -->
+    <UI>
+      <UIRef Id="WixUI_InstallDir" />
+      <Property Id="WIXUI_INSTALLDIR" Value="VERSIONDIR" />
+    </UI>
+
+    <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
+
+    <!-- Properties for custom actions -->
+    <Property Id="CEP_PATH" Value="[AppDataFolder]Adobe\CEP\extensions\$(var.AppId)" />
+
+  </Product>
+
+  <!-- Version marker -->
+  <Fragment>
+    <DirectoryRef Id="VERSIONDIR">
+      <Component Id="VersionComponent" Guid="{A7B8C9D0-F1A2-40A1-5D6E-7F8090A1B2C0}" Win64="no">
+        <File Id="version_file" Name="installed-version.txt" Source="$(var.BuildDir)\VERSION" KeyPath="yes" />
+        <RemoveFolder Id="RemoveVersionDir" Directory="VERSIONDIR" On="uninstall" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- Start Menu shortcut -->
+  <Fragment>
+    <DirectoryRef Id="STARTMENUAPP">
+      <Component Id="ShortcutComponent" Guid="{B8C9D0E1-A2B3-40B2-6E7F-8090A1B2C3D0}" Win64="no">
+        <Shortcut Id="StartMenuShortcut"
+                  Name="Start FlagshipEditor Backend"
+                  Target="[VERSIONDIR]scripts\Start-FlagshipEditor-Backend.cmd"
+                  Directory="STARTMENUAPP"
+                  Show="minimized"
+                  WorkingDirectory="VERSIONDIR" />
+        <RemoveFolder Id="RemoveStartMenuApp" Directory="STARTMENUAPP" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\ake-studio\FlagshipEditor" Name="Shortcut" Type="string" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- Uninstall shortcut -->
+  <Fragment>
+    <DirectoryRef Id="STARTMENUAPP">
+      <Component Id="UninstallShortcutComponent" Guid="{C9D0E1F2-B3C4-40C3-7F80-90A1B2C3D4E0}" Win64="no">
+        <Shortcut Id="UninstallShortcut"
+                  Name="Uninstall FlagshipEditor"
+                  Target="[SystemFolder]msiexec.exe"
+                  Arguments="/x [ProductCode]"
+                  Directory="STARTMENUAPP" />
+        <RegistryValue Root="HKCU" Key="Software\ake-studio\FlagshipEditor" Name="UninstallShortcut" Type="string" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- Registry entries -->
+  <Fragment>
+    <Component Id="RegistryComponent" Guid="{D0E1F2A3-C4D5-40D4-8090-A1B2C3D4E5F0}" Win64="no" Directory="INSTALLDIR">
+      <RegistryKey Root="HKCU" Key="Software\ake-studio\FlagshipEditor">
+        <RegistryValue Name="Version" Type="string" Value="$(var.AppVersion)" />
+        <RegistryValue Name="InstallPath" Type="string" Value="[INSTALLDIR]" />
+        <RegistryValue Name="CEPPath" Type="string" Value="[CEPAPPDIR]" />
+      </RegistryKey>
+      <RegistryKey Root="HKCU" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\FlagshipEditor">
+        <RegistryValue Name="DisplayName" Type="string" Value="$(var.AppName) $(var.AppVersion)" />
+        <RegistryValue Name="DisplayVersion" Type="string" Value="$(var.AppVersion)" />
+        <RegistryValue Name="Publisher" Type="string" Value="$(var.AppPublisher)" />
+        <RegistryValue Name="NoModify" Type="integer" Value="1" />
+        <RegistryValue Name="NoRepair" Type="integer" Value="1" />
+      </RegistryKey>
+    </Component>
+  </Fragment>
+
+</Wix>

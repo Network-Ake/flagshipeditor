@@ -27,7 +27,7 @@ if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
 $ProjectRoot = [IO.Path]::GetFullPath($ProjectRoot)
 $ExtensionId = "com.akestudio.flagshipeditor"
 $BackendId = "com.akestudio.flagshipeditor.backend"
-$ExpectedVersion = "0.1.3"
+$ExpectedVersion = "2.0.0"
 $CepRoot = Join-Path $env:APPDATA "Adobe\CEP\extensions"
 $ExtensionDir = Join-Path $CepRoot $ExtensionId
 $ApplicationDir = Join-Path $env:LOCALAPPDATA "ake-studio\FlagshipEditor"

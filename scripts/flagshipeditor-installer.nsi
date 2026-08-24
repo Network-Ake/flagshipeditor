@@ -1,10 +1,10 @@
 ; ============================================================
-; FlagshipEditor v0.1.9 - NSIS Installer for Windows
+; FlagshipEditor v2.0.0 - NSIS Installer for Windows
 ; Built with NSIS 3.08 in Docker (Debian)
 ; ============================================================
 
 !define APP_NAME "FlagshipEditor"
-!define APP_VERSION "0.1.9"
+!define APP_VERSION "2.0.0"
 !define APP_PUBLISHER "ake-studio"
 !define APP_ID "com.akestudio.flagshipeditor"
 !define APP_URL "https://github.com/Network-Ake/flagshipeditor"
@@ -25,7 +25,7 @@ ShowInstDetails show
 ShowUnInstDetails show
 BrandingText "ake-studio - FlagshipEditor ${APP_VERSION}"
 
-VIProductVersion "0.1.9.0"
+VIProductVersion "2.0.0.0"
 VIAddVersionKey "ProductName" "FlagshipEditor"
 VIAddVersionKey "CompanyName" "ake-studio"
 VIAddVersionKey "LegalCopyright" "(c) 2026 ake-studio"
@@ -92,21 +92,21 @@ Section "FlagshipEditor" SecMain
   ; Move files from extracted folder to install location
   DetailPrint "Installing CEP extension..."
   CreateDirectory "${CEP_PATH}"
-  CopyFiles /SILENT "$INSTDIR\FlagshipEditor-0.1.9-Windows\dist\cep\*" "${CEP_PATH}"
+  CopyFiles /SILENT "$INSTDIR\FlagshipEditor-2.0.0-Windows\dist\cep\*" "${CEP_PATH}"
 
   DetailPrint "Installing runtime (Python, FFmpeg)..."
   CreateDirectory "${APP_PATH}"
-  CopyFiles /SILENT "$INSTDIR\FlagshipEditor-0.1.9-Windows\engine" "${APP_PATH}"
-  CopyFiles /SILENT "$INSTDIR\FlagshipEditor-0.1.9-Windows\luts" "${APP_PATH}"
-  CopyFiles /SILENT "$INSTDIR\FlagshipEditor-0.1.9-Windows\styles" "${APP_PATH}"
-  CopyFiles /SILENT "$INSTDIR\FlagshipEditor-0.1.9-Windows\runtime" "${APP_PATH}"
-  CopyFiles /SILENT "$INSTDIR\FlagshipEditor-0.1.9-Windows\scripts\Start-FlagshipEditor-Backend.cmd" "${APP_PATH}\scripts\"
+  CopyFiles /SILENT "$INSTDIR\FlagshipEditor-2.0.0-Windows\engine" "${APP_PATH}"
+  CopyFiles /SILENT "$INSTDIR\FlagshipEditor-2.0.0-Windows\luts" "${APP_PATH}"
+  CopyFiles /SILENT "$INSTDIR\FlagshipEditor-2.0.0-Windows\styles" "${APP_PATH}"
+  CopyFiles /SILENT "$INSTDIR\FlagshipEditor-2.0.0-Windows\runtime" "${APP_PATH}"
+  CopyFiles /SILENT "$INSTDIR\FlagshipEditor-2.0.0-Windows\scripts\Start-FlagshipEditor-Backend.cmd" "${APP_PATH}\scripts\"
 
   ; Copy payload checksums
-  CopyFiles /SILENT "$INSTDIR\FlagshipEditor-0.1.9-Windows\payload-checksums.json" "$INSTDIR"
+  CopyFiles /SILENT "$INSTDIR\FlagshipEditor-2.0.0-Windows\payload-checksums.json" "$INSTDIR"
 
   ; Clean up extracted folder
-  RMDir /r "$INSTDIR\FlagshipEditor-0.1.9-Windows"
+  RMDir /r "$INSTDIR\FlagshipEditor-2.0.0-Windows"
 
   ; Write registry entries
   WriteRegStr HKCU "Software\ake-studio\FlagshipEditor" "Version" "${APP_VERSION}"

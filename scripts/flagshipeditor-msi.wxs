@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  FlagshipEditor v2.0.0 — WiX MSI Installer
+  Built with WiX Toolset 3.14 via Docker (felfert/wix)
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+
+  <?define AppVersion = "2.0.0" ?>
+  <?define AppName = "FlagshipEditor" ?>
+  <?define AppPublisher = "ake-studio" ?>
+  <?define AppId = "com.akestudio.flagshipeditor" ?>
+  <?define AppUrl = "https://github.com/Network-Ake/flagshipeditor" ?>
+
+  <Product Id="*"
+           Name="$(var.AppName) $(var.AppVersion)"
+           Language="1033"
+           Version="$(var.AppVersion).0"
+           Manufacturer="$(var.AppPublisher)"
+           UpgradeCode="{A1B2C3D4-E5F6-4A5B-8C9D-0E1F2A3B4C5D}">
+
+    <Package Id="*"
+             Description="$(var.AppName) — AI Music Video Editor for After Effects"
+             Manufacturer="$(var.AppPublisher)"
+             InstallerVersion="200"
+             Compressed="yes"
+             InstallScope="perUser"
+             Platform="x86" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of $(var.AppName) is already installed." />
+    <Media Id="1" Cabinet="payload.cab" EmbedCab="yes" CompressionLevel="high" />
+
+    <!-- Directory structure -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <!-- LocalAppData install (per-user, no admin needed) -->
+      <Directory Id="LocalAppDataFolder">
+        <Directory Id="INSTALLDIR" Name="$(var.AppPublisher)">
+          <Directory Id="APPDIR" Name="$(var.AppName)">
+            <Directory Id="VERSIONDIR" Name="$(var.AppVersion)">
+              <Directory Id="ENGINEDIR" Name="engine" />
+              <Directory Id="LUTSDIR" Name="luts" />
+              <Directory Id="STYLESDIR" Name="styles" />
+              <Directory Id="RUNTIMEDIR" Name="runtime" />
+              <Directory Id="SCRIPTSDIR" Name="scripts" />
+            </Directory>
+          </Directory>
+        </Directory>
+      </Directory>
+
+      <!-- CEP Extension folder -->
+      <Directory Id="AppDataFolder">
+        <Directory Id="CEPROOT" Name="Adobe">
+          <Directory Id="CEPEXT" Name="CEP">
+            <Directory Id="CEPAPPDIR" Name="$(var.AppId)" />
+          </Directory>
+        </Directory>
+      </Directory>
+
+      <!-- Start Menu shortcuts -->
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="STARTMENU" Name="$(var.AppPublisher)">
+          <Directory Id="STARTMENUAPP" Name="$(var.AppName)" />
+        </Directory>
+      </Directory>
+    </Directory>
+
+    <!-- Features -->
+    <Feature Id="Complete" Title="$(var.AppName)" Level="1"
+             Description="AI Music Video Editor plugin for Adobe After Effects.">
+
+      <!-- CEP Extension files (the panel itself) -->
+      <ComponentRef Id="CepComponent" />
+
+      <!-- Runtime files (Python, FFmpeg) -->
+      <ComponentRef Id="EngineComponent" />
+      <ComponentRef Id="LutsComponent" />
+      <ComponentRef Id="StylesComponent" />
+      <ComponentRef Id="RuntimeComponent" />
+      <ComponentRef Id="ScriptsComponent" />
+
+      <!-- Version marker -->
+      <ComponentRef Id="VersionComponent" />
+
+      <!-- Start Menu shortcuts -->
+      <ComponentRef Id="ShortcutComponent" />
+      <ComponentRef Id="UninstallShortcutComponent" />
+
+      <!-- Registry entries -->
+      <ComponentRef Id="RegistryComponent" />
+    </Feature>
+
+    <!-- UI -->
+    <UI>
+      <UIRef Id="WixUI_InstallDir" />
+      <UIRef Id="WixUI_FeatureTree" />
+      <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
+      <Property Id="WIXUI_EXITDIALOGOPTIONALTEXT" Value="FlagshipEditor $(var.AppVersion) installed. Open After Effects → Window → Extensions → FlagshipEditor." />
+    </UI>
+
+    <WixVariable Id="WixUILicenseRtf" Value="LICENSE.rtf" />
+    <WixVariable Id="WixUIDialogBmp" Value="installer-banner.bmp" />
+    <WixVariable Id="WixUIBannerBmp" Value="installer-banner.bmp" />
+
+    <!-- Properties -->
+    <Property Id="CEP_PATH" Value="[AppDataFolder]Adobe\CEP\extensions\$(var.AppId)" />
+    <Property Id="APP_PATH" Value="[INSTALLDIR]$(var.AppVersion)" />
+
+    <!-- Custom actions: extract payload ZIP -->
+    <CustomAction Id="ExtractPayload"
+                  Directory="INSTALLDIR"
+                  ExeCommand='cmd.exe /c "tar -xf payload.zip -C . &amp; del payload.zip"'
+                  Return="check" />
+
+    <!-- Install sequence -->
+    <InstallExecuteSequence>
+      <Custom Action="ExtractPayload" After="InstallFiles">NOT Installed</Custom>
+    </InstallExecuteSequence>
+
+  </Product>
+
+  <!-- CEP Extension Component -->
+  <Fragment>
+    <DirectoryRef Id="CEPAPPDIR">
+      <Component Id="CepComponent" Guid="{B1C2D3E4-F5A6-4B5C-9D0E-1F2A3B4C5D6E}" Win64="no">
+        <File Id="cep_manifest" Name="manifest.xml" Source="$(var.BuildDir)\dist\cep\CSXS\manifest.xml" />
+        <File Id="cep_index" Name="index.html" Source="$(var.BuildDir)\dist\cep\main\index.html" />
+        <File Id="cep_styles" Name="styles.css" Source="$(var.BuildDir)\dist\cep\main\styles.css" />
+        <File Id="cep_bundle" Name="main.js" Source="$(var.BuildDir)\dist\cep\assets\main.js" />
+        <File Id="cep_debug" Name=".debug" Source="$(var.BuildDir)\dist\cep\.debug" />
+        <RemoveFolder Id="RemoveCepDir" Directory="CEPAPPDIR" On="uninstall" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- Engine Component -->
+  <Fragment>
+    <DirectoryRef Id="ENGINEDIR">
+      <Component Id="EngineComponent" Guid="{C2D3E4F5-A6B7-4C6D-0E1F-2A3B4C5D6E7F}" Win64="no">
+        <File Id="engine_server" Name="server.py" Source="$(var.BuildDir)\engine\server.py" />
+        <File Id="engine_beat" Name="beat_analysis.py" Source="$(var.BuildDir)\engine\beat_analysis.py" />
+        <File Id="engine_clip" Name="clip_analysis.py" Source="$(var.BuildDir)\engine\clip_analysis.py" />
+        <File Id="engine_jobs" Name="analysis_jobs.py" Source="$(var.BuildDir)\engine\analysis_jobs.py" />
+        <File Id="engine_shots" Name="shot_selector.py" Source="$(var.BuildDir)\engine\shot_selector.py" />
+        <File Id="engine_selftest" Name="self_test.py" Source="$(var.BuildDir)\engine\self_test.py" />
+        <File Id="engine_reqs" Name="requirements.txt" Source="$(var.BuildDir)\engine\requirements.txt" />
+        <File Id="engine_version" Name="VERSION" Source="$(var.BuildDir)\engine\VERSION" />
+        <RemoveFolder Id="RemoveEngineDir" Directory="ENGINEDIR" On="uninstall" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- LUTs Component -->
+  <Fragment>
+    <DirectoryRef Id="LUTSDIR">
+      <Component Id="LutsComponent" Guid="{D3E4F5A6-B7C8-4D6E-1F2A-3B4C5D6E7F80}" Win64="no">
+        <File Id="lut1" Name="cinematic_warm.cube" Source="$(var.BuildDir)\luts\cinematic_warm.cube" />
+        <File Id="lut2" Name="cinematic_cool.cube" Source="$(var.BuildDir)\luts\cinematic_cool.cube" />
+        <File Id="lut3" Name="drill_dark.cube" Source="$(var.BuildDir)\luts\drill_dark.cube" />
+        <File Id="lut4" Name="drill_neon.cube" Source="$(var.BuildDir)\luts\drill_neon.cube" />
+        <File Id="lut5" Name="vintage_film.cube" Source="$(var.BuildDir)\luts\vintage_film.cube" />
+        <File Id="lut6" Name="clean_natural.cube" Source="$(var.BuildDir)\luts\clean_natural.cube" />
+        <File Id="lut7" Name="noir_contrast.cube" Source="$(var.BuildDir)\luts\noir_contrast.cube" />
+        <RemoveFolder Id="RemoveLutsDir" Directory="LUTSDIR" On="uninstall" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- Styles Component -->
+  <Fragment>
+    <DirectoryRef Id="STYLESDIR">
+      <Component Id="StylesComponent" Guid="{E4F5A6B7-C8D9-4E7F-2A3B-4C5D6E7F8090}" Win64="no">
+        <File Id="style_cmd" Name="cmd_command_drill.json" Source="$(var.BuildDir)\styles\cmd_command_drill.json" />
+        <File Id="style_cinematic" Name="cinematic_drama.json" Source="$(var.BuildDir)\styles\cinematic_drama.json" />
+        <File Id="style_vintage" Name="vintage_grain.json" Source="$(var.BuildDir)\styles\vintage_grain.json" />
+        <File Id="style_neon" Name="neon_drill.json" Source="$(var.BuildDir)\styles\neon_drill.json" />
+        <File Id="style_documentary" Name="documentary_clean.json" Source="$(var.BuildDir)\styles\documentary_clean.json" />
+        <File Id="style_hiphop" Name="hiphop_classic.json" Source="$(var.BuildDir)\styles\hiphop_classic.json" />
+        <RemoveFolder Id="RemoveStylesDir" Directory="STYLESDIR" On="uninstall" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- Runtime Component (Python + FFmpeg) -->
+  <Fragment>
+    <DirectoryRef Id="RUNTIMEDIR">
+      <Component Id="RuntimeComponent" Guid="{F5A6B7C8-D9E0-4F80-3B4C-5D6E7F8090A0}" Win64="no">
+        <File Id="runtime_python" Name="python.exe" Source="$(var.BuildDir)\runtime\python.exe" KeyPath="yes" />
+        <RemoveFolder Id="RemoveRuntimeDir" Directory="RUNTIMEDIR" On="uninstall" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- Scripts Component -->
+  <Fragment>
+    <DirectoryRef Id="SCRIPTSDIR">
+      <Component Id="ScriptsComponent" Guid="{A6B7C8D9-E0F1-4090-4C5D-6E7F8090A1B0}" Win64="no">
+        <File Id="script_start" Name="Start-FlagshipEditor-Backend.cmd" Source="$(var.BuildDir)\scripts\Start-FlagshipEditor-Backend.cmd" />
+        <RemoveFolder Id="RemoveScriptsDir" Directory="SCRIPTSDIR" On="uninstall" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- Version marker -->
+  <Fragment>
+    <DirectoryRef Id="VERSIONDIR">
+      <Component Id="VersionComponent" Guid="{A7B8C9D0-F1A2-40A1-5D6E-7F8090A1B2C0}" Win64="no">
+        <File Id="version_file" Name="installed-version.txt" Source="$(var.BuildDir)\VERSION" KeyPath="yes" />
+        <RemoveFolder Id="RemoveVersionDir" Directory="VERSIONDIR" On="uninstall" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- Start Menu shortcut -->
+  <Fragment>
+    <DirectoryRef Id="STARTMENUAPP">
+      <Component Id="ShortcutComponent" Guid="{B8C9D0E1-A2B3-40B2-6E7F-8090A1B2C3D0}" Win64="no">
+        <Shortcut Id="StartMenuShortcut"
+                  Name="Start FlagshipEditor Backend"
+                  Target="[SCRIPTSDIR]Start-FlagshipEditor-Backend.cmd"
+                  Directory="STARTMENUAPP"
+                  Show="minimized"
+                  WorkingDirectory="SCRIPTSDIR" />
+        <RemoveFolder Id="RemoveStartMenuApp" Directory="STARTMENUAPP" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\ake-studio\FlagshipEditor" Name="Shortcut" Type="string" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- Uninstall shortcut -->
+  <Fragment>
+    <DirectoryRef Id="STARTMENUAPP">
+      <Component Id="UninstallShortcutComponent" Guid="{C9D0E1F2-B3C4-40C3-7F80-90A1B2C3D4E0}" Win64="no">
+        <Shortcut Id="UninstallShortcut"
+                  Name="Uninstall FlagshipEditor"
+                  Target="[SystemFolder]msiexec.exe"
+                  Arguments="/x [ProductCode]"
+                  Directory="STARTMENUAPP" />
+        <RegistryValue Root="HKCU" Key="Software\ake-studio\FlagshipEditor" Name="UninstallShortcut" Type="string" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <!-- Registry entries -->
+  <Fragment>
+    <Component Id="RegistryComponent" Guid="{D0E1F2A3-C4D5-40D4-8090-A1B2C3D4E5F0}" Win64="no" Directory="INSTALLDIR">
+      <RegistryKey Root="HKCU" Key="Software\ake-studio\FlagshipEditor">
+        <RegistryValue Name="Version" Type="string" Value="$(var.AppVersion)" />
+        <RegistryValue Name="InstallPath" Type="string" Value="[INSTALLDIR]" />
+        <RegistryValue Name="CEPPath" Type="string" Value="[CEPAPPDIR]" />
+        <RegistryValue Name="AppPath" Type="string" Value="[VERSIONDIR]" />
+      </RegistryKey>
+      <RegistryKey Root="HKCU" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\FlagshipEditor">
+        <RegistryValue Name="DisplayName" Type="string" Value="$(var.AppName) $(var.AppVersion)" />
+        <RegistryValue Name="DisplayVersion" Type="string" Value="$(var.AppVersion)" />
+        <RegistryValue Name="Publisher" Type="string" Value="$(var.AppPublisher)" />
+        <RegistryValue Name="URLInfoAbout" Type="string" Value="$(var.AppUrl)" />
+        <RegistryValue Name="InstallLocation" Type="string" Value="[INSTALLDIR]" />
+        <RegistryValue Name="NoModify" Type="integer" Value="1" />
+        <RegistryValue Name="NoRepair" Type="integer" Value="1" />
+      </RegistryKey>
+    </Component>
+  </Fragment>
+
+</Wix>

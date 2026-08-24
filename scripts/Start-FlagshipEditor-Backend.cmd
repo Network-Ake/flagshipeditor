@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 cd /d "%~dp0"
-set "FLAGSHIP_VERSION=0.1.9"
+set "FLAGSHIP_VERSION=2.0.0"
 set "BACKEND_ID=com.akestudio.flagshipeditor.backend"
 set "PYTHON=%CD%\runtime\python\python.exe"
 set "PYTHONW=%CD%\runtime\python\pythonw.exe"

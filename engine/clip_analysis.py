@@ -18,17 +18,17 @@ from typing import Any, Dict, Optional, Tuple
 import cv2
 import numpy as np
 
+from media_tools import FFMPEG, FFPROBE
+
 
 ANALYSIS_SCHEMA_VERSION = "3"
 ANALYSIS_MAX_DIMENSION = max(320, min(960, int(os.environ.get("FLAGSHIPEDITOR_ANALYSIS_MAX_DIM", "640"))))
 ANALYSIS_SAMPLES = max(3, min(10, int(os.environ.get("FLAGSHIPEDITOR_ANALYSIS_SAMPLES", "6"))))
 PROBE_TIMEOUT_SECONDS = max(5, int(os.environ.get("FLAGSHIPEDITOR_PROBE_TIMEOUT", "25")))
 FRAME_TIMEOUT_SECONDS = max(5, int(os.environ.get("FLAGSHIPEDITOR_FRAME_TIMEOUT", "30")))
-FFPROBE_PATH = os.environ.get("FLAGSHIPEDITOR_FFPROBE", "ffprobe")
-FFMPEG_PATH = os.environ.get(
-    "FLAGSHIPEDITOR_FFMPEG",
-    str(Path(FFPROBE_PATH).with_name("ffmpeg.exe" if sys.platform == "win32" else "ffmpeg")) if Path(FFPROBE_PATH).is_absolute() else ("ffmpeg.exe" if sys.platform == "win32" else "ffmpeg"),
-)
+CLIP_TIMEOUT_SECONDS = max(30, int(os.environ.get("FLAGSHIPEDITOR_CLIP_TIMEOUT", "120")))
+FFPROBE_PATH = FFPROBE.path
+FFMPEG_PATH = FFMPEG.path
 
 BASE_CACHE_DIR = Path(
     os.environ.get(
@@ -68,6 +68,15 @@ def _cancelled(cancel_event: Optional[threading.Event]) -> bool:
 def _check_cancel(cancel_event: Optional[threading.Event]) -> None:
     if _cancelled(cancel_event):
         raise ClipAnalysisError("cancelled", "Analysis cancelled")
+
+
+def _check_deadline(deadline: Optional[float]) -> None:
+    """Abort a clip that has outrun its whole-file budget."""
+    if deadline is not None and time.monotonic() >= deadline:
+        raise ClipAnalysisError(
+            "clip_timeout",
+            f"Analysis exceeded the {CLIP_TIMEOUT_SECONDS}s budget for a single clip",
+        )
 
 
 def safe_float(value: Any, default: float = 0.0) -> float:
@@ -169,9 +178,30 @@ def save_thumbnail(cache_key: str, frames: list) -> str:
         return ""
 
 
+def classify_probe_failure(diagnostic: str) -> Tuple[str, str]:
+    """Turn raw FFprobe stderr into a code and a sentence a user can act on."""
+    text = diagnostic.lower()
+    if "invalid data found" in text or "moov atom not found" in text or "truncat" in text:
+        return "corrupt_media", "The file is corrupt or incompletely written"
+    if "decoder" in text and "not found" in text:
+        return "unsupported_codec", "This build of FFmpeg has no decoder for that codec"
+    if "permission denied" in text:
+        return "unreadable", "Windows denied read access to the file"
+    if "no such file" in text:
+        return "missing", "The file no longer exists at that path"
+    if "protocol not found" in text:
+        return "unsupported_path", "The media path uses a protocol FFmpeg cannot read"
+    return "probe_failed", diagnostic
+
+
 def get_video_metadata(video_path: str, cancel_event: Optional[threading.Event] = None) -> Dict[str, Any]:
     """Extract bounded metadata through the bundled FFprobe."""
     _check_cancel(cancel_event)
+    if not FFPROBE.available:
+        raise ClipAnalysisError(
+            "probe_unavailable",
+            f"FFprobe is unavailable ({FFPROBE.path}): {FFPROBE.detail}",
+        )
     command = [
         FFPROBE_PATH,
         "-v", "error",
@@ -196,7 +226,8 @@ def get_video_metadata(video_path: str, cancel_event: Optional[threading.Event] 
     _check_cancel(cancel_event)
     if result.returncode != 0:
         diagnostic = (result.stderr or "unknown FFprobe error").strip()[-500:]
-        raise ClipAnalysisError("probe_failed", diagnostic)
+        code, message = classify_probe_failure(diagnostic)
+        raise ClipAnalysisError(code, message)
     try:
         metadata = json.loads(result.stdout)
     except (TypeError, json.JSONDecodeError) as error:
@@ -282,8 +313,14 @@ def extract_frames_ffmpeg(
     duration: float,
     num_frames: int = ANALYSIS_SAMPLES,
     cancel_event: Optional[threading.Event] = None,
+    deadline: Optional[float] = None,
 ) -> list:
     """Seek through ProRes with bundled FFmpeg without decoding the full clip."""
+    if not FFMPEG.available:
+        raise ClipAnalysisError(
+            "decode_unavailable",
+            f"FFmpeg is unavailable ({FFMPEG.path}): {FFMPEG.detail}",
+        )
     if duration <= 0:
         timestamps = [0.0]
     else:
@@ -295,6 +332,7 @@ def extract_frames_ffmpeg(
     )
     for timestamp in timestamps:
         _check_cancel(cancel_event)
+        _check_deadline(deadline)
         command = [
             FFMPEG_PATH,
             "-v", "error",
@@ -308,8 +346,11 @@ def extract_frames_ffmpeg(
             "-q:v", "4",
             "pipe:1",
         ]
+        budget = FRAME_TIMEOUT_SECONDS
+        if deadline is not None:
+            budget = int(max(1, min(budget, deadline - time.monotonic())))
         try:
-            encoded = _run_cancellable(command, cancel_event, FRAME_TIMEOUT_SECONDS)
+            encoded = _run_cancellable(command, cancel_event, budget)
         except ClipAnalysisError as error:
             if frames and error.code == "decode_failed":
                 continue
@@ -325,18 +366,19 @@ def extract_frames(
     num_frames: int = ANALYSIS_SAMPLES,
     metadata: Optional[Dict[str, Any]] = None,
     cancel_event: Optional[threading.Event] = None,
+    deadline: Optional[float] = None,
 ) -> Tuple[list, str]:
     """Use bundled FFmpeg for ProRes and as a fallback for other codecs."""
     meta = metadata or get_video_metadata(video_path, cancel_event)
     codec = str(meta.get("codec", "")).lower()
+    duration = safe_float(meta.get("duration"))
     if codec == "prores":
-        frames = extract_frames_ffmpeg(video_path, safe_float(meta.get("duration")), num_frames, cancel_event)
-        return frames, "ffmpeg"
+        return extract_frames_ffmpeg(video_path, duration, num_frames, cancel_event, deadline), "ffmpeg"
     frames = extract_frames_opencv(video_path, num_frames, cancel_event)
     if frames:
         return frames, "opencv"
-    frames = extract_frames_ffmpeg(video_path, safe_float(meta.get("duration")), num_frames, cancel_event)
-    return frames, "ffmpeg"
+    _check_deadline(deadline)
+    return extract_frames_ffmpeg(video_path, duration, num_frames, cancel_event, deadline), "ffmpeg"
 
 
 def compute_motion_intensity(frames: list) -> float:
@@ -433,12 +475,20 @@ def compute_visual_scores(frames: list, motion: float) -> Dict[str, Any]:
 
 
 def classify_clip(video_path: str, cancel_event: Optional[threading.Event] = None) -> Dict[str, Any]:
+    """Analyse one media file within a bounded time and memory budget."""
+    deadline = time.monotonic() + CLIP_TIMEOUT_SECONDS
     absolute, _stat, cache_key = _source_identity(video_path)
     _check_cancel(cancel_event)
     metadata = get_video_metadata(absolute, cancel_event)
-    frames, decoder = extract_frames(absolute, ANALYSIS_SAMPLES, metadata, cancel_event)
+    _check_deadline(deadline)
+    frames, decoder = extract_frames(absolute, ANALYSIS_SAMPLES, metadata, cancel_event, deadline)
     if not frames:
-        raise ClipAnalysisError("no_decodable_frames", "No video frame could be decoded")
+        raise ClipAnalysisError(
+            "no_decodable_frames",
+            "No video frame could be decoded — the file is corrupt or uses an unsupported codec",
+        )
+    _check_cancel(cancel_event)
+    _check_deadline(deadline)
     face_info = detect_faces(frames)
     brightness = float(np.mean([cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY).mean() for frame in frames]))
     motion = compute_motion_intensity(frames)

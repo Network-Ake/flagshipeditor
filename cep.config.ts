@@ -1,7 +1,7 @@
 import type { CEP_Config } from "vite-cep-plugin";
 
 const config: CEP_Config = {
-  version: "0.1.9",
+  version: "2.0.0",
   id: "com.akestudio.flagshipeditor",
   displayName: "FlagshipEditor",
   symlink: "local",

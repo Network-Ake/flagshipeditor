@@ -83,8 +83,8 @@ if (!guiBundle.includes("appendCutBatch")) {
 }
 for (const windowsFilter of [
   "Video files:*.mov;*.mp4;*.m4v;*.avi;*.mxf,All files:*.*",
-  "Audio files:*.mp3;*.wav;*.aac;*.m4a,All files:*.*",
-  "All imported clips failed analysis",
+  "Audio files:*.mp3;*.wav;*.aac;*.m4a;*.flac,All files:*.*",
+  "clip(s) failed analysis",
   "/analysis-jobs",
   "/media/scan",
   "Cancel task",

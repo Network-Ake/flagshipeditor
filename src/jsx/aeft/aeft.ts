@@ -1,45 +1,44 @@
-// After Effects specific ExtendScript functions
-// Type-safe, compiled to ES3 via Bolt CEP
+// After Effects bridge — builds the generated composition from cut decisions.
+// Compiled to ES3 via Bolt CEP, so this file stays on `var` and plain functions.
 
-import { applyZoomPunch, applyCameraShake, applyWhipPan, applyGlitch, applySpeedRamp, applyFreezeFrame, applyFaceMask, applySmokeFog, applySlowMo, applyBeatFlash, applyLightLeaks, applyVHSOverlay, applyFilmGrain, applyLetterbox, applyDepthBlur, applySmoothTransitions, applyMaskTransition, applyPictureFlash, applySelectiveColor, applySlowPushIn, applyRGBSplit, applyStrobe, applyLightWrap } from "./vfx_engine";
+import {
+  LayerPlan,
+  applyBeatFlash,
+  applyCameraShake,
+  applyDepthBlur,
+  applyFaceMask,
+  applyFilmGrain,
+  applyFreezeFrame,
+  applyGlitch,
+  applyLetterbox,
+  applyLightLeaks,
+  applyLightWrap,
+  applyMaskTransition,
+  applyPictureFlash,
+  applyRGBSplit,
+  applySelectiveColor,
+  applySlowMo,
+  applySlowPushIn,
+  applySmokeFog,
+  applySmoothTransitions,
+  applySpeedRamp,
+  applyStrobe,
+  applyVHSOverlay,
+  applyWhipPan,
+  applyZoomPunch,
+  commitLayerPlan,
+  createLayerPlan,
+} from "./vfx_engine";
+import { VFXContext, makeRandom, toNumber } from "./vfx_utils";
 import { applyColorGrading } from "./color_grading";
-import { createElement3DSolid } from "./element_3d";
-
-interface BeatData {
-  tempo: number;
-  beats: number[];
-  downbeats: number[];
-  sections: { type: string; start: number; end: number }[];
-  energy: number[];
-  bass_onsets: number[];
-  hihat_onsets: number[];
-  key: string;
-  mode: string;
-  duration: number;
-}
-
-interface ClipData {
-  path: string;
-  name: string;
-  duration: number;
-  scene_type: string;
-  has_face: boolean;
-  brightness: number;
-  motion_intensity: number;
-}
+import { createElement3DSolid, detectElement3D, resetElement3DDetection } from "./element_3d";
 
 interface StyleConfig {
   style_name: string;
   display_name: string;
   cut_strategy: { [section: string]: any };
-  zoom_punch?: any;
-  whip_pan?: any;
-  text_overlays?: any;
   color_grading?: any;
-  camera_shake?: any;
-  glitch_effect?: any;
   element_3d?: any;
-  face_mask?: any;
   [key: string]: any;
 }
 
@@ -47,16 +46,25 @@ interface EditingParameters {
   cutIntensity: number;
   vfxIntensity: number;
   colorGrading: number;
-  zoomPunch: boolean;
-  whipPan: boolean;
-  cameraShake: boolean;
-  glitch: boolean;
-  element3d: boolean;
+  seed: number;
+  effects: { [effectName: string]: boolean };
 }
 
 interface Element3DSettings {
   parallaxDepth: number;
   autoCamera: boolean;
+}
+
+interface MediaProfile {
+  width: number;
+  height: number;
+  fps: number;
+}
+
+interface SectionSpan {
+  type: string;
+  start: number;
+  end: number;
 }
 
 interface CutDecision {
@@ -70,7 +78,47 @@ interface TimelineCut extends CutDecision {
   endTime: number;
 }
 
+// Effects animated on the clip layer that starts on the beat.
+var PER_CUT_EFFECTS = [
+  "zoom_punch",
+  "camera_shake",
+  "whip_pan",
+  "glitch_effect",
+  "speed_ramp",
+  "freeze_frame",
+  "face_mask",
+  "slow_mo",
+  "beat_flash",
+  "depth_blur",
+  "smooth_transitions",
+  "mask_transition",
+  "picture_flash",
+  "selective_color",
+  "slow_push_in",
+  "rgb_split",
+  "strobe",
+];
+
+// Effects that belong to the whole edit. Building these per cut is what used to
+// leave hundreds of duplicate solids in the project.
+var COMP_WIDE_EFFECTS = [
+  "smoke_fog",
+  "light_leaks",
+  "vhs_overlay",
+  "film_grain",
+  "letterbox",
+  "light_wrap",
+];
+
+var MAX_CUTS_PER_BATCH = 30;
+
 var activeBuild: any = null;
+
+// `typeof value.length === "number"` also accepts strings, which is exactly the
+// shape a malformed evalScript payload arrives in.
+function isArray(value: any): boolean {
+  return Object.prototype.toString.call(value) === "[object Array]";
+}
 
 export function beginComp(
   duration: number,
@@ -78,14 +126,17 @@ export function beginComp(
   runtimeStyle: StyleConfig,
   params: EditingParameters,
   element3D: Element3DSettings,
-  sections: { type: string; start: number; end: number }[],
-  extensionPath: string
+  sections: SectionSpan[],
+  extensionPath: string,
+  mediaProfile: MediaProfile,
+  tempo: number
 ): string {
   var comp: any = null;
   var clipsFolder: any = null;
   var audioItem: any = null;
   try {
     if (activeBuild) cleanupActiveBuild();
+    resetElement3DDetection();
     var project = app.project;
     if (!project) return JSON.stringify({ __error: "No After Effects project is open" });
     if (!isFinite(duration) || duration <= 0) {
@@ -96,51 +147,59 @@ export function beginComp(
       return JSON.stringify({ __error: "Music file is missing: " + audioPath });
     }
 
-    var compWidth = 1920;
-    var compHeight = 1080;
-    var compFps = 30;
-    // Detect FPS from the first available footage item, not just audio
-    try {
-      var firstItem = project.numItems > 0 ? project.item(1) : null;
-      if (firstItem && firstItem.frameRate) {
-        var detectedFps = firstItem.frameRate;
-        if (detectedFps > 0 && isFinite(detectedFps)) compFps = detectedFps;
-      }
-    } catch (fpsErr) {}
-    // Detect resolution from the first footage item if available
-    try {
-      var firstFootage = project.numItems > 0 ? project.item(1) : null;
-      if (firstFootage && firstFootage.width && firstFootage.height) {
-        compWidth = firstFootage.width;
-        compHeight = firstFootage.height;
-      }
-    } catch (resErr) {}
+    var profile = resolveCompProfile(project, mediaProfile);
+
     app.beginUndoGroup("FlagshipEditor Build");
-    comp = project.items.addComp("FlagshipEditor_Edit", compWidth, compHeight, 1, duration, compFps);
+    comp = project.items.addComp(
+      "FlagshipEditor_Edit",
+      profile.width,
+      profile.height,
+      1,
+      duration,
+      profile.fps
+    );
     clipsFolder = project.items.addFolder("FlagshipEditor_Clips");
     audioItem = importFile(audioPath);
     if (!audioItem) throw new Error("After Effects could not import the music file");
     var audioLayer = comp.layers.add(audioItem);
     audioLayer.name = "MUSIC";
 
-    var configuredStyle = applyParameterOverrides(runtimeStyle, params, element3D);
+    var safeParams = normalizeParameters(params);
+    var configuredStyle = applyParameterOverrides(runtimeStyle, safeParams, element3D);
     if (configuredStyle.color_grading) {
       configuredStyle.color_grading.extension_root = extensionPath;
     }
+
     activeBuild = {
       comp: comp,
       clipsFolder: clipsFolder,
       audioItem: audioItem,
       styleConfig: configuredStyle,
-      element3D: element3D,
       sections: sections || [],
       footagePaths: [],
       footageItems: [],
       added: 0,
-      warnings: []
+      warnings: [],
+      context: {
+        comp: comp,
+        fps: profile.fps,
+        tempo: toNumber(tempo, 0),
+        warnings: [],
+        random: makeRandom(safeParams.seed),
+      } as VFXContext,
     };
-    appendUnsupportedEffectWarnings(activeBuild, configuredStyle);
-    return JSON.stringify({ __result: { started: true, compName: comp.name } });
+    activeBuild.context.warnings = activeBuild.warnings;
+    warnUnimplementedEffects(configuredStyle, activeBuild.warnings);
+
+    return JSON.stringify({
+      __result: {
+        started: true,
+        compName: comp.name,
+        width: profile.width,
+        height: profile.height,
+        fps: profile.fps,
+      },
+    });
   } catch (e) {
     removeProjectItem(comp);
     removeProjectItem(clipsFolder);
@@ -156,11 +215,23 @@ export function appendCutBatch(cuts: TimelineCut[]): string {
     if (!activeBuild || !activeBuild.comp) {
       return JSON.stringify({ __error: "No FlagshipEditor composition build is active" });
     }
+    if (!isArray(cuts)) {
+      return JSON.stringify({ __error: "appendCutBatch expects an array of cuts" });
+    }
+    if (cuts.length > MAX_CUTS_PER_BATCH) {
+      return JSON.stringify({
+        __error:
+          "A cut batch is limited to " + MAX_CUTS_PER_BATCH + " clips; received " + cuts.length,
+      });
+    }
     var added = 0;
     var skipped = 0;
     for (var i = 0; i < cuts.length; i++) {
       var cut = cuts[i];
       if (!cut || !cut.clipPath || cut.endTime <= cut.beatTime) {
+        activeBuild.warnings.push(
+          "Cut skipped: " + (cut && cut.clipName ? cut.clipName : "unnamed") + " has no usable time range"
+        );
         skipped++;
         continue;
       }
@@ -172,11 +243,12 @@ export function appendCutBatch(cuts: TimelineCut[]): string {
       }
       var clipLayer = activeBuild.comp.layers.add(clipItem);
       clipLayer.startTime = cut.beatTime;
+      clipLayer.inPoint = cut.beatTime;
       clipLayer.outPoint = Math.min(cut.endTime, activeBuild.comp.duration);
       clipLayer.name = cut.clipName + " [" + cut.sectionType + "]";
       clipLayer.comment = cutTag(cut.beatTime, cut.sectionType);
       try {
-        applyVFXToLayer(clipLayer, activeBuild.styleConfig, cut.sectionType, cut.beatTime);
+        applyVFXToLayer(clipLayer, activeBuild.styleConfig, cut.sectionType, cut.beatTime, activeBuild.context);
       } catch (vfxError) {
         activeBuild.warnings.push("VFX skipped on " + cut.clipName + ": " + String(vfxError));
       }
@@ -201,26 +273,29 @@ export function finishComp(): string {
       return JSON.stringify({ __error: "After Effects could not import any selected clips" });
     }
     var build = activeBuild;
+
+    applyCompWideVFX(build.styleConfig, build.context);
+
     if (build.styleConfig.color_grading) {
-      build.warnings = build.warnings.concat(
-        applyColorGrading(build.comp, build.sections, build.styleConfig.color_grading)
-      );
+      applyColorGrading(build.comp, build.sections, build.styleConfig.color_grading, build.context);
     }
+
     if (build.styleConfig.element_3d && build.styleConfig.element_3d.enabled) {
       try {
-        createElement3DSolid(build.comp, build.styleConfig.element_3d);
+        createElement3DSolid(build.comp, build.styleConfig.element_3d, build.context);
       } catch (elementError) {
         build.warnings.push("3D setup skipped: " + String(elementError));
       }
     }
-    for (var i = 0; i < build.sections.length; i++) {
-      var section = build.sections[i];
-      build.comp.markerProperty.setValueAtTime(
-        section.start,
-        new MarkerValue(section.type.toUpperCase())
-      );
+
+    writeSectionMarkers(build.comp, build.sections, build.warnings);
+
+    try {
+      build.comp.openInViewer();
+    } catch (viewerError) {
+      build.warnings.push("The comp was built but could not be opened: " + String(viewerError));
     }
-    build.comp.openInViewer();
+
     var result = {
       message: "Comp created: " + build.comp.name,
       clipsAdded: build.added,
@@ -240,13 +315,98 @@ export function abortComp(): string {
   return JSON.stringify({ __result: { aborted: true } });
 }
 
+function writeSectionMarkers(comp: any, sections: SectionSpan[], warnings: string[]): void {
+  if (!sections || !sections.length) return;
+  var written: number[] = [];
+  for (var i = 0; i < sections.length; i++) {
+    var section = sections[i];
+    var start = toNumber(section.start, -1);
+    if (start < 0 || start > comp.duration) continue;
+    var duplicate = false;
+    for (var j = 0; j < written.length; j++) {
+      if (Math.abs(written[j] - start) < 0.001) duplicate = true;
+    }
+    if (duplicate) continue;
+    try {
+      comp.markerProperty.setValueAtTime(start, new MarkerValue(String(section.type).toUpperCase()));
+      written.push(start);
+    } catch (markerError) {
+      warnings.push("Section marker skipped at " + start.toFixed(2) + "s: " + String(markerError));
+    }
+  }
+}
+
+// Detect the edit format from the analysed media first: the Python engine
+// already probed every clip, which is more reliable than guessing from
+// whichever item happens to sit first in the project panel.
+function resolveCompProfile(project: any, mediaProfile: MediaProfile): MediaProfile {
+  var width = 1920;
+  var height = 1080;
+  var fps = 30;
+
+  if (mediaProfile) {
+    var profileWidth = toNumber(mediaProfile.width, 0);
+    var profileHeight = toNumber(mediaProfile.height, 0);
+    var profileFps = toNumber(mediaProfile.fps, 0);
+    if (profileWidth > 0 && profileHeight > 0) {
+      width = Math.round(profileWidth);
+      height = Math.round(profileHeight);
+    }
+    if (profileFps > 0) fps = profileFps;
+    if (profileWidth > 0 && profileHeight > 0 && profileFps > 0) {
+      return { width: width, height: height, fps: fps };
+    }
+  }
+
+  var scanned = scanProjectForFootageProfile(project);
+  if (scanned) {
+    if (scanned.width > 0 && scanned.height > 0 && !(mediaProfile && toNumber(mediaProfile.width, 0) > 0)) {
+      width = scanned.width;
+      height = scanned.height;
+    }
+    if (scanned.fps > 0 && !(mediaProfile && toNumber(mediaProfile.fps, 0) > 0)) {
+      fps = scanned.fps;
+    }
+  }
+  return { width: width, height: height, fps: fps };
+}
+
+function scanProjectForFootageProfile(project: any): MediaProfile | null {
+  var total = 0;
+  try {
+    total = toNumber(project.numItems, 0);
+  } catch (countError) {
+    return null;
+  }
+  if (total < 1) return null;
+  for (var i = 1; i <= total; i++) {
+    try {
+      var item = project.item(i);
+      if (!item || !item.hasVideo) continue;
+      var itemWidth = toNumber(item.width, 0);
+      var itemHeight = toNumber(item.height, 0);
+      var itemFps = toNumber(item.frameRate, 0);
+      if (itemWidth > 0 && itemHeight > 0 && itemFps > 0) {
+        return { width: Math.round(itemWidth), height: Math.round(itemHeight), fps: itemFps };
+      }
+    } catch (itemError) {
+      // A project item that cannot be inspected is simply not a candidate.
+    }
+  }
+  return null;
+}
+
 function getOrImportFootage(path: string): any {
   for (var i = 0; i < activeBuild.footagePaths.length; i++) {
     if (activeBuild.footagePaths[i] === path) return activeBuild.footageItems[i];
   }
   var item = importFile(path);
   if (!item) return null;
-  item.parentFolder = activeBuild.clipsFolder;
+  try {
+    item.parentFolder = activeBuild.clipsFolder;
+  } catch (folderError) {
+    activeBuild.warnings.push("Clip could not be filed into the clips folder: " + path);
+  }
   activeBuild.footagePaths.push(path);
   activeBuild.footageItems.push(item);
   return item;
@@ -298,10 +458,16 @@ export function swapCut(
     if (!layer) return JSON.stringify({ __result: { updated: 0, message: "Cut layer not found" } });
     var footage = findOrImportProjectFootage(clipPath);
     if (!footage) return JSON.stringify({ __result: { updated: 0, message: "Replacement file is missing" } });
-    layer.replaceSource(footage, false);
-    layer.name = clipName + " [" + sectionType + "]";
+    app.beginUndoGroup("FlagshipEditor Swap Cut");
+    try {
+      layer.replaceSource(footage, false);
+      layer.name = clipName + " [" + sectionType + "]";
+    } finally {
+      endUndoGroupSafely();
+    }
     return JSON.stringify({ __result: { updated: 1 } });
   } catch (e) {
+    endUndoGroupSafely();
     return JSON.stringify({ __error: String(e) });
   }
 }
@@ -310,21 +476,48 @@ export function replaceSectionCuts(sectionType: string, decisions: CutDecision[]
   try {
     var comp = findGeneratedComp();
     if (!comp) return JSON.stringify({ __result: { updated: 0, message: "Generated comp not found" } });
-    var updated = 0;
-    for (var i = 0; i < decisions.length; i++) {
-      var decision = decisions[i];
-      var layer = findCutLayer(comp, decision.beatTime, sectionType);
-      if (!layer) continue;
-      var footage = findOrImportProjectFootage(decision.clipPath);
-      if (!footage) continue;
-      layer.replaceSource(footage, false);
-      layer.name = decision.clipName + " [" + sectionType + "]";
-      updated++;
+    if (!isArray(decisions)) {
+      return JSON.stringify({ __error: "replaceSectionCuts expects an array of cut decisions" });
     }
-    return JSON.stringify({ __result: { updated: updated } });
+    var updated = 0;
+    var missing = 0;
+    app.beginUndoGroup("FlagshipEditor Replace Section");
+    try {
+      for (var i = 0; i < decisions.length; i++) {
+        var decision = decisions[i];
+        var layer = findCutLayer(comp, decision.beatTime, sectionType);
+        if (!layer) {
+          missing++;
+          continue;
+        }
+        var footage = findOrImportProjectFootage(decision.clipPath);
+        if (!footage) {
+          missing++;
+          continue;
+        }
+        layer.replaceSource(footage, false);
+        layer.name = decision.clipName + " [" + sectionType + "]";
+        updated++;
+      }
+    } finally {
+      endUndoGroupSafely();
+    }
+    return JSON.stringify({ __result: { updated: updated, missing: missing } });
   } catch (e) {
+    endUndoGroupSafely();
     return JSON.stringify({ __error: String(e) });
   }
+}
+
+function normalizeParameters(params: EditingParameters): EditingParameters {
+  var source: any = params || {};
+  return {
+    cutIntensity: toNumber(source.cutIntensity, 5),
+    vfxIntensity: toNumber(source.vfxIntensity, 5),
+    colorGrading: toNumber(source.colorGrading, 5),
+    seed: toNumber(source.seed, 1),
+    effects: source.effects || {},
+  };
 }
 
 function applyParameterOverrides(
@@ -332,18 +525,32 @@ function applyParameterOverrides(
   params: EditingParameters,
   element3D: Element3DSettings
 ): StyleConfig {
-  if (style.zoom_punch) style.zoom_punch.enabled = params.zoomPunch && params.vfxIntensity > 0;
-  if (style.whip_pan) style.whip_pan.enabled = params.whipPan && params.vfxIntensity > 0;
-  if (style.camera_shake) style.camera_shake.enabled = params.cameraShake && params.vfxIntensity > 0;
-  if (style.glitch_effect) style.glitch_effect.enabled = params.glitch && params.vfxIntensity > 0;
+  var vfxEnabled = params.vfxIntensity > 0;
+  var allEffects = PER_CUT_EFFECTS.concat(COMP_WIDE_EFFECTS);
+  for (var i = 0; i < allEffects.length; i++) {
+    var key = allEffects[i];
+    if (!style[key]) continue;
+    var override = params.effects[key];
+    if (override === true || override === false) {
+      style[key].enabled = override && vfxEnabled;
+    } else {
+      style[key].enabled = style[key].enabled === true && vfxEnabled;
+    }
+  }
+
   if (style.color_grading) {
     style.color_grading.enabled = params.colorGrading > 0;
-    style.color_grading.opacity = params.colorGrading * 10;
+    style.color_grading.opacity = Math.max(0, Math.min(100, params.colorGrading * 10));
   }
+
   style.element_3d = style.element_3d || {};
-  style.element_3d.enabled = params.element3d;
-  style.element_3d.auto_camera = element3D.autoCamera;
-  style.element_3d.parallax_depth = element3D.parallaxDepth;
+  var element3DOverride = params.effects.element_3d;
+  style.element_3d.enabled =
+    element3DOverride === true || (element3DOverride !== false && style.element_3d.enabled === true);
+  if (element3D) {
+    style.element_3d.auto_camera = element3D.autoCamera !== false;
+    style.element_3d.parallax_depth = toNumber(element3D.parallaxDepth, 0);
+  }
   return style;
 }
 
@@ -418,189 +625,163 @@ function arrayContains(values: any[], expected: any): boolean {
   return false;
 }
 
+// A style preset can name an effect this build has no routine for — a newer
+// preset opened by an older install. Nothing would apply it, so say so rather
+// than letting the user believe the preset ran in full.
+function warnUnimplementedEffects(style: StyleConfig, warnings: string[]): void {
+  if (!style) return;
+  var routed = PER_CUT_EFFECTS.concat(COMP_WIDE_EFFECTS);
+  routed.push("color_grading");
+  routed.push("element_3d");
+  for (var key in style) {
+    if (!Object.prototype.hasOwnProperty.call(style, key)) continue;
+    var config = style[key];
+    if (!config || typeof config !== "object" || config.enabled !== true) continue;
+    if (arrayContains(routed, key)) continue;
+    var message = "Style effect is not implemented and was skipped: " + key;
+    if (!arrayContains(warnings, message)) warnings.push(message);
+  }
+}
+
+function isEffectActive(style: StyleConfig, effectName: string, sectionType: string): boolean {
+  var config = style[effectName];
+  if (!config || config.enabled !== true) return false;
+  var sections = config.sections;
+  if (!sections || typeof sections.length !== "number" || sections.length === 0) return true;
+  return arrayContains(sections, sectionType);
+}
+
 function applyVFXToLayer(
   layer: any,
   style: StyleConfig,
   sectionType: string,
-  beatTime: number
+  beatTime: number,
+  context: VFXContext
 ): void {
-  var fps = 30;
-  try {
-    if (layer.containingComp && layer.containingComp.frameRate) {
-      fps = layer.containingComp.frameRate;
-    }
-  } catch (e) {}
+  var plan: LayerPlan = createLayerPlan(layer);
 
-  if (style.zoom_punch && style.zoom_punch.enabled) {
-    var sections = style.zoom_punch.sections || [];
-    if (arrayContains(sections, sectionType) || sections.length === 0) {
-      applyZoomPunch(layer, style.zoom_punch, beatTime, fps);
-    }
+  // Whole-layer moves are queued first so the beat-synced bursts multiply on
+  // top of them rather than overwriting them.
+  if (isEffectActive(style, "slow_push_in", sectionType)) {
+    applySlowPushIn(style.slow_push_in, plan);
   }
-
-  if (style.camera_shake && style.camera_shake.enabled) {
-    var shakeSections = style.camera_shake.sections || [];
-    if (arrayContains(shakeSections, sectionType) || shakeSections.length === 0) {
-      applyCameraShake(layer, style.camera_shake, beatTime, fps);
-    }
+  if (isEffectActive(style, "smooth_transitions", sectionType)) {
+    applySmoothTransitions(style.smooth_transitions, context, plan);
   }
-
-  if (style.whip_pan && style.whip_pan.enabled) {
-    var whipSections = style.whip_pan.sections || [];
-    if (arrayContains(whipSections, sectionType) || whipSections.length === 0) {
-      applyWhipPan(layer, style.whip_pan, beatTime, fps);
-    }
+  if (isEffectActive(style, "zoom_punch", sectionType)) {
+    applyZoomPunch(style.zoom_punch, beatTime, context, plan);
   }
-
-  if (style.glitch_effect && style.glitch_effect.enabled) {
-    var glitchSections = style.glitch_effect.sections || [];
-    if (arrayContains(glitchSections, sectionType) || glitchSections.length === 0) {
-      applyGlitch(layer, style.glitch_effect, beatTime, fps);
-    }
+  if (isEffectActive(style, "beat_flash", sectionType)) {
+    applyBeatFlash(style.beat_flash, beatTime, context, plan);
   }
-
-  if (style.speed_ramp && style.speed_ramp.enabled) {
-    var speedSections = style.speed_ramp.sections || [];
-    if (arrayContains(speedSections, sectionType) || speedSections.length === 0) {
-      applySpeedRamp(layer, style.speed_ramp, beatTime, fps);
-    }
+  if (isEffectActive(style, "strobe", sectionType)) {
+    applyStrobe(style.strobe, beatTime, context, plan);
   }
+  commitLayerPlan(layer, plan, context);
 
-  if (style.freeze_frame && style.freeze_frame.enabled) {
-    var freezeSections = style.freeze_frame.sections || [];
-    if (arrayContains(freezeSections, sectionType) || freezeSections.length === 0) {
-      var freezeDur = style.freeze_frame.duration_frames || 6;
-      applyFreezeFrame(layer, beatTime, freezeDur, fps);
-    }
+  if (isEffectActive(style, "camera_shake", sectionType)) {
+    applyCameraShake(layer, style.camera_shake, beatTime, context);
   }
-
-  if (style.face_mask && style.face_mask.enabled) {
-    var faceMaskSections = style.face_mask.sections || [];
-    if (arrayContains(faceMaskSections, sectionType) || faceMaskSections.length === 0) {
-      applyFaceMask(layer, style.face_mask, beatTime, fps);
-    }
+  if (isEffectActive(style, "whip_pan", sectionType)) {
+    applyWhipPan(layer, style.whip_pan, beatTime, context);
   }
-
-  if (style.smoke_fog && style.smoke_fog.enabled) {
-    var smokeFogSections = style.smoke_fog.sections || [];
-    if (arrayContains(smokeFogSections, sectionType) || smokeFogSections.length === 0) {
-      applySmokeFog(layer, style.smoke_fog, beatTime, fps);
-    }
+  if (isEffectActive(style, "glitch_effect", sectionType)) {
+    applyGlitch(layer, style.glitch_effect, beatTime, context);
+  } else if (isEffectActive(style, "rgb_split", sectionType)) {
+    // The glitch already lays down a chromatic tear; doing both doubles the
+    // layer count for no visible gain.
+    applyRGBSplit(layer, style.rgb_split, beatTime, context);
   }
-
-  if (style.slow_mo && style.slow_mo.enabled) {
-    var slowMoSections = style.slow_mo.sections || [];
-    if (arrayContains(slowMoSections, sectionType) || slowMoSections.length === 0) {
-      applySlowMo(layer, style.slow_mo, beatTime, fps);
-    }
+  if (isEffectActive(style, "speed_ramp", sectionType)) {
+    applySpeedRamp(layer, style.speed_ramp, beatTime, context);
+  } else if (isEffectActive(style, "slow_mo", sectionType)) {
+    applySlowMo(layer, style.slow_mo, beatTime, context);
+  } else if (isEffectActive(style, "freeze_frame", sectionType)) {
+    applyFreezeFrame(layer, style.freeze_frame, beatTime, context);
   }
-
-  if (style.beat_flash && style.beat_flash.enabled) {
-    var beatFlashSections = style.beat_flash.sections || [];
-    if (arrayContains(beatFlashSections, sectionType) || beatFlashSections.length === 0) {
-      applyBeatFlash(layer, style.beat_flash, beatTime, fps);
-    }
+  if (isEffectActive(style, "face_mask", sectionType)) {
+    applyFaceMask(layer, style.face_mask, beatTime, context);
   }
-
-  if (style.light_leaks && style.light_leaks.enabled) {
-    var lightLeaksSections = style.light_leaks.sections || [];
-    if (arrayContains(lightLeaksSections, sectionType) || lightLeaksSections.length === 0) {
-      applyLightLeaks(layer, style.light_leaks, beatTime, fps);
-    }
+  if (isEffectActive(style, "depth_blur", sectionType)) {
+    applyDepthBlur(layer, style.depth_blur, beatTime, context);
   }
-
-  if (style.vhs_overlay && style.vhs_overlay.enabled) {
-    var vhsOverlaySections = style.vhs_overlay.sections || [];
-    if (arrayContains(vhsOverlaySections, sectionType) || vhsOverlaySections.length === 0) {
-      applyVHSOverlay(layer, style.vhs_overlay, beatTime, fps);
-    }
+  if (isEffectActive(style, "selective_color", sectionType)) {
+    applySelectiveColor(layer, style.selective_color, beatTime, context);
   }
-
-  if (style.film_grain && style.film_grain.enabled) {
-    var filmGrainSections = style.film_grain.sections || [];
-    if (arrayContains(filmGrainSections, sectionType) || filmGrainSections.length === 0) {
-      applyFilmGrain(layer, style.film_grain, beatTime, fps);
-    }
+  if (isEffectActive(style, "mask_transition", sectionType)) {
+    applyMaskTransition(layer, style.mask_transition, beatTime, context);
   }
-
-  if (style.letterbox && style.letterbox.enabled) {
-    var letterboxSections = style.letterbox.sections || [];
-    if (arrayContains(letterboxSections, sectionType) || letterboxSections.length === 0) {
-      applyLetterbox(layer, style.letterbox, beatTime, fps);
-    }
-  }
-
-  if (style.depth_blur && style.depth_blur.enabled) {
-    var depthBlurSections = style.depth_blur.sections || [];
-    if (arrayContains(depthBlurSections, sectionType) || depthBlurSections.length === 0) {
-      applyDepthBlur(layer, style.depth_blur, beatTime, fps);
-    }
-  }
-
-  if (style.smooth_transitions && style.smooth_transitions.enabled) {
-    var smoothTransitionsSections = style.smooth_transitions.sections || [];
-    if (arrayContains(smoothTransitionsSections, sectionType) || smoothTransitionsSections.length === 0) {
-      applySmoothTransitions(layer, style.smooth_transitions, beatTime, fps);
-    }
-  }
-
-  if (style.mask_transition && style.mask_transition.enabled) {
-    var maskTransitionSections = style.mask_transition.sections || [];
-    if (arrayContains(maskTransitionSections, sectionType) || maskTransitionSections.length === 0) {
-      applyMaskTransition(layer, style.mask_transition, beatTime, fps);
-    }
-  }
-
-  if (style.picture_flash && style.picture_flash.enabled) {
-    var pictureFlashSections = style.picture_flash.sections || [];
-    if (arrayContains(pictureFlashSections, sectionType) || pictureFlashSections.length === 0) {
-      applyPictureFlash(layer, style.picture_flash, beatTime, fps);
-    }
-  }
-
-  if (style.selective_color && style.selective_color.enabled) {
-    var selectiveColorSections = style.selective_color.sections || [];
-    if (arrayContains(selectiveColorSections, sectionType) || selectiveColorSections.length === 0) {
-      applySelectiveColor(layer, style.selective_color, beatTime, fps);
-    }
-  }
-
-  if (style.slow_push_in && style.slow_push_in.enabled) {
-    var slowPushInSections = style.slow_push_in.sections || [];
-    if (arrayContains(slowPushInSections, sectionType) || slowPushInSections.length === 0) {
-      applySlowPushIn(layer, style.slow_push_in, beatTime, fps);
-    }
-  }
-
-  if (style.rgb_split && style.rgb_split.enabled) {
-    var rgbSplitSections = style.rgb_split.sections || [];
-    if (arrayContains(rgbSplitSections, sectionType) || rgbSplitSections.length === 0) {
-      applyRGBSplit(layer, style.rgb_split, beatTime, fps);
-    }
-  }
-
-  if (style.strobe && style.strobe.enabled) {
-    var strobeSections = style.strobe.sections || [];
-    if (arrayContains(strobeSections, sectionType) || strobeSections.length === 0) {
-      applyStrobe(layer, style.strobe, beatTime, fps);
-    }
-  }
-
-  if (style.light_wrap && style.light_wrap.enabled) {
-    var lightWrapSections = style.light_wrap.sections || [];
-    if (arrayContains(lightWrapSections, sectionType) || lightWrapSections.length === 0) {
-      applyLightWrap(layer, style.light_wrap, beatTime, fps);
-    }
+  if (isEffectActive(style, "picture_flash", sectionType)) {
+    applyPictureFlash(layer, style.picture_flash, beatTime, context);
   }
 }
 
-function appendUnsupportedEffectWarnings(build: any, style: StyleConfig): void {
-  var unsupported: string[] = [];
-  for (var i = 0; i < unsupported.length; i++) {
-    var effectName = unsupported[i];
-    var config = style[effectName];
-    if (config && config.enabled === true) {
-      build.warnings.push("Style effect is not implemented and was skipped: " + effectName);
+function applyCompWideVFX(style: StyleConfig, context: VFXContext): void {
+  if (style.smoke_fog && style.smoke_fog.enabled === true) {
+    applySmokeFog(style.smoke_fog, context);
+  }
+  if (style.light_leaks && style.light_leaks.enabled === true) {
+    applyLightLeaks(style.light_leaks, context);
+  }
+  if (style.vhs_overlay && style.vhs_overlay.enabled === true) {
+    applyVHSOverlay(style.vhs_overlay, context);
+  }
+  if (style.light_wrap && style.light_wrap.enabled === true) {
+    applyLightWrap(style.light_wrap, context);
+  }
+  if (style.film_grain && style.film_grain.enabled === true) {
+    applyFilmGrain(style.film_grain, context);
+  }
+  // Letterbox is added last so its bars sit above every other overlay.
+  if (style.letterbox && style.letterbox.enabled === true) {
+    applyLetterbox(style.letterbox, context);
+  }
+}
+
+// Reports which style effects this build will actually act on, so the panel can
+// show the user what a preset is doing instead of guessing.
+export function describeStyleCoverage(style: StyleConfig): string {
+  try {
+    var active: string[] = [];
+    var inactive: string[] = [];
+    var all = PER_CUT_EFFECTS.concat(COMP_WIDE_EFFECTS);
+    for (var i = 0; i < all.length; i++) {
+      var config = style ? style[all[i]] : null;
+      if (config && config.enabled === true) {
+        active.push(all[i]);
+      } else if (config) {
+        inactive.push(all[i]);
+      }
     }
+    if (style && style.element_3d && style.element_3d.enabled === true) active.push("element_3d");
+    return JSON.stringify({ __result: { active: active, inactive: inactive, total: all.length + 1 } });
+  } catch (e) {
+    return JSON.stringify({ __error: String(e) });
+  }
+}
+
+export function getBuildWarnings(): string {
+  if (!activeBuild) return JSON.stringify({ __result: { warnings: [] } });
+  return JSON.stringify({ __result: { warnings: uniqueWarningStrings(activeBuild.warnings) } });
+}
+
+// Surfaced for the panel's 3D tab so the user sees whether the plugin is there
+// before they generate an edit that silently skips it.
+export function probeElement3D(): string {
+  var project = app.project;
+  if (!project) {
+    return JSON.stringify({ __error: "No After Effects project is open" });
+  }
+  var probeComp: any = null;
+  try {
+    probeComp = project.items.addComp("FlagshipEditor_ElementProbe", 16, 16, 1, 0.1, 24);
+    resetElement3DDetection();
+    var matchName = detectElement3D(probeComp);
+    return JSON.stringify({ __result: { installed: matchName !== null, matchName: matchName } });
+  } catch (e) {
+    return JSON.stringify({ __error: String(e) });
+  } finally {
+    removeProjectItem(probeComp);
+    resetElement3DDetection();
   }
 }

@@ -11,9 +11,97 @@
     rel="stylesheet"
   />
   <link rel="stylesheet" href="./styles.css" />
+  <!-- Inlined so a startup failure is still readable when styles.css is missing. -->
+  <style>
+    .panel-message {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      height: 100%;
+      padding: 24px;
+      text-align: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 13px;
+      color: #a1a1aa;
+      background: #0a0a0f;
+    }
+    .panel-message__text {
+      color: #f4f4f5;
+      font-weight: 600;
+    }
+    .panel-message__detail {
+      max-width: 420px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+    .panel-message__spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(99, 102, 241, 0.25);
+      border-top-color: #6366f1;
+      animation: panel-message-spin 700ms linear infinite;
+    }
+    .panel-message--error .panel-message__text {
+      color: #ef4444;
+    }
+    @keyframes panel-message-spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root">
+    <div class="panel-message" id="boot-status">
+      <span class="panel-message__spinner"></span>
+      <span class="panel-message__text">Starting FlagshipEditor…</span>
+    </div>
+  </div>
+  <script>
+    // CEP shows a blank white panel when the bundle throws, so every startup
+    // failure is caught here and written into the panel itself.
+    (function () {
+      var BOOT_TIMEOUT_MS = 15000;
+      function showFatal(message, detail) {
+        var root = document.getElementById("root");
+        if (!root) return;
+        var text = String(message || "FlagshipEditor could not start.");
+        var extra = detail ? String(detail) : "";
+        root.innerHTML = "";
+        var box = document.createElement("div");
+        box.className = "panel-message panel-message--error";
+        var title = document.createElement("span");
+        title.className = "panel-message__text";
+        title.textContent = text;
+        box.appendChild(title);
+        if (extra) {
+          var body = document.createElement("span");
+          body.className = "panel-message__detail";
+          body.textContent = extra;
+          box.appendChild(body);
+        }
+        root.appendChild(box);
+      }
+      window.__flagshipShowFatal = showFatal;
+      window.addEventListener("error", function (event) {
+        if (window.__flagshipBooted) return;
+        showFatal("FlagshipEditor could not start.", event.message || String(event.error || ""));
+      });
+      window.addEventListener("unhandledrejection", function (event) {
+        if (window.__flagshipBooted) return;
+        showFatal("FlagshipEditor could not start.", String((event.reason && event.reason.message) || event.reason || ""));
+      });
+      window.setTimeout(function () {
+        if (window.__flagshipBooted) return;
+        showFatal(
+          "FlagshipEditor did not finish loading.",
+          "The panel bundle never ran. Reinstall the extension, then reopen Window > Extensions > FlagshipEditor."
+        );
+      }, BOOT_TIMEOUT_MS);
+    })();
+  </script>
   <script type="module" src="./index.tsx"></script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 ;!@Install@!UTF-8!
-Title="FlagshipEditor 0.1.9 Setup"
-BeginPrompt="Do you want to install FlagshipEditor 0.1.9?"
+Title="FlagshipEditor 2.0.0 Setup"
+BeginPrompt="Do you want to install FlagshipEditor 2.0.0?"
 ExtractDialogText="Extracting FlagshipEditor files..."
 ExtractPathText="Choose installation folder"
-ExtractTitle="FlagshipEditor 0.1.9"
+ExtractTitle="FlagshipEditor 2.0.0"
 RunProgram="cmd /c INSTALL-FLAGSHIPEDITOR.cmd"
 ;!@InstallEnd@!

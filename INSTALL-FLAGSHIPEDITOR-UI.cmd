@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 cd /d "%~dp0"
-set "FLAGSHIP_VERSION=0.1.5"
+set "FLAGSHIP_VERSION=2.0.0"
 set "EXTENSION_ID=com.akestudio.flagshipeditor"
 set "CEP_PARENT=%APPDATA%\Adobe\CEP\extensions"
 set "CEP_FINAL=%CEP_PARENT%\%EXTENSION_ID%"
