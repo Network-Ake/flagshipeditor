@@ -16,3 +16,7 @@ flagshipeditor_b64.txt
 *.exe
 *.cmd.bak
 research/
+
+# MSI/stream extraction artifacts (msiextract / msiinfo)
+Binary/
+Icon/

@@ -12,6 +12,7 @@
     "generate:luts": "node scripts/generate-luts.mjs",
     "zip": "npm run build && node scripts/package-windows.mjs",
     "test:ae-bridge": "node scripts/test-ae-bridge.mjs",
+    "test:backend-search": "node scripts/test-backend-search.mjs",
     "test:engine-contracts": "python3 scripts/test-engine-contracts.py",
     "test:analysis-jobs": "python3 scripts/test-analysis-jobs.py",
     "test:ui-recovery": "node scripts/test-ui-job-recovery.mjs",
