@@ -9,6 +9,10 @@ declare global {
 }
 
 // evalTS — type-safe call to ExtendScript functions
+// Includes payload size guard to prevent CEPHtmlEngine crashes on Windows.
+const BRIDGE_ID = "com.akestudio.flagshipeditor.bridge";
+const MAX_PAYLOAD = 24000; // CEPHtmlEngine crashes on payloads > ~24KB
+
 export async function evalTS(funcName: string, ...args: any[]): Promise<any> {
   const cs = window.csInterface;
   if (!cs) {
@@ -18,7 +22,15 @@ export async function evalTS(funcName: string, ...args: any[]): Promise<any> {
   return new Promise((resolve, reject) => {
     const argStr = args.map((a) => JSON.stringify(a)).join(", ");
     const script = `${funcName}(${argStr})`;
+    if (script.length > MAX_PAYLOAD) {
+      reject(new Error(`Adobe bridge payload is too large (${script.length} characters).`));
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      reject(new Error(`Adobe bridge timeout: ${funcName} did not respond in 60s`));
+    }, 60000);
     cs.evalScript(script, (result: string) => {
+      window.clearTimeout(timeout);
       try {
         const parsed = JSON.parse(result);
         if (parsed.__error) {
@@ -31,6 +43,11 @@ export async function evalTS(funcName: string, ...args: any[]): Promise<any> {
       }
     });
   });
+}
+
+// Get bridge health info
+export function getBridgeHealth(): { appId: string; version: string } {
+  return { appId: BRIDGE_ID, version: "0.1.9" };
 }
 
 // evalES — direct ExtendScript eval (no type safety)

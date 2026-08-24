@@ -79,7 +79,7 @@ export const ReviewMode: React.FC<{
             onClick={() => setSelectedCut(i)}
           >
             <div className="cut-thumbnail">
-              <img src={getThumbnail(cut.clipPath)} alt={cut.clipName} />
+              <img src={getThumbnail(cut.clipPath)} alt={cut.clipName} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = 'No preview'; }} />
             </div>
             <div className="cut-info">
               <span className="cut-time">{formatTime(cut.beatTime)}</span>
@@ -109,7 +109,7 @@ export const ReviewMode: React.FC<{
           <div className="alternatives">
             {cuts[selectedCut].alternatives.map((alt, j) => (
               <div key={j} className="alt-card" onClick={() => onSwap(selectedCut, alt.clipPath)}>
-                <img src={getThumbnail(alt.clipPath)} alt={alt.clipName} />
+                <img src={getThumbnail(alt.clipPath)} alt={alt.clipName} onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.textContent = 'No preview'; }} />
                 <span>{alt.clipName}</span>
                 <span className="alt-score">{Math.round(alt.score)}/100</span>
               </div>

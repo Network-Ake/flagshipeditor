@@ -34,7 +34,7 @@ const MediaImport: React.FC<Props> = ({ clips, setClips, audioPath, setAudioPath
   const handleImportClips = async () => {
     setImporting(true);
     try {
-      const files = await openFiles("*.mov,*.mp4,*.m4v");
+      const files = await openFiles("Video files:*.mov;*.mp4;*.m4v;*.avi;*.mxf,All files:*.*");
       if (files.length > 0) {
         const newClips = files.map((path) => ({
           path,
@@ -53,7 +53,7 @@ const MediaImport: React.FC<Props> = ({ clips, setClips, audioPath, setAudioPath
   };
 
   const handleImportMusic = async () => {
-    const file = await openFile("*.mp3,*.wav,*.aac,*.m4a");
+    const file = await openFile("Audio files:*.mp3;*.wav;*.aac;*.m4a,All files:*.*");
     if (file) {
       setAudioPath(file);
     }

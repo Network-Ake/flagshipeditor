@@ -26,6 +26,15 @@ export interface ClipInfo {
   motion_intensity: number;
 }
 
+export interface AnalysisJob {
+  id: string;
+  state: "queued" | "running" | "completed" | "failed" | "cancelled";
+  progress: number;
+  result?: any;
+  error?: string;
+}
+
+// --- Beat Analysis ---
 export async function runBeatAnalysis(audioPath: string): Promise<BeatAnalysis> {
   const res = await fetch(`${PYTHON_SERVER}/analyze-beat`, {
     method: "POST",
@@ -36,6 +45,7 @@ export async function runBeatAnalysis(audioPath: string): Promise<BeatAnalysis> 
   return res.json();
 }
 
+// --- Clip Analysis (simple, single clip) ---
 export async function runClipAnalysis(videoPath: string): Promise<ClipInfo> {
   const res = await fetch(`${PYTHON_SERVER}/analyze-clip`, {
     method: "POST",
@@ -46,6 +56,36 @@ export async function runClipAnalysis(videoPath: string): Promise<ClipInfo> {
   return res.json();
 }
 
+// --- Analysis Jobs (async batch analysis) ---
+export async function createAnalysisJob(videoPath: string): Promise<AnalysisJob> {
+  const res = await fetch(`${PYTHON_SERVER}/analysis-jobs`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ videoPath }),
+  });
+  if (!res.ok) throw new Error(`Failed to create analysis job: ${res.statusText}`);
+  return res.json();
+}
+
+export async function getAnalysisJob(jobId: string): Promise<AnalysisJob> {
+  const res = await fetch(`${PYTHON_SERVER}/analysis-jobs/${encodeURIComponent(jobId)}`, {}, 10000);
+  if (!res.ok) throw new Error(`Failed to get analysis job status: ${res.statusText}`);
+  return res.json();
+}
+
+export async function getAnalysisJobResult(jobId: string): Promise<any> {
+  const res = await fetch(`${PYTHON_SERVER}/analysis-jobs/${encodeURIComponent(jobId)}/result`, {}, 60000);
+  if (!res.ok) throw new Error(`Failed to get analysis job result: ${res.statusText}`);
+  return res.json();
+}
+
+export async function cancelAnalysisJob(jobId: string): Promise<void> {
+  await fetch(`${PYTHON_SERVER}/analysis-jobs/${encodeURIComponent(jobId)}/cancel`, {
+    method: "POST",
+  });
+}
+
+// --- Shot Selection ---
 export async function selectShots(
   clips: ClipInfo[],
   beatTimes: number[],
@@ -63,6 +103,18 @@ export async function selectShots(
   return data.selections;
 }
 
+// --- Media Scan (recursive folder import) ---
+export async function scanMedia(folderPath: string): Promise<{ files: string[]; skipped: number }> {
+  const res = await fetch(`${PYTHON_SERVER}/media/scan`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ folderPath }),
+  });
+  if (!res.ok) throw new Error(`Media scan failed: ${res.statusText}`);
+  return res.json();
+}
+
+// --- Server Health ---
 export async function checkPythonServer(): Promise<boolean> {
   try {
     const res = await fetch(`${PYTHON_SERVER}/health`);
@@ -70,6 +122,12 @@ export async function checkPythonServer(): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export async function getServerHealth(): Promise<any> {
+  const res = await fetch(`${PYTHON_SERVER}/health`);
+  if (!res.ok) throw new Error(`Health check failed: ${res.statusText}`);
+  return res.json();
 }
 
 export async function startPythonServer(): Promise<boolean> {
