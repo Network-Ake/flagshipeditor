@@ -11,7 +11,7 @@ import lyricalLemonade from "../../../../styles/lyrical_lemonade.json";
 import ninetive from "../../../../styles/ninetive.json";
 import worldwideFilms from "../../../../styles/worldwide_films.json";
 
-export type EffectGroup = "cut" | "camera" | "texture" | "color" | "time" | "3d";
+export type EffectGroup = "cut" | "camera" | "texture" | "color" | "time";
 
 export interface EffectConfig {
   enabled?: boolean;
@@ -55,11 +55,6 @@ export interface EditingParameters {
   effects: Record<string, boolean>;
 }
 
-export interface Element3DSettings {
-  parallaxDepth: number;
-  autoCamera: boolean;
-}
-
 export interface StyleSummary {
   id: string;
   name: string;
@@ -93,7 +88,6 @@ export const EFFECT_CATALOG: { key: string; label: string; group: EffectGroup }[
   { key: "face_mask", label: "Face mask", group: "color" },
   { key: "depth_blur", label: "Depth blur", group: "color" },
   { key: "selective_color", label: "Selective color", group: "color" },
-  { key: "element_3d", label: "Element 3D", group: "3d" },
 ];
 
 export const EFFECT_GROUP_LABELS: Record<EffectGroup, string> = {
@@ -102,7 +96,6 @@ export const EFFECT_GROUP_LABELS: Record<EffectGroup, string> = {
   texture: "Texture",
   color: "Color",
   time: "Time",
-  "3d": "3D",
 };
 
 // Scaling these keys is what turns the VFX intensity slider into something the
@@ -248,7 +241,7 @@ export function buildRuntimeStyle(base: StyleConfig, params: EditingParameters):
     const requested = params.effects[effect.key];
     const existing = style[effect.key];
     if (isEffectConfig(existing)) {
-      if (effect.key !== "element_3d" && params.vfxIntensity !== 5) {
+      if (params.vfxIntensity !== 5) {
         scaleMagnitudes(existing, vfxFactor);
       }
     } else if (requested === true) {

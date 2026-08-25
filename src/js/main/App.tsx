@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import MediaImport from "./components/MediaImport";
 import StyleSelector from "./components/StyleSelector";
 import Parameters from "./components/Parameters";
-import Element3DPanel, { Element3DDetection } from "./components/Element3DPanel";
+
 import AnalysisView from "./components/AnalysisView";
 import ReviewMode from "./components/ReviewMode";
 import {
@@ -41,14 +41,14 @@ import {
 import { pollPersistentJob, retryTransientOperation } from "./lib/resilient-job";
 import {
   EditingParameters,
-  Element3DSettings,
+
   StyleConfig,
   buildRuntimeStyle,
   defaultEffectToggles,
   loadStyle,
 } from "./lib/styles";
 
-type Tab = "media" | "style" | "params" | "3d" | "review" | "analysis";
+type Tab = "media" | "style" | "params" | "review" | "analysis";
 type Phase =
   | "idle"
   | "importing"
@@ -102,11 +102,6 @@ interface ReplaceSectionResult {
   missing: number;
 }
 
-interface Element3DProbeResult {
-  installed: boolean;
-  matchName: string | null;
-}
-
 interface TimelineCutPayload {
   beatTime: number;
   endTime: number;
@@ -119,7 +114,6 @@ const TABS: { id: Tab; icon: string; label: string }[] = [
   { id: "media", icon: "📁", label: "Media" },
   { id: "style", icon: "🎨", label: "Style" },
   { id: "params", icon: "🎛", label: "Params" },
-  { id: "3d", icon: "🧊", label: "3D" },
   { id: "review", icon: "👁", label: "Review" },
   { id: "analysis", icon: "📊", label: "Analysis" },
 ];
@@ -223,15 +217,6 @@ const App: React.FC = () => {
     beatSubdivision: 1,
     effects: defaultEffectToggles(loadStyle("cmd_command_drill")),
   }));
-  const [element3D, setElement3D] = useState<Element3DSettings>({
-    parallaxDepth: 0.4,
-    autoCamera: true,
-  });
-  const [element3DDetection, setElement3DDetection] = useState<Element3DDetection>({
-    state: "unknown",
-    matchName: "",
-    message: "",
-  });
   const [analysis, setAnalysis] = useState<BeatAnalysis | null>(null);
   const [beatProgress, setBeatProgress] = useState<BeatProgress | null>(null);
   const [cuts, setCuts] = useState<CutDecision[]>([]);
@@ -543,12 +528,8 @@ const App: React.FC = () => {
       setStyleId(nextId);
       const style = customStyles[nextId] || loadStyle(nextId);
       setParams((previous) => ({ ...previous, effects: defaultEffectToggles(style) }));
-      const depth = style.element_3d && typeof style.element_3d.parallax_depth === "number"
-        ? (style.element_3d.parallax_depth as number)
-        : element3D.parallaxDepth;
-      setElement3D((previous) => ({ ...previous, parallaxDepth: depth }));
     },
-    [customStyles, element3D.parallaxDepth]
+    [customStyles]
   );
 
   const handleCustomizeStyle = useCallback(
@@ -575,34 +556,6 @@ const App: React.FC = () => {
   const handleResetEffects = useCallback(() => {
     setParams((previous) => ({ ...previous, effects: defaultEffectToggles(activeStyle) }));
   }, [activeStyle]);
-
-  const handleProbeElement3D = useCallback(async () => {
-    if (!hostAvailable) {
-      setElement3DDetection({
-        state: "error",
-        matchName: "",
-        message: "After Effects is not connected to this panel.",
-      });
-      return;
-    }
-    setElement3DDetection({ state: "checking", matchName: "", message: "" });
-    try {
-      const result = await evalTSTimed<Element3DProbeResult>("probeElement3D", 30000);
-      setElement3DDetection({
-        state: result.installed ? "installed" : "missing",
-        matchName: result.matchName || "",
-        message: "",
-      });
-    } catch (error) {
-      setElement3DDetection({ state: "error", matchName: "", message: errorMessage(error) });
-    }
-  }, [hostAvailable]);
-
-  useEffect(() => {
-    if (hostAvailable) void handleProbeElement3D();
-    // The probe only has to run once per panel session.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hostAvailable]);
 
   // --- Generation ----------------------------------------------------------
 
@@ -644,7 +597,6 @@ const App: React.FC = () => {
         audioPath,
         runtimeStyle,
         params,
-        element3D,
         beat.sections,
         extensionPath,
         profile,
@@ -672,7 +624,7 @@ const App: React.FC = () => {
       }
 
       checkpoint();
-      updateStatus("Applying grading, 3D and markers…", "busy", 96);
+      updateStatus("Applying grading and markers…", "busy", 96);
       const finished = await evalTSTimed<FinishCompResult>("finishComp", FINISH_COMP_TIMEOUT_MS);
       buildActiveRef.current = false;
 
@@ -688,7 +640,7 @@ const App: React.FC = () => {
       }
       updateStatus(`${finished.message} — ${finished.clipsAdded} clips placed`, "ready", 100);
     },
-    [audioPath, checkpoint, element3D, params, pushNotice, updateStatus]
+    [audioPath, checkpoint, params, pushNotice, updateStatus]
   );
 
   const handleGenerate = useCallback(async () => {
@@ -1173,22 +1125,6 @@ const App: React.FC = () => {
               onResetToStyle={handleResetEffects}
             />
           )}
-          {activeTab === "3d" && (
-            <Element3DPanel
-              settings={element3D}
-              enabled={params.effects.element_3d === true}
-              detection={element3DDetection}
-              disabled={busy}
-              onChange={setElement3D}
-              onToggleEnabled={(enabled) =>
-                setParams((previous) => ({
-                  ...previous,
-                  effects: { ...previous.effects, element_3d: enabled },
-                }))
-              }
-              onProbe={handleProbeElement3D}
-            />
-          )}
           {activeTab === "review" && (
             <ReviewMode
               cuts={cuts}
@@ -1197,6 +1133,7 @@ const App: React.FC = () => {
               onToggleLock={handleToggleLock}
               onReorder={handleReorder}
               onRegenerateSection={handleRegenerateSection}
+              beatAnalysis={analysis}
             />
           )}
           {activeTab === "analysis" && (

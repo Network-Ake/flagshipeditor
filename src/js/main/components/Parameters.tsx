@@ -49,10 +49,9 @@ const GROUP_ICONS: Record<EffectGroup, string> = {
   texture: "🎞",
   color: "🎨",
   time: "⏱",
-  "3d": "🧊",
 };
 
-const GROUP_ORDER: EffectGroup[] = ["cut", "camera", "texture", "time", "color", "3d"];
+const GROUP_ORDER: EffectGroup[] = ["cut", "camera", "texture", "time", "color"];
 
 function sliderStyle(value: number): React.CSSProperties {
   return { "--value-percent": `${value * 10}%` } as React.CSSProperties;
