@@ -178,11 +178,16 @@ def analyze_track(audio_path: str, progress_callback: Optional[Any] = None) -> D
     key, mode = estimate_key(chroma)
 
     _progress("Finalizing", 0.95)
+    
+    # Detect phrase boundaries
+    phrase_boundaries = detect_phrase_boundaries(beat_times, tempo, sections)
+    
     result = {
         "tempo": tempo,
         "beats": beat_times.tolist(),
         "downbeats": downbeats,
         "sections": sections,
+        "phrase_boundaries": [pb['time'] for pb in phrase_boundaries],
         "energy": rms.tolist(),
         "bass_onsets": bass_onsets.tolist(),
         "hihat_onsets": hihat_onsets.tolist(),
@@ -239,20 +244,70 @@ def labels_to_sections(labels, frame_times, y, sr):
 
 
 def classify_section_type(y, sr, start, end):
-    """Classify a section based on its audio characteristics."""
-    segment = y[int(start * sr):int(end * sr)]
+    """Classify a section based on multiple audio characteristics.
+    
+    Uses spectral contrast + RMS envelope + onset density to classify:
+    - Intro = low energy + low onset density at start
+    - Verse = moderate energy, steady rhythm
+    - Chorus = high energy + high onset density, repetitive
+    - Drop = max energy + sub-bass heavy
+    - Bridge = energy dip after chorus/drop
+    - Outro = energy decay at end
+    """
+    start_sample = int(max(0, start * sr))
+    end_sample = int(min(len(y), end * sr))
+    
+    if end_sample <= start_sample:
+        return "verse"
+    
+    segment = y[start_sample:end_sample]
     if len(segment) == 0:
         return "verse"
-
+    
+    # Compute multiple features
     rms = np.sqrt(np.mean(segment ** 2))
+    
+    # Spectral contrast (difference between peaks and valleys in spectrum)
+    spectral_contrast = librosa.feature.spectral_contrast(y=segment, sr=sr)
+    contrast_mean = np.mean(spectral_contrast)
+    
+    # Onset density (onsets per second)
+    onset_env = librosa.onset.onset_strength(y=segment, sr=sr)
+    onset_density = np.sum(onset_env > np.mean(onset_env) * 0.5) / (len(segment) / sr)
+    
+    # Sub-bass energy (< 80Hz)
+    bass_filtered = frequency_filter(segment, sr, 80, "lowpass")
+    bass_energy = np.sqrt(np.mean(bass_filtered ** 2))
+    bass_ratio = bass_energy / (rms + 1e-10)
+    
+    # Spectral centroid (brightness)
     spectral_centroid = np.mean(librosa.feature.spectral_centroid(y=segment, sr=sr))
-
-    if rms < 0.01:
-        return "intro"
-    elif rms > 0.1 and spectral_centroid > 3000:
+    
+    # Classify based on combined features
+    # Drop: high energy + high bass ratio
+    if rms > 0.08 and bass_ratio > 0.3:
         return "drop"
-    elif rms > 0.05:
+    
+    # Chorus: high energy + high onset density
+    elif rms > 0.05 and onset_density > 15:
         return "chorus"
+    
+    # Intro: low energy + low onset density
+    elif rms < 0.02 and onset_density < 10:
+        return "intro"
+    
+    # Bridge: moderate energy but lower than surroundings (energy dip)
+    elif 0.02 < rms < 0.05 and onset_density < 12:
+        return "bridge"
+    
+    # Verse: moderate energy, steady rhythm
+    elif 0.02 < rms < 0.06:
+        return "verse"
+    
+    # Default to chorus for high energy sections
+    elif rms > 0.04:
+        return "chorus"
+    
     else:
         return "verse"
 
@@ -343,3 +398,59 @@ def estimate_key(chroma):
             best_mode = "minor"
 
     return best_key, best_mode
+
+
+def detect_phrase_boundaries(beat_times, tempo, sections):
+    """Detect phrase boundaries (4-bar, 8-bar phrases) for musical cut placement.
+    
+    Returns a list of timestamps where phrase boundaries occur.
+    These are preferred locations for transitions and section changes.
+    """
+    # ``analyze_track`` passes the librosa beat array straight through, and a
+    # numpy array has no truth value — test the length, never the object.
+    if beat_times is None or len(beat_times) < 4:
+        return []
+    
+    # Calculate beat period
+    beat_period = 60.0 / tempo if tempo > 0 else np.median(np.diff(beat_times))
+    
+    # In 4/4 time, a bar is typically 4 beats
+    # Common phrase lengths: 4 bars (16 beats), 8 bars (32 beats)
+    phrase_beats = [16, 32]  # 4-bar and 8-bar phrases
+    
+    phrase_boundaries = []
+    
+    # Start from the first downbeat
+    for section in sections:
+        section_start = section.get('start', 0.0)
+        section_end = section.get('end', 0.0)
+        section_type = section.get('type', 'verse')
+        
+        # Find the first beat in this section
+        start_beat_idx = np.searchsorted(beat_times, section_start)
+        end_beat_idx = np.searchsorted(beat_times, section_end)
+        
+        if start_beat_idx >= end_beat_idx:
+            continue
+        
+        # Add phrase boundaries within the section
+        for phrase_len in phrase_beats:
+            for i in range(start_beat_idx + phrase_len, end_beat_idx, phrase_len):
+                if i < len(beat_times):
+                    phrase_boundaries.append({
+                        'time': float(beat_times[i]),
+                        'phrase_length': phrase_len,
+                        'section_type': section_type
+                    })
+    
+    # Remove duplicates (same time from different phrase lengths)
+    seen_times = set()
+    unique_boundaries = []
+    for boundary in sorted(phrase_boundaries, key=lambda x: x['time']):
+        # Round to nearest 10ms for comparison
+        rounded_time = round(boundary['time'], 2)
+        if rounded_time not in seen_times:
+            seen_times.add(rounded_time)
+            unique_boundaries.append(boundary)
+    
+    return unique_boundaries

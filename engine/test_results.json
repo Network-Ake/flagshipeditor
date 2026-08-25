@@ -1,0 +1,70 @@
+{
+  "timestamp": "2026-08-24T20:48:13.119295",
+  "tests": {
+    "imports": true,
+    "cut_placement": true,
+    "cut_lengths": true,
+    "clip_variety": true,
+    "phrase_boundaries": true,
+    "best_moment_alignment": true,
+    "bass_onset_response": true
+  },
+  "summary": {
+    "passed": 7,
+    "total": 7,
+    "success_rate": 1.0
+  },
+  "cut_slots_count": 122,
+  "cut_slots_sample": [
+    {
+      "beatTime": 0.0,
+      "endTime": 1.5,
+      "sectionType": "intro"
+    },
+    {
+      "beatTime": 1.5,
+      "endTime": 3.0,
+      "sectionType": "intro"
+    },
+    {
+      "beatTime": 3.0,
+      "endTime": 4.5,
+      "sectionType": "intro"
+    },
+    {
+      "beatTime": 4.5,
+      "endTime": 6.0,
+      "sectionType": "intro"
+    },
+    {
+      "beatTime": 6.0,
+      "endTime": 8.0,
+      "sectionType": "intro"
+    },
+    {
+      "beatTime": 8.0,
+      "endTime": 9.0,
+      "sectionType": "verse"
+    },
+    {
+      "beatTime": 9.0,
+      "endTime": 10.0,
+      "sectionType": "verse"
+    },
+    {
+      "beatTime": 10.0,
+      "endTime": 11.0,
+      "sectionType": "verse"
+    },
+    {
+      "beatTime": 11.0,
+      "endTime": 12.0,
+      "sectionType": "verse"
+    },
+    {
+      "beatTime": 12.0,
+      "endTime": 13.0,
+      "sectionType": "verse"
+    }
+  ]
+}
