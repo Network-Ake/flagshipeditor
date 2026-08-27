@@ -58,10 +58,18 @@ function walkFiles(directory) {
 }
 
 function exportTable(table) {
-  const output = execFileSync("msiinfo", ["export", msiPath, table], {
-    maxBuffer: 256 * 1024 * 1024,
-    encoding: "utf8",
-  });
+  let output;
+  try {
+    output = execFileSync("msiinfo", ["export", msiPath, table], {
+      maxBuffer: 256 * 1024 * 1024,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+  } catch (error) {
+    // A table wixl had no reason to create is equivalent to an empty one.
+    if (String(error.stderr).includes("table not found")) return [];
+    throw error;
+  }
   // msiinfo prints three header lines (column names, formats, keys) before
   // the data rows, and terminates every line with CRLF.
   return output
@@ -83,22 +91,24 @@ assert.equal(properties.get("Manufacturer"), "ake-studio");
 assert.equal(properties.get("ProductName"), `FlagshipEditor ${version}`);
 assert.equal(properties.get("ARPPRODUCTICON"), "FlagshipEditor.ico", "Add/Remove Programs icon is missing.");
 assert.ok(properties.get("UpgradeCode"), "UpgradeCode is missing; upgrades would stack installs.");
+assert.equal(properties.get("ALLUSERS"), "1",
+  "ALLUSERS must be 1: without it the per-machine package silently degrades to a broken per-user install.");
 
+// A launch condition is the only authored mechanism that can refuse an
+// install outright, so every row must be on this allow-list. The first
+// published 3.0.0 MSI hard-blocked real machines because an After Effects
+// registry search listed exact minor-version keys; environment detection
+// belongs in Setup-Complete-FlagshipEditor.vbs, never here.
 const launchConditions = exportTable("LaunchCondition");
-const aeGate = launchConditions.find(([condition]) => condition.includes("AE2024"));
-assert.ok(aeGate, "After Effects 2024+ launch condition is missing.");
-assert.ok(aeGate[0].startsWith("Installed OR "), "AE gate must not block repair or uninstall.");
-assert.ok(aeGate[1].includes("After Effects 2024 or newer"), "AE gate error message must name the requirement.");
-
-const regLocator = exportTable("RegLocator");
-const aeSearches = regLocator.filter(([, , key]) => key.startsWith("SOFTWARE\\Adobe\\After Effects\\"));
-assert.equal(aeSearches.length, 6, "Expected registry searches for AE 24.0/24.1/25.0/25.1/26.0/26.1.");
-for (const [, rootId, , name, type] of aeSearches) {
-  assert.equal(rootId, "2", "AE registry searches must target HKLM.");
-  assert.equal(name, "InstallPath");
-  assert.equal(type, "18", "AE registry searches must be raw 64-bit lookups.");
-}
-assert.equal(exportTable("AppSearch").length, 6, "Every AE search property must be wired into AppSearch.");
+assert.deepEqual(
+  launchConditions.map(([condition]) => condition).sort(),
+  ["NOT WIX_DOWNGRADE_DETECTED"],
+  "Unexpected launch condition: only the downgrade guard may block an install."
+);
+assert.equal(exportTable("AppSearch").length, 0,
+  "AppSearch must stay empty: install-time registry detection caused the field failure.");
+assert.equal(exportTable("RegLocator").length, 0,
+  "RegLocator must stay empty: install-time registry detection caused the field failure.");
 
 const registry = exportTable("Registry");
 for (const generation of [9, 10, 11, 12, 13]) {
@@ -130,16 +140,76 @@ assert.ok(shortcuts.some((row) => row.some((cell) => cell.includes("Start-Flagsh
 assert.ok(shortcuts.some((row) => row.some((cell) => cell.includes("Stop-FlagshipEditor-Backend.vbs"))));
 assert.ok(shortcuts.some((row) => row.some((cell) => cell.includes("[ProductCode]"))));
 
+// Upgrade coverage: older versions, the same version (a rebuilt MSI must
+// replace, not stack) and a downgrade guard. Windows Installer only honours
+// these across the elevation boundary when the action properties are secure.
+const upgradeRows = exportTable("Upgrade");
+const upgradeCode = properties.get("UpgradeCode");
 assert.ok(
-  exportTable("Upgrade").some(([code]) => code === properties.get("UpgradeCode")),
-  "MajorUpgrade record is missing; a new version would not replace the old one."
+  upgradeRows.some(([code, min, max]) => code === upgradeCode && min === "" && max === version),
+  "Earlier-version upgrade record is missing; an old install would not be replaced."
 );
+const sameVersionRow = upgradeRows.find(([code, min, max]) => code === upgradeCode && min === version && max === version);
+assert.ok(sameVersionRow, "Same-version upgrade record is missing; reinstalling 3.0.0 would stack two products.");
+assert.equal(Number(sameVersionRow[4]) & 0x300, 0x300,
+  "Same-version upgrade bounds must both be inclusive.");
+assert.ok(
+  upgradeRows.some(([code, min, , , attributes]) =>
+    code === upgradeCode && min === version && attributes === "2"),
+  "Downgrade detection record is missing."
+);
+const secured = (properties.get("SecureCustomProperties") || "").split(";");
+for (const property of ["WIX_UPGRADE_DETECTED", "WIX_SAME_VERSION_UPGRADE_DETECTED", "WIX_DOWNGRADE_DETECTED"]) {
+  assert.ok(secured.includes(property), `${property} must be a secure custom property.`);
+}
 
 const customActions = exportTable("CustomAction");
 assert.ok(customActions.some(([id]) => id === "StopBackend"), "Stop-backend custom action is missing.");
 const sequence = exportTable("InstallExecuteSequence");
-assert.ok(sequence.some(([action]) => action === "StopBackend"),
-  "StopBackend must be sequenced, or upgrades fail on a running backend.");
+for (const id of ["SetStopBackendExe", "StopBackend"]) {
+  const row = sequence.find(([action]) => action === id);
+  assert.ok(row, `${id} must be sequenced, or upgrades fail on a running backend.`);
+  assert.ok(row[1].includes("WIX_SAME_VERSION_UPGRADE_DETECTED"),
+    `${id} must also fire on same-version upgrades, or the running backend locks the runtime.`);
+}
+const stopSeq = Number(sequence.find(([action]) => action === "StopBackend")[2]);
+const repSeq = Number(sequence.find(([action]) => action === "RemoveExistingProducts")[2]);
+assert.ok(stopSeq < repSeq, "StopBackend must run before RemoveExistingProducts.");
+
+// Custom action types are pinned: 51 sets a property, 114 = 50 (run EXE from
+// a property) + 64 (continue on failure). Nothing this installer runs may be
+// able to fail the install, and nothing may run deferred/elevated.
+const expectedTypes = new Map([
+  ["SetStopBackendExe", "51"],
+  ["StopBackend", "114"],
+  ["SetSetupCompleteExe", "51"],
+  ["SetupComplete", "114"],
+]);
+assert.equal(customActions.length, expectedTypes.size, "Unexpected custom action count.");
+for (const [id, type] of customActions) {
+  assert.equal(type, expectedTypes.get(id), `Custom action ${id} has unexpected type ${type}.`);
+}
+
+// Every sequenced action must be a Windows Installer standard action or a
+// defined custom action; anything else is a dangling reference msiexec
+// resolves only at run time (debug error 2726 at best, a broken install at
+// worst).
+const standardActions = new Set([
+  "FindRelatedProducts", "AppSearch", "LaunchConditions", "ValidateProductID",
+  "CostInitialize", "FileCost", "CostFinalize", "MigrateFeatureStates",
+  "ExecuteAction", "InstallValidate", "InstallInitialize", "RemoveExistingProducts",
+  "ProcessComponents", "UnpublishFeatures", "RemoveRegistryValues", "RemoveShortcuts",
+  "RemoveFiles", "RemoveFolders", "CreateFolders", "InstallFiles", "DuplicateFiles",
+  "CreateShortcuts", "WriteRegistryValues", "RegisterUser", "RegisterProduct",
+  "PublishFeatures", "PublishProduct", "InstallFinalize", "InstallAdminPackage",
+]);
+const definedCustomActions = new Set(customActions.map(([id]) => id));
+for (const table of ["InstallExecuteSequence", "InstallUISequence", "AdminExecuteSequence", "AdminUISequence", "AdvtExecuteSequence"]) {
+  for (const [action] of exportTable(table)) {
+    assert.ok(standardActions.has(action) || definedCustomActions.has(action),
+      `${table} references an action that does not exist: ${action}`);
+  }
+}
 
 const uiSequence = exportTable("InstallUISequence");
 const executeAction = uiSequence.find(([action]) => action === "ExecuteAction");
@@ -163,6 +233,33 @@ assert.ok(
   exportTable("Media").some((row) => row.includes("#payload.cab")),
   "Payload cabinet must be embedded in the MSI."
 );
+
+// The Setup-Complete script carries the environment validation the MSI
+// deliberately no longer performs. Read it from the staging tree the MSI is
+// byte-compared against, so these checks hold for the exact shipped bytes.
+const setupCompleteScript = fs.readFileSync(
+  path.join(msiStage, "root", "Setup-Complete-FlagshipEditor.vbs"), "utf8");
+assert.ok(setupCompleteScript.includes("EnumKey"),
+  "AE detection must enumerate every installed version, never probe fixed keys.");
+assert.ok(setupCompleteScript.includes("SOFTWARE\\Adobe\\After Effects"),
+  "AE detection must read Adobe's version registry.");
+assert.ok(/After Effects "\s*&\s*year/.test(setupCompleteScript),
+  "AE detection must keep the default-folder fallback.");
+assert.ok(!/After Effects\\2[0-9]\./.test(setupCompleteScript),
+  "Fixed AE version keys are forbidden; they caused the field failure.");
+assert.ok(setupCompleteScript.includes("For generation = 9 To 13"),
+  "PlayerDebugMode must cover CSXS generations 9-13 for the invoking user.");
+for (const requiredBehaviour of [
+  "PlayerDebugMode",
+  "RemoveLegacyZipInstall",
+  "\\engine\\server.py",
+  "\\runtime\\python\\pythonw.exe",
+  "BackendIsHealthy",
+  "WScript.Quit 0",
+]) {
+  assert.ok(setupCompleteScript.includes(requiredBehaviour),
+    `Setup-Complete script is missing required behaviour: ${requiredBehaviour}`);
+}
 
 // ── 3. Byte-for-byte payload comparison via msiextract ────────────────────
 const expectedInstall = new Map();

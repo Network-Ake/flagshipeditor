@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
     <DirectoryRef Id="ENGINEDIR">
-      <Directory Id="dir3AE71BCE4E82D0D100344C41C00A4BD9" Name=".">
+      <Directory Id="dirCDA903FEFC971484C711723490E7BF2B" Name=".">
         <Component Win64="$(var.Win64)" Id="cmp834354949DAF2B99016AA309B6FA6193" Guid="*">
           <File Id="filD72E95F547F7ECE6C2613B7DD9A9636F" KeyPath="yes" Source="$(var.EngineDir)/analysis_jobs.py"/>
         </Component>
@@ -28,7 +28,7 @@
           <File Id="filE14BEF2FB1D727B4EA1C182AD0299EDE" KeyPath="yes" Source="$(var.EngineDir)/CYBER-FORENSIC-SPEC.md"/>
         </Component>
       </Directory>
-      <Directory Id="dirE673EBF153FEFD7DCD47BEB270E2A7A8" Name="fixtures">
+      <Directory Id="dir8F1D9D6002F91AACC0F9CB95FCC08D06" Name="fixtures">
         <Component Win64="$(var.Win64)" Id="cmp5375E3705F5D005DDC75016D9E564086" Guid="*">
           <File Id="fil482BABD011FD2722FCE55430A53A4C54" KeyPath="yes" Source="$(var.EngineDir)/fixtures/prores-422-hq.mov"/>
         </Component>
@@ -36,12 +36,12 @@
           <File Id="filCDB10AB85881D9879A26D9B7A527EBF2" KeyPath="yes" Source="$(var.EngineDir)/fixtures/prores-422-standard.mov"/>
         </Component>
       </Directory>
-      <Directory Id="dir267FF1B3A947DEB887A0BE475331905B" Name="forensics">
+      <Directory Id="dir4D0FFE638841B95B6BC9CB1880F8514B" Name="forensics">
         <Component Win64="$(var.Win64)" Id="cmp6FD68EE279F046337BF1A9C5ADF6B2C7" Guid="*">
           <File Id="filB61E05D90320635B64AB11F45876F31E" KeyPath="yes" Source="$(var.EngineDir)/forensics/baseline.json"/>
         </Component>
-        <Directory Id="dir34B31BD3C9043EF66B49154AE282AD5E" Name="runs">
-          <Directory Id="dir34BBF96D61FE81785A6CA6FED924BD50" Name="20260825-final-opus5">
+        <Directory Id="dir352B185774F3342261737C1A197AB8D1" Name="runs">
+          <Directory Id="dirBF3EADFAC376D06381E09C6E0AEBC1C1" Name="20260825-final-opus5">
             <Component Win64="$(var.Win64)" Id="cmpC5062EB23A71B68D83BBDE0AC1E7776A" Guid="*">
               <File Id="filF7DE2F690CDA1BA62D3DA392AC647DDA" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5/checks.jsonl"/>
             </Component>
@@ -61,7 +61,7 @@
               <File Id="filB73B108F596F10C1FEC736B32D4B867B" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dir094F57E2AD98C4C47B794CE60AA39C02" Name="20260825-final-opus5-r2">
+          <Directory Id="dir2E79F2F8FCAC540F55BE83406CA0FA9C" Name="20260825-final-opus5-r2">
             <Component Win64="$(var.Win64)" Id="cmp4E5D089136E75AD69856A6A18EA348C0" Guid="*">
               <File Id="fil82AC076D4F7A15E99D59A4FF3D546A99" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r2/checks.jsonl"/>
             </Component>
@@ -81,7 +81,7 @@
               <File Id="fil27F70AD2E404F431463C6F0EAD27CF6B" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r2/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dirBC120C33A20082E03861A189CA1D0695" Name="20260825-final-opus5-r3">
+          <Directory Id="dir6079E3C57085A0984E5E4F7D84F2079A" Name="20260825-final-opus5-r3">
             <Component Win64="$(var.Win64)" Id="cmp06668D52FBB7CCDCF81C5D4B1F12BDAB" Guid="*">
               <File Id="fil821BE9CB4A32213293328D1905085F96" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r3/checks.jsonl"/>
             </Component>
@@ -101,7 +101,7 @@
               <File Id="fil77D215843943A33ADB2978D3CEEB3932" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r3/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dir578E60874A6C6FB161CA6760273CC79F" Name="20260825T051023.611159Z-8f850d71-e1b84ec58c">
+          <Directory Id="dir21DCB8EED5A50594CE62B75FA4BCAFF9" Name="20260825T051023.611159Z-8f850d71-e1b84ec58c">
             <Component Win64="$(var.Win64)" Id="cmpAE709347316BB0937592EB2CB0F8E613" Guid="*">
               <File Id="filA5BAF05088565BD1A2DE63A867729642" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T051023.611159Z-8f850d71-e1b84ec58c/checks.jsonl"/>
             </Component>
@@ -121,7 +121,7 @@
               <File Id="fil6BC7DE28CEE282967C11C3863F4CFDBB" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T051023.611159Z-8f850d71-e1b84ec58c/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dirDB33CB96E7ADD172CBED0B3AF576134A" Name="20260825T052830.257360Z-8f850d71-23f63ec653">
+          <Directory Id="dir80D0A9BE07937FB8907D830FC5C97CBF" Name="20260825T052830.257360Z-8f850d71-23f63ec653">
             <Component Win64="$(var.Win64)" Id="cmpE94671584394FDACA54B99B187D572DE" Guid="*">
               <File Id="fil476882F5C3DC6D1C3EBFDE90AB038F7B" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052830.257360Z-8f850d71-23f63ec653/checks.jsonl"/>
             </Component>
@@ -141,7 +141,7 @@
               <File Id="fil503570D631238A200AB8CA4B90BAE559" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052830.257360Z-8f850d71-23f63ec653/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dir8D6BC0352C6D4F9FF61DCAD498A7DC14" Name="20260825T052920.736996Z-8f850d71-23f63ec653">
+          <Directory Id="dirB203C1AFE814700E79DAF82D09743C02" Name="20260825T052920.736996Z-8f850d71-23f63ec653">
             <Component Win64="$(var.Win64)" Id="cmp780E44EFFA5C49913BEDAE110C631D41" Guid="*">
               <File Id="fil78BDB20BCC478580A1DD9C2A530D9DE3" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052920.736996Z-8f850d71-23f63ec653/checks.jsonl"/>
             </Component>
@@ -161,7 +161,7 @@
               <File Id="fil9A66A118B10C68045ADE32F53F0E5479" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052920.736996Z-8f850d71-23f63ec653/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dir51317B7207AC44B0265A2D62EC184479" Name="20260825T053008.256023Z-8f850d71-8f168f6125">
+          <Directory Id="dir26CAB44B0271464D11AD2B98C7D27736" Name="20260825T053008.256023Z-8f850d71-8f168f6125">
             <Component Win64="$(var.Win64)" Id="cmp2F9F93CBCDE1552126EAE27F467D90C2" Guid="*">
               <File Id="fil4AD893AFFB27AEE65FCA8F2FF2485601" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053008.256023Z-8f850d71-8f168f6125/checks.jsonl"/>
             </Component>
@@ -181,7 +181,7 @@
               <File Id="fil846A055BC4329E8FD772FD25B1ADDFBC" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053008.256023Z-8f850d71-8f168f6125/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dirFE3D4FBD44AD44EF4455634E692462F6" Name="20260825T053027.921398Z-8f850d71-3e48e4b7e7">
+          <Directory Id="dir3DE4DC157DE75CA8A223ED6EB966AC8A" Name="20260825T053027.921398Z-8f850d71-3e48e4b7e7">
             <Component Win64="$(var.Win64)" Id="cmp27598B3A2F71E652B53604DFD79F3F6A" Guid="*">
               <File Id="fil15A00923B665E7157B574F9F383EF695" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053027.921398Z-8f850d71-3e48e4b7e7/checks.jsonl"/>
             </Component>
@@ -201,7 +201,7 @@
               <File Id="filDECF11A077792026CB6B9B4A275CFFAF" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053027.921398Z-8f850d71-3e48e4b7e7/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dir213949E8047599E5C2E31989AC27F676" Name="20260825T053130.128708Z-8f850d71-3e48e4b7e7">
+          <Directory Id="dirAFF30DB02BBAD1025C9C58E489E172B2" Name="20260825T053130.128708Z-8f850d71-3e48e4b7e7">
             <Component Win64="$(var.Win64)" Id="cmp0F71B182A37C0BFD81624015EB623B83" Guid="*">
               <File Id="filBD3838A7AD0D0D5F5BE1F3DFB2425D70" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053130.128708Z-8f850d71-3e48e4b7e7/checks.jsonl"/>
             </Component>
@@ -221,7 +221,7 @@
               <File Id="fil67B8A1197E5BDAA44FAB952FFDB45326" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053130.128708Z-8f850d71-3e48e4b7e7/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dir5644B2101F0D39CE5524D64625EE92CF" Name="20260825T053409.188119Z-8f850d71-495286f657">
+          <Directory Id="dirDA5F69C86A21D0F845389AFE7B2165D2" Name="20260825T053409.188119Z-8f850d71-495286f657">
             <Component Win64="$(var.Win64)" Id="cmp602C4BB116D023ADAB7E98784F806D63" Guid="*">
               <File Id="fil486BA3637992F2B33DFD06272B8D37C5" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053409.188119Z-8f850d71-495286f657/checks.jsonl"/>
             </Component>
@@ -241,7 +241,7 @@
               <File Id="fil915B365BC4DF77157DFB8D209CA7F010" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053409.188119Z-8f850d71-495286f657/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dirA57AFFB696AEE4CDCF2E738B2037EE1B" Name="20260825T053548.297032Z-8f850d71-83120ee8b2">
+          <Directory Id="dir0C61337AEDA9B92D5A5A5277CD71B28B" Name="20260825T053548.297032Z-8f850d71-83120ee8b2">
             <Component Win64="$(var.Win64)" Id="cmp517671242B05DB5A372D5AF136F44D8A" Guid="*">
               <File Id="fil188B93285C2005D57580A2A31BDB6A11" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053548.297032Z-8f850d71-83120ee8b2/checks.jsonl"/>
             </Component>
@@ -261,7 +261,7 @@
               <File Id="filF60473A163A78E2D3A6005C8EECA2ACB" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053548.297032Z-8f850d71-83120ee8b2/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dirCE8719E871ACABC6C899D4DA99CDF9F0" Name="20260825T053705.946198Z-8f850d71-83120ee8b2">
+          <Directory Id="dirC430B06A0F9F3EF32F89F1ADC232F18B" Name="20260825T053705.946198Z-8f850d71-83120ee8b2">
             <Component Win64="$(var.Win64)" Id="cmp599EFA0383700BF476C9AE5610AB8BBB" Guid="*">
               <File Id="filEB704E347BF4AB137992813428473597" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053705.946198Z-8f850d71-83120ee8b2/checks.jsonl"/>
             </Component>
@@ -281,7 +281,7 @@
               <File Id="filF3FEBF22A078F6D66F178EDF07BB70BE" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053705.946198Z-8f850d71-83120ee8b2/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dir311F86140021A0A76F6F9D23DE43CD11" Name="20260825T053725.880054Z-8f850d71-83120ee8b2">
+          <Directory Id="dir78851F6F96A442531E831F459036401B" Name="20260825T053725.880054Z-8f850d71-83120ee8b2">
             <Component Win64="$(var.Win64)" Id="cmp1A75DA2AFC90B2685CD819B52D5453B0" Guid="*">
               <File Id="fil902F254134D5D7AA488B42A50DE5AFE0" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053725.880054Z-8f850d71-83120ee8b2/checks.jsonl"/>
             </Component>
@@ -301,7 +301,7 @@
               <File Id="fil2A1ED64374153924E3C53E1E4811DD5C" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053725.880054Z-8f850d71-83120ee8b2/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dir7828401302DC76C2F60DC3E90DB5B824" Name="20260825T134313.573466Z-8f850d71-83120ee8b2">
+          <Directory Id="dir225CC5113D2011426360727C587BADFB" Name="20260825T134313.573466Z-8f850d71-83120ee8b2">
             <Component Win64="$(var.Win64)" Id="cmp6A58189C82AE61E3D3016F4BD214F4F2" Guid="*">
               <File Id="fil3B5AB666523DE89493426A74DA735329" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T134313.573466Z-8f850d71-83120ee8b2/checks.jsonl"/>
             </Component>
@@ -321,7 +321,7 @@
               <File Id="fil569718FFD2D1042349CF60C11FFBF18B" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T134313.573466Z-8f850d71-83120ee8b2/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dirEBDEDF7EDEA7E8A4B2732814BAFE8698" Name="20260825T140420.593432Z-8f850d71-471b11a07d">
+          <Directory Id="dirD222988B84663CB25934F94D158E3512" Name="20260825T140420.593432Z-8f850d71-471b11a07d">
             <Component Win64="$(var.Win64)" Id="cmp478954BEF1719D313CA569D17C0B6C59" Guid="*">
               <File Id="fil9B6679AA6C10F29E1CCFBC32E354FC0F" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T140420.593432Z-8f850d71-471b11a07d/checks.jsonl"/>
             </Component>
@@ -341,7 +341,7 @@
               <File Id="filBCA339638EE02DD2342D39E33A7227E5" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T140420.593432Z-8f850d71-471b11a07d/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dir2A1DD7C6444AF23F63D6C886BAAB7FD3" Name="20260825T141328.532934Z-8f850d71-24e8afc905">
+          <Directory Id="dirDF34D9841F80D9B89DC6ACF1AF8C9A03" Name="20260825T141328.532934Z-8f850d71-24e8afc905">
             <Component Win64="$(var.Win64)" Id="cmpC5B37A60DF12E2C36CB598B413DA7C9C" Guid="*">
               <File Id="fil4A5EE7F55489866A20EA36AB75E0FB2A" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T141328.532934Z-8f850d71-24e8afc905/checks.jsonl"/>
             </Component>
@@ -361,7 +361,7 @@
               <File Id="fil8C21A3A1275D67A715C18A16D1D8AAB3" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T141328.532934Z-8f850d71-24e8afc905/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dirB4F3188872AE8BE5E8FEE69B203D553A" Name="20260825T142654.712268Z-8f850d71-9a13c4fbcf">
+          <Directory Id="dirB2BDB4C4A62DEED76B7F374D036C6B7A" Name="20260825T142654.712268Z-8f850d71-9a13c4fbcf">
             <Component Win64="$(var.Win64)" Id="cmpFABDC0F7CAC6FDD29F39E1F972F9FE4C" Guid="*">
               <File Id="fil6642B424FAA11E7F2627E0BB457A17A0" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T142654.712268Z-8f850d71-9a13c4fbcf/checks.jsonl"/>
             </Component>
@@ -381,7 +381,7 @@
               <File Id="fil5E76B0FDE8B95E2E93EF155D2267F40A" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T142654.712268Z-8f850d71-9a13c4fbcf/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dirC058E171406DA466712D8ED803C7C914" Name="20260825T232911.362462Z-8f850d71-c29524cbc2">
+          <Directory Id="dirF566A5DACF773EC90F18376E522888A3" Name="20260825T232911.362462Z-8f850d71-c29524cbc2">
             <Component Win64="$(var.Win64)" Id="cmpAED560D1843168F5369E376D89A3CE0D" Guid="*">
               <File Id="fil25227E304470E099817AE9B926D773C1" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T232911.362462Z-8f850d71-c29524cbc2/checks.jsonl"/>
             </Component>
@@ -401,7 +401,7 @@
               <File Id="filCC00D1E077379DB4C9E554C4C98E4E19" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T232911.362462Z-8f850d71-c29524cbc2/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dirBFD4D41FD7FB0D59394E142E3125CF30" Name="20260826T025847.206549Z-8f850d71-19d7b8b77d">
+          <Directory Id="dir52EB5682269528EEAC2F51D2822BD06C" Name="20260826T025847.206549Z-8f850d71-19d7b8b77d">
             <Component Win64="$(var.Win64)" Id="cmpA856D58D3C607B20E431A17559700DF8" Guid="*">
               <File Id="fil2C54B1847E2C518389C0AEEFBB8E6CEC" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260826T025847.206549Z-8f850d71-19d7b8b77d/checks.jsonl"/>
             </Component>
@@ -421,7 +421,7 @@
               <File Id="fil745518ACB327682BEEAEF01F30A8AB93" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260826T025847.206549Z-8f850d71-19d7b8b77d/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dir4133863F784F628FAC78A51878FC111D" Name="20260827T002730.452077Z-8f850d71-b09cd15a70">
+          <Directory Id="dirF89104026749A0571176D4C643C154C0" Name="20260827T002730.452077Z-8f850d71-b09cd15a70">
             <Component Win64="$(var.Win64)" Id="cmpBFD9B1668D8FD09FD8F99F0C3762F935" Guid="*">
               <File Id="filA438AFDD8C2BA3356080F7075154D276" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002730.452077Z-8f850d71-b09cd15a70/checks.jsonl"/>
             </Component>
@@ -441,7 +441,7 @@
               <File Id="filB94CD71117391DF377B1BBB117D3EF35" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002730.452077Z-8f850d71-b09cd15a70/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dir08872D754C82E0DD7AA0B99EC1961782" Name="20260827T002810.159681Z-8f850d71-b09cd15a70">
+          <Directory Id="dir4164C66C9035D98EA744672E1EF18AAF" Name="20260827T002810.159681Z-8f850d71-b09cd15a70">
             <Component Win64="$(var.Win64)" Id="cmpFB95372B82D71A0BFE1DCA2227DC66A7" Guid="*">
               <File Id="fil4B29D8D657B39DF2C2B96668B83AA921" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002810.159681Z-8f850d71-b09cd15a70/checks.jsonl"/>
             </Component>
@@ -461,7 +461,7 @@
               <File Id="fil97941611280492F8A016E5239FCC5273" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002810.159681Z-8f850d71-b09cd15a70/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dirF673D84599DFE69D32622C578CC5CB3C" Name="20260827T003015.060161Z-8f850d71-b09cd15a70">
+          <Directory Id="dirA56187E2A46A7286FAF6516047B0FA76" Name="20260827T003015.060161Z-8f850d71-b09cd15a70">
             <Component Win64="$(var.Win64)" Id="cmp8A9CDEC7A6BEE43AD9D15331740FD784" Guid="*">
               <File Id="fil6B8AA747490B435E83B1BECD7F27C0BA" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T003015.060161Z-8f850d71-b09cd15a70/checks.jsonl"/>
             </Component>
@@ -481,7 +481,7 @@
               <File Id="fil77B13A4C553536EB4692AAA93DC642D7" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T003015.060161Z-8f850d71-b09cd15a70/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dir0117F5C2A7DF2C1ABCAF994D91F64B7A" Name="20260827T015120.337374Z-8f850d71-b09cd15a70">
+          <Directory Id="dir8717752FE64890A7DE419DAF21EBAF03" Name="20260827T015120.337374Z-8f850d71-b09cd15a70">
             <Component Win64="$(var.Win64)" Id="cmpEFB9C3197918DA80DF972B6C50E8AD27" Guid="*">
               <File Id="fil772C580832CDB9A328B90863805421E0" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015120.337374Z-8f850d71-b09cd15a70/checks.jsonl"/>
             </Component>
@@ -501,7 +501,7 @@
               <File Id="fil18A5410ECDF6BC68A383A2D4DCAB2416" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015120.337374Z-8f850d71-b09cd15a70/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dirF3390FE25DB812E7C56B2BE828A4B041" Name="20260827T015450.028410Z-8f850d71-b09cd15a70">
+          <Directory Id="dir8BBFB4954F84F210705381AA42E84A18" Name="20260827T015450.028410Z-8f850d71-b09cd15a70">
             <Component Win64="$(var.Win64)" Id="cmpEE3B727299B8112416C005F6DCC15086" Guid="*">
               <File Id="fil12E7C2968CDCB4F6FCA44F726AFE59E8" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015450.028410Z-8f850d71-b09cd15a70/checks.jsonl"/>
             </Component>
@@ -521,7 +521,7 @@
               <File Id="fil874343FD6AC02C80C8A428ADBAFB2681" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015450.028410Z-8f850d71-b09cd15a70/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dirC9FFA590AE6E9EE6944D1ACA0B652491" Name="20260827T020406.477024Z-8f850d71-31df6ac303">
+          <Directory Id="dirACB7861B99812F8000B8A095268BEA9A" Name="20260827T020406.477024Z-8f850d71-31df6ac303">
             <Component Win64="$(var.Win64)" Id="cmpBFCE786501083D00E94332CEFED9E6B4" Guid="*">
               <File Id="fil2F00B2B3829355E4F326A2A59AAEAE43" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020406.477024Z-8f850d71-31df6ac303/checks.jsonl"/>
             </Component>
@@ -541,7 +541,7 @@
               <File Id="filD5BB4F3EE8DBCACABB07168A148F8780" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020406.477024Z-8f850d71-31df6ac303/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dirEB54B6F2134466D952C7DEE0373B0D08" Name="20260827T020513.838089Z-8f850d71-31df6ac303">
+          <Directory Id="dir527FF82DA7088AF39B53137144AD3E20" Name="20260827T020513.838089Z-8f850d71-31df6ac303">
             <Component Win64="$(var.Win64)" Id="cmpA7FAAEFE71B37FA43C3E79835D3FC39D" Guid="*">
               <File Id="fil26CB87EBF329D1E00326E7BFC6467A53" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020513.838089Z-8f850d71-31df6ac303/checks.jsonl"/>
             </Component>
@@ -561,7 +561,7 @@
               <File Id="filB901E4BAEEB5B425163F93797574AF63" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020513.838089Z-8f850d71-31df6ac303/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dir856BF4FBC92C10123E047EF4970C89B3" Name="20260827T020549.358192Z-8f850d71-31df6ac303">
+          <Directory Id="dirEC52CDDE4711F38AFF1F080AC60EA907" Name="20260827T020549.358192Z-8f850d71-31df6ac303">
             <Component Win64="$(var.Win64)" Id="cmpC1CC7FF1C6EFB9FA539441E47B6CAD93" Guid="*">
               <File Id="fil32146FDFAAE6393E0F596DCD79DE41FB" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020549.358192Z-8f850d71-31df6ac303/checks.jsonl"/>
             </Component>
@@ -581,7 +581,7 @@
               <File Id="fil9BFC75D200853B0B4828B806A7B2B3C9" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020549.358192Z-8f850d71-31df6ac303/SHA256SUMS.sha256"/>
             </Component>
           </Directory>
-          <Directory Id="dir3175EBD95B1067C3E75055CAE7054091" Name="20260827T020601.193116Z-8f850d71-31df6ac303">
+          <Directory Id="dir71ACCA3B150BD5D215A64B342531BB0B" Name="20260827T020601.193116Z-8f850d71-31df6ac303">
             <Component Win64="$(var.Win64)" Id="cmp6B7C4D80056368D37441C816C8BB8A37" Guid="*">
               <File Id="filF88F846AC37096F8BA9B08553E5D6FAD" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020601.193116Z-8f850d71-31df6ac303/checks.jsonl"/>
             </Component>
@@ -603,7 +603,7 @@
           </Directory>
         </Directory>
       </Directory>
-      <Directory Id="dir10C82A3AD9005FBFA4F54A74BFA908F8" Name=".">
+      <Directory Id="dir1FED7DBE24CC576A2565E6B0750A37EB" Name=".">
         <Component Win64="$(var.Win64)" Id="cmp136CC9DCAE0BC3DDF860367E04840C50" Guid="*">
           <File Id="fil4F916D39972137018AD826EDB935A06C" KeyPath="yes" Source="$(var.EngineDir)/media_tools.py"/>
         </Component>

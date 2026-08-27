@@ -18,7 +18,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 
 const root = process.cwd();
 const version = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version;
@@ -150,7 +150,11 @@ for (const fragment of fragments) {
 // Installer native UI plus the Setup-Complete success script.
 fs.rmSync(msiPath, { force: true });
 console.log("Compiling MSI with wixl (this takes a few minutes)...");
-execFileSync("wixl", [
+// wixl errors on unknown elements but silently ignores unknown attributes,
+// so any diagnostics it does emit are treated as fatal; attribute-level
+// behaviour is additionally pinned by the table assertions in
+// test-msi-package.mjs.
+const wixlResult = spawnSync("wixl", [
   "--arch", "x64",
   "-D", "Win64=yes",
   "-D", `AssetDir=${path.join(root, "scripts")}`,
@@ -164,7 +168,15 @@ execFileSync("wixl", [
   path.join("frag", "engine.wxs"),
   path.join("frag", "runtime.wxs"),
   path.join("frag", "cep.wxs"),
-], { cwd: msiDir, stdio: "inherit" });
+], { cwd: msiDir, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+const wixlOutput = `${wixlResult.stdout || ""}${wixlResult.stderr || ""}`;
+if (wixlOutput.trim()) console.log(wixlOutput.trim());
+if (wixlResult.status !== 0) {
+  throw new Error(`wixl failed with exit code ${wixlResult.status}.`);
+}
+if (/warning|unhandled/i.test(wixlOutput)) {
+  throw new Error("wixl reported diagnostics; refusing to ship an MSI wixl only partially understood.");
+}
 
 // ── 6. Validate the finished MSI before copying it anywhere ───────────────
 execFileSync(process.execPath, [path.join(root, "scripts", "test-msi-package.mjs")], {

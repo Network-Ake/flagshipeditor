@@ -2,27 +2,27 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
     <DirectoryRef Id="CEPEXTDIR">
-      <Directory Id="dirE8D2BD50D7E48CE1D698E70436A4C9A9" Name=".">
+      <Directory Id="dirE46E39A50D5988531ABDCE7169A542BC" Name=".">
         <Component Id="cmpF51997E8AFD10B5DAEFDA5041A2D3106" Guid="*">
           <File Id="fil2A900D62A6E1352229E75DC4D3D3640A" KeyPath="yes" Source="$(var.CepDir)/.debug"/>
         </Component>
       </Directory>
-      <Directory Id="dir6F55E9BD6FEE8CDD7AE93DFE6E8AFE76" Name="assets">
+      <Directory Id="dir141DF2BDDC87BA5D93BF1C5517209C7F" Name="assets">
         <Component Id="cmp8B80334B52D7EE02B2DE706B3526E1E2" Guid="*">
           <File Id="fil4564FB6013AE557B50D3C2510B230583" KeyPath="yes" Source="$(var.CepDir)/assets/main-Mb1ZCy-p.js"/>
         </Component>
       </Directory>
-      <Directory Id="dir858116A00B22C9E559155084F7500F15" Name="CSXS">
+      <Directory Id="dirB2AA15582B73C093E95EE51AF04AE5A7" Name="CSXS">
         <Component Id="cmp21E891E77738088DB11B857C9956E475" Guid="*">
           <File Id="fil2871C2B424E5EC3A565F7F2CC85DF2A0" KeyPath="yes" Source="$(var.CepDir)/CSXS/manifest.xml"/>
         </Component>
       </Directory>
-      <Directory Id="dir78BC3F848D2A5939C1A7F3BBADE0FE43" Name="jsx">
+      <Directory Id="dir68475E1A3CAD897DC148ED5A6225A14F" Name="jsx">
         <Component Id="cmp84B3F2D621E16611E86BC3E1618B2450" Guid="*">
           <File Id="fil39DB71B0B916E4A0AAB3EDDD1C703BD4" KeyPath="yes" Source="$(var.CepDir)/jsx/index.js"/>
         </Component>
       </Directory>
-      <Directory Id="dir0454561F6515F030F9EFF82923626A4F" Name="luts">
+      <Directory Id="dirEC51BA7B256449A251D7EC4061F94145" Name="luts">
         <Component Id="cmpFE040E82A13E19FEC77CCCDF7F6CCD7B" Guid="*">
           <File Id="filCD680C883A5FD128AFCB5B0359C6A1A6" KeyPath="yes" Source="$(var.CepDir)/luts/cmd_command_dark_cold.cube"/>
         </Component>
@@ -45,7 +45,7 @@
           <File Id="fil3EBE156C27052BA4A58744A11B755C72" KeyPath="yes" Source="$(var.CepDir)/luts/worldwide_neon_dark.cube"/>
         </Component>
       </Directory>
-      <Directory Id="dir12FD8EAA204F4DC3916B7D8F365BD947" Name="main">
+      <Directory Id="dir0CA5D93B17CFA7A58DED89B1C44F26CD" Name="main">
         <Component Id="cmpE24B049FFBAEF598542ED621FFC0857F" Guid="*">
           <File Id="fil51F8F2FB0D131145845322C8D2F58247" KeyPath="yes" Source="$(var.CepDir)/main/index.html"/>
         </Component>
@@ -53,12 +53,12 @@
           <File Id="fil6D09C0F619E6C4E5215F4FBED057CFF6" KeyPath="yes" Source="$(var.CepDir)/main/styles.css"/>
         </Component>
       </Directory>
-      <Directory Id="dir7D8A8DB47C53B0FC773D13263668D80F" Name=".">
+      <Directory Id="dir5F6B53165AC10460056BD81533B6D477" Name=".">
         <Component Id="cmpA536539A9D49502EBB6A7F7A6B715A5E" Guid="*">
           <File Id="filC59AFC8B788E867CD569D060ED2C4CF4" KeyPath="yes" Source="$(var.CepDir)/Start-FlagshipEditor-Backend.cmd"/>
         </Component>
       </Directory>
-      <Directory Id="dir0FB0BC80C8BE916A471C702F395B5394" Name="styles">
+      <Directory Id="dir1DE307882B4DBD6211C9659A5BD9E29C" Name="styles">
         <Component Id="cmp00C64F1A41BD2AD30E3455FECAA9AA65" Guid="*">
           <File Id="fil4D1B0266AD5C54CD25014AA23C42CF34" KeyPath="yes" Source="$(var.CepDir)/styles/cmd_command_drill.json"/>
         </Component>
