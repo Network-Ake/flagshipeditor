@@ -77,9 +77,9 @@ function fullStyle() {
 
 function cuts() {
   return [
-    { beatTime: 0, endTime: 4, clipPath: "C:/media/a.mov", clipName: "a.mov", sectionType: "intro" },
-    { beatTime: 4, endTime: 8, clipPath: "C:/media/b.mov", clipName: "b.mov", sectionType: "verse" },
-    { beatTime: 8, endTime: 12, clipPath: "C:/media/a.mov", clipName: "a.mov", sectionType: "drop" },
+    { beatTime: 0, endTime: 4, sourceStart: 1, sourceEnd: 5, clipPath: "C:/media/a.mov", clipName: "a.mov", sectionType: "intro" },
+    { beatTime: 4, endTime: 8, sourceStart: 2, sourceEnd: 6, clipPath: "C:/media/b.mov", clipName: "b.mov", sectionType: "verse" },
+    { beatTime: 8, endTime: 12, sourceStart: 3, sourceEnd: 7, clipPath: "C:/media/a.mov", clipName: "a.mov", sectionType: "drop" },
   ];
 }
 
@@ -206,6 +206,18 @@ function cuts() {
   const remapped = clipLayers.filter((layer) => layer.timeRemap);
   assert.ok(remapped.length > 0, "Speed ramp must enable time remapping");
   for (const layer of remapped) {
+    const cut = cuts().find((entry) => layer.comment === `FlagshipEditorCut|${entry.sectionType}|${entry.beatTime.toFixed(4)}`);
+    assert.ok(cut, `Time-remapped layer has an unknown cut tag: ${layer.comment}`);
+    assert.equal(
+      layer.startTime,
+      cut.beatTime - cut.sourceStart,
+      "AE layer startTime must place sourceStart exactly at the cut beat",
+    );
+    assert.equal(
+      layer.timeRemap.keys[0].value,
+      cut.sourceStart,
+      "Time-remap VFX must begin from the selected best-moment source offset",
+    );
     for (const key of layer.timeRemap.keys) {
       assert.ok(
         key.value >= 0 && key.value <= layer.source.duration + 1e-6,
@@ -254,6 +266,22 @@ function cuts() {
     assert.equal(comp.layerByName(name).adjustmentLayer, true, `${name} must be an adjustment layer`);
   }
 
+  // Picture flash: one shared solid keyframed per beat, never one solid per cut.
+  const flashLayers = comp.layersNamed("FlagshipEditor_Flash");
+  assert.equal(flashLayers.length, 1, "Every picture flash must reuse one shared solid");
+  const flashOpacity = flashLayers[0].transform("ADBE Opacity");
+  const flashPeaks = flashOpacity.keys.filter((key) => key.value === 85);
+  assert.equal(flashPeaks.length, 3, "Each of the three cuts must keyframe its own flash");
+  for (const key of flashOpacity.keys) {
+    assert.ok(key.value === 0 || key.value === 85, `Unexpected flash key value ${key.value}`);
+  }
+  for (const beat of [4, 8]) {
+    assert.ok(
+      flashOpacity.keys.some((key) => key.value === 0 && Math.abs(key.time - (beat - 1 / 24)) < 1e-6),
+      `The shared flash must hold zero opacity until one frame before the beat at ${beat}s`,
+    );
+  }
+
   const grain = comp.layerByName("FlagshipEditor_Grain").effects.property("ADBE Noise");
   assert.equal(grain.get("Use Color Noise"), false, "Film grain is monochrome");
   assert.equal(grain.get("Amount of Noise"), 6);
@@ -296,6 +324,49 @@ function cuts() {
     false,
     `Implemented VFX must not fail into a warning: ${JSON.stringify(finished.warnings)}`,
   );
+}
+
+// --- Selected source offset survives every time-remap mode -----------------
+{
+  const selectedCut = {
+    beatTime: 1,
+    endTime: 3,
+    sourceStart: 2.5,
+    sourceEnd: 4.5,
+    clipPath: "C:/media/source-offset.mov",
+    clipName: "source-offset.mov",
+    sectionType: "verse",
+  };
+  for (const activeMode of ["speed_ramp", "slow_mo", "freeze_frame"]) {
+    const { context, project } = loadBridge();
+    const style = fullStyle();
+    style.speed_ramp.enabled = activeMode === "speed_ramp";
+    style.slow_mo.enabled = activeMode === "slow_mo";
+    style.freeze_frame.enabled = activeMode === "freeze_frame";
+    unwrap(
+      context.beginComp(4, "C:/media/song.wav", style, baseParams(), {}, SECTIONS, "C:/extension", MEDIA_PROFILE, 140),
+      "beginComp",
+    );
+    unwrap(context.appendCutBatch([selectedCut]), "appendCutBatch");
+    unwrap(context.finishComp(), "finishComp");
+    const layer = project.comps[0].layerList.find((entry) => /FlagshipEditorCut\|/.test(entry.comment));
+    assert.ok(layer && layer.timeRemap, `${activeMode} must time-remap the selected cut`);
+    assert.equal(
+      layer.startTime,
+      selectedCut.beatTime - selectedCut.sourceStart,
+      `${activeMode} must retain the selected source offset in AE layer time`,
+    );
+    assert.equal(
+      layer.timeRemap.keys[0].time,
+      selectedCut.beatTime,
+      `${activeMode} must key the selected source frame at the cut in-point`,
+    );
+    assert.equal(
+      layer.timeRemap.keys[0].value,
+      selectedCut.sourceStart,
+      `${activeMode} must start at sourceStart, never source time zero`,
+    );
+  }
 }
 
 // --- Element 3D present -----------------------------------------------------
@@ -386,6 +457,17 @@ function cuts() {
   unwrap(context.finishComp(), "finishComp");
   const comp = project.comps[0];
   assert.equal(comp.layerList.length, 4, "Zero VFX intensity must leave only the music and three cuts");
+  for (const cut of cuts()) {
+    const layer = comp.layerList.find(
+      (entry) => entry.comment === `FlagshipEditorCut|${cut.sectionType}|${cut.beatTime.toFixed(4)}`,
+    );
+    assert.ok(layer, `Native source-offset test could not find ${cut.clipName}`);
+    assert.equal(
+      layer.inPoint - layer.startTime,
+      cut.sourceStart,
+      "An un-remapped AE layer must show sourceStart at its cut in-point",
+    );
+  }
   assert.equal(comp.layerByName("FlagshipEditor_LUT_GLOBAL"), null);
 }
 
@@ -481,19 +563,120 @@ function cuts() {
   unwrap(context.appendCutBatch(cuts()), "appendCutBatch");
   unwrap(context.finishComp(), "finishComp");
 
-  const swapped = unwrap(context.swapCut(4, "verse", "C:/media/c.mov", "c.mov"), "swapCut");
+  const swapped = unwrap(
+    context.swapCut(4, "verse", "C:/media/c.mov", "c.mov", 8, 1.25, 5.25),
+    "swapCut",
+  );
   assert.equal(swapped.updated, 1);
   const comp = project.comps[0];
-  assert.ok(comp.layerList.some((layer) => layer.name === "c.mov [verse]"), "The swapped layer must be renamed");
+  const swappedLayer = comp.layerList.find((layer) => layer.name === "c.mov [verse]");
+  assert.ok(swappedLayer, "The swapped layer must be renamed");
+  assert.equal(
+    swappedLayer.inPoint - swappedLayer.startTime,
+    1.25,
+    "A manual swap must adopt the alternative clip's selected source offset",
+  );
+  assert.equal(
+    swappedLayer.timeRemap.valueAtTime(swappedLayer.inPoint),
+    1.25,
+    "A manual swap must retarget existing time-remap values to the alternative source offset",
+  );
 
-  const missing = unwrap(context.swapCut(99, "verse", "C:/media/c.mov", "c.mov"), "swapCut");
+  const reordered = unwrap(
+    context.swapCut(4, "verse", "C:/media/a.mov", "a.mov", 8, 3, 7),
+    "swapCut reorder path",
+  );
+  assert.equal(reordered.updated, 1);
+  assert.equal(
+    swappedLayer.inPoint - swappedLayer.startTime,
+    3,
+    "The reorder path must move the selected source offset with the clip assignment",
+  );
+  assert.equal(
+    swappedLayer.timeRemap.valueAtTime(swappedLayer.inPoint),
+    3,
+    "The reorder path must shift existing time-remap values with the clip assignment",
+  );
+  const sourceBeforeInvalidSwap = swappedLayer.source;
+  const nameBeforeInvalidSwap = swappedLayer.name;
+  const itemCountBeforeInvalidSwap = project.numItems;
+  assert.match(
+    expectError(
+      context.swapCut(4, "verse", "C:/media/invalid.mov", "invalid.mov", 8, 9, 8),
+      "swapCut invalid source window",
+    ),
+    /no usable selected source window/,
+  );
+  assert.equal(
+    swappedLayer.source,
+    sourceBeforeInvalidSwap,
+    "An invalid manual swap must not mutate the AE layer source",
+  );
+  assert.equal(swappedLayer.name, nameBeforeInvalidSwap);
+  assert.equal(
+    project.numItems,
+    itemCountBeforeInvalidSwap,
+    "An invalid manual swap must not leave orphan footage in the AE project",
+  );
+
+  const missing = unwrap(
+    context.swapCut(99, "verse", "C:/media/c.mov", "c.mov", 100, 0, 1),
+    "swapCut",
+  );
   assert.equal(missing.updated, 0);
 
   const replaced = unwrap(
-    context.replaceSectionCuts("drop", [{ beatTime: 8, clipPath: "C:/media/d.mov", clipName: "d.mov", sectionType: "drop" }]),
+    context.replaceSectionCuts("drop", [{
+      beatTime: 8,
+      endTime: 12,
+      sourceStart: 1.5,
+      sourceEnd: 5.5,
+      clipPath: "C:/media/d.mov",
+      clipName: "d.mov",
+      sectionType: "drop",
+    }]),
     "replaceSectionCuts",
   );
   assert.equal(replaced.updated, 1);
+  const regeneratedLayer = comp.layerList.find((layer) => layer.name === "d.mov [drop]");
+  assert.equal(
+    regeneratedLayer.inPoint - regeneratedLayer.startTime,
+    1.5,
+    "Section regeneration must apply the replacement cut's selected source offset",
+  );
+  assert.equal(
+    regeneratedLayer.timeRemap.valueAtTime(regeneratedLayer.inPoint),
+    1.5,
+    "Section regeneration must retarget existing time-remap values to sourceStart",
+  );
+  const sourceBeforeInvalidRegeneration = regeneratedLayer.source;
+  const nameBeforeInvalidRegeneration = regeneratedLayer.name;
+  const itemCountBeforeInvalidRegeneration = project.numItems;
+  const invalidRegeneration = unwrap(
+    context.replaceSectionCuts("drop", [{
+      beatTime: 8,
+      endTime: 12,
+      sourceStart: 20,
+      sourceEnd: 30,
+      clipPath: "C:/media/invalid-regeneration.mov",
+      clipName: "invalid-regeneration.mov",
+      sectionType: "drop",
+    }]),
+    "replaceSectionCuts invalid source window",
+  );
+  assert.equal(invalidRegeneration.updated, 0);
+  assert.equal(invalidRegeneration.missing, 1);
+  assert.equal(
+    regeneratedLayer.source,
+    sourceBeforeInvalidRegeneration,
+    "An invalid section replacement must not mutate the AE layer source",
+  );
+  assert.equal(regeneratedLayer.name, nameBeforeInvalidRegeneration);
+  assert.equal(
+    project.numItems,
+    itemCountBeforeInvalidRegeneration,
+    "A clamped-invalid regeneration must clean up newly imported orphan footage",
+  );
   assert.match(expectError(context.replaceSectionCuts("drop", null), "replaceSectionCuts"), /expects an array/);
 }
 

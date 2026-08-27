@@ -1,0 +1,876 @@
+{
+  "baseline": {
+    "added": [],
+    "changed": [],
+    "contract_actual_sha256": "9000d00dd7df66aba066471cd4dd6a3c10d97d48f45363c37f46f129e97ebaca",
+    "contract_changed": false,
+    "contract_expected_sha256": "",
+    "missing": [],
+    "status": "missing"
+  },
+  "baseline_path": "engine/forensics/baseline.json",
+  "baseline_sha256": "",
+  "contract_metrics": {
+    "duplicate_identity_rejected": true,
+    "phrase_boundaries_sha256": "e2f8f18401efbee764f1eea7a1f643c8ac0eed6816febd6a3a18e21f1b5403c1",
+    "phrase_boundary_count": 6,
+    "section_weight_sums": {
+      "bridge": 1.0,
+      "chorus": 1.0,
+      "drop": 1.0,
+      "intro": 1.0,
+      "outro": 1.0,
+      "verse": 1.0
+    },
+    "selection_count": 27,
+    "selection_sha256": "da84f7d8243d332046138ec8e1daea542444a8055271558660a0d85646914bdb",
+    "selection_three_run_equal": true,
+    "slot_count": 27,
+    "slot_sha256": "2f66cd894a6131a6e4b6fe75bb04bb64059b061056d5ab74f1fa0d92228913b2",
+    "visual_feature_keys": [
+      "composition_score",
+      "energy_score",
+      "histogram",
+      "sharpness_score"
+    ],
+    "visual_histogram_bins": 32
+  },
+  "findings": [
+    {
+      "check": "required-symbols",
+      "evidence": [
+        "engine/beat_analysis.py:81 analyze_track",
+        "engine/beat_analysis.py:403 detect_phrase_boundaries",
+        "engine/beat_analysis.py:71 frequency_filter"
+      ],
+      "message": "engine/beat_analysis.py exposes every required contract symbol",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "network-surface",
+      "evidence": [],
+      "message": "No network-capable imports found in engine/beat_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "dynamic-code-execution",
+      "evidence": [],
+      "message": "No eval/exec/compile calls in engine/beat_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "shell-injection-surface",
+      "evidence": [],
+      "message": "No shell=True subprocess in engine/beat_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "selector-determinism-surface",
+      "evidence": [],
+      "message": "No forbidden random selection calls in engine/beat_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "required-symbols",
+      "evidence": [
+        "engine/clip_analysis.py:24 ANALYSIS_SCHEMA_VERSION",
+        "engine/clip_analysis.py:731 classify_clip",
+        "engine/clip_analysis.py:692 compute_visual_scores",
+        "engine/clip_analysis.py:549 find_best_moment"
+      ],
+      "message": "engine/clip_analysis.py exposes every required contract symbol",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "network-surface",
+      "evidence": [],
+      "message": "No network-capable imports found in engine/clip_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "dynamic-code-execution",
+      "evidence": [],
+      "message": "No eval/exec/compile calls in engine/clip_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "shell-injection-surface",
+      "evidence": [],
+      "message": "No shell=True subprocess in engine/clip_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "selector-determinism-surface",
+      "evidence": [],
+      "message": "No forbidden random selection calls in engine/clip_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "required-symbols",
+      "evidence": [
+        "engine/shot_selector.py:28 SECTION_WEIGHTS",
+        "engine/shot_selector.py:90 SECTION_SCENE_AFFINITY",
+        "engine/shot_selector.py:103 MIN_CUT_SECONDS",
+        "engine/shot_selector.py:708 plan_cuts",
+        "engine/shot_selector.py:262 score_clip",
+        "engine/shot_selector.py:866 select_best_clips"
+      ],
+      "message": "engine/shot_selector.py exposes every required contract symbol",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "network-surface",
+      "evidence": [],
+      "message": "No network-capable imports found in engine/shot_selector.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "dynamic-code-execution",
+      "evidence": [],
+      "message": "No eval/exec/compile calls in engine/shot_selector.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "shell-injection-surface",
+      "evidence": [],
+      "message": "No shell=True subprocess in engine/shot_selector.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "selector-determinism-surface",
+      "evidence": [],
+      "message": "No forbidden random selection calls in engine/shot_selector.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "B06",
+      "evidence": [
+        "engine/beat_analysis.py:159 rms_times is calculated",
+        "engine/beat_analysis.py:191 result emits energy only"
+      ],
+      "message": "Energy samples are emitted without their calculated time base",
+      "severity": "medium",
+      "status": "warn"
+    },
+    {
+      "check": "B09",
+      "evidence": [
+        "engine/beat_analysis.py:118 every fourth beat is labelled downbeat",
+        "engine/beat_analysis.py:321 first section is forced to intro",
+        "engine/beat_analysis.py:322 last section is forced to outro"
+      ],
+      "message": "Musical labels remain heuristic and carry no confidence/provenance",
+      "severity": "medium",
+      "status": "warn"
+    },
+    {
+      "check": "CACHE-BEAT-PROVENANCE",
+      "evidence": [
+        "engine/beat_analysis.py:53 key uses size, mtime and path"
+      ],
+      "message": "Beat cache identity omits schema, code hash, and analysis configuration",
+      "severity": "high",
+      "status": "warn"
+    },
+    {
+      "check": "C02",
+      "evidence": [
+        "engine/clip_analysis.py:146 cache identity",
+        "engine/clip_analysis.py:25 analysis dimension",
+        "engine/clip_analysis.py:26 sample count"
+      ],
+      "message": "Clip cache key does not bind every analysis setting/tool identity",
+      "severity": "high",
+      "status": "warn"
+    },
+    {
+      "check": "C06",
+      "evidence": [
+        "engine/clip_analysis.py:652 face output boundary"
+      ],
+      "message": "Face results omit detector/fallback provenance",
+      "severity": "medium",
+      "status": "warn"
+    },
+    {
+      "check": "C10",
+      "evidence": [
+        "engine/clip_analysis.py:437 flow signature",
+        "engine/clip_analysis.py:26 sparse sample count"
+      ],
+      "message": "Sparse optical-flow values are not normalized by elapsed source time/decoder policy",
+      "severity": "high",
+      "status": "warn"
+    },
+    {
+      "check": "UNUSED_SIGNAL",
+      "evidence": [
+        "beat.phrase_boundaries",
+        "beat.energy",
+        "clip.energy_score"
+      ],
+      "message": "Signals are emitted by upstream engines but ignored by selector",
+      "severity": "medium",
+      "status": "warn"
+    },
+    {
+      "check": "S12",
+      "evidence": [
+        "engine/shot_selector.py:775 slot output fields"
+      ],
+      "message": "Final cuts do not record boundary/onset/grid provenance after arbitration",
+      "severity": "medium",
+      "status": "warn"
+    },
+    {
+      "check": "S13",
+      "evidence": [
+        "engine/shot_selector.py:975 selector emits sourceStart",
+        "src/js/main/lib/python.ts:126 CutDecision source fields=False",
+        "src/js/main/App.tsx:105 payload source fields=False",
+        "src/js/main/App.tsx:172 serialization drops source fields=True",
+        "src/jsx/aeft/aeft.ts:77 renderer contract source fields=False",
+        "src/jsx/aeft/aeft.ts:245 renderer source offset applied=False"
+      ],
+      "message": "Selector sourceStart/sourceEnd are dropped before rendering; best moment is not applied",
+      "severity": "critical",
+      "status": "fail"
+    },
+    {
+      "check": "ROADMAP-REAL-MEDIA",
+      "evidence": [
+        "v1 preflight scope boundary"
+      ],
+      "message": "Real-media decoder and semantic accuracy are not exercised by preflight",
+      "severity": "info",
+      "status": "warn"
+    },
+    {
+      "check": "ROADMAP-CACHE-REPLAY",
+      "evidence": [
+        "v1 preflight scope boundary"
+      ],
+      "message": "Cached-vs-uncached semantic equality is not exercised by preflight",
+      "severity": "info",
+      "status": "warn"
+    },
+    {
+      "check": "ROADMAP-NATIVE-AE",
+      "evidence": [
+        "v1 preflight scope boundary"
+      ],
+      "message": "Native Windows/After Effects composition inspection is not exercised",
+      "severity": "info",
+      "status": "warn"
+    },
+    {
+      "check": "ROADMAP-ARTISTIC",
+      "evidence": [
+        "v1 preflight scope boundary"
+      ],
+      "message": "Artistic quality has no labelled fixtures or blind human validation",
+      "severity": "info",
+      "status": "warn"
+    },
+    {
+      "check": "ROADMAP-NETWORK-SANDBOX",
+      "evidence": [
+        "v1 preflight scope boundary"
+      ],
+      "message": "The protocol performs no network calls, but child tests are not kernel-level network-sandboxed",
+      "severity": "info",
+      "status": "warn"
+    },
+    {
+      "check": "ROADMAP-PROCESS-CONTAINMENT",
+      "evidence": [
+        "v1 preflight scope boundary"
+      ],
+      "message": "Child output is buffered and timeout handling does not guarantee termination of descendant processes",
+      "severity": "info",
+      "status": "warn"
+    },
+    {
+      "check": "ROADMAP-TS-PARSER",
+      "evidence": [
+        "v1 preflight scope boundary"
+      ],
+      "message": "The S13 contract uses multi-boundary source inspection, not a TypeScript AST parser or native AE execution",
+      "severity": "info",
+      "status": "warn"
+    },
+    {
+      "check": "section-contract",
+      "evidence": [
+        "required=['bridge', 'chorus', 'drop', 'intro', 'outro', 'verse']",
+        "missing_weights=[]",
+        "missing_affinities=[]",
+        "weight_sums={'bridge': 1.0, 'chorus': 1.0, 'drop': 1.0, 'intro': 1.0, 'outro': 1.0, 'verse': 1.0}"
+      ],
+      "message": "Beat/clip/selector section vocabulary is aligned",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "clip-selector-feature-contract",
+      "evidence": [
+        "keys=['composition_score', 'energy_score', 'histogram', 'sharpness_score']",
+        "histogram_bins=32"
+      ],
+      "message": "Clip features satisfy selector input contracts",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "timeline-invariants",
+      "evidence": [
+        "slot_count=27",
+        "boundary_count=4",
+        "minimum_slot_seconds=0.25",
+        "contiguous=True",
+        "deterministic=True"
+      ],
+      "message": "Cut planner is deterministic and tiles the full timeline",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "selection-invariants",
+      "evidence": [
+        "selection_count=27",
+        "slot_count=27",
+        "repeat_violations=0",
+        "three_run_deterministic=True",
+        "source_window_failures=[]",
+        "score_failures=[]",
+        "alternative_failures=[]"
+      ],
+      "message": "Selector output is deterministic, bounded, and non-repeating",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "S04-DUPLICATE-IDENTITY",
+      "evidence": [
+        "input_count=9",
+        "unique_paths=8",
+        "output_count=0"
+      ],
+      "message": "Duplicate clip identities are explicitly rejected",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "beat-selector-time-contract",
+      "evidence": [
+        "phrase_boundary_count=6"
+      ],
+      "message": "Beat-derived phrase times are ordered and bounded",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "TEST-MUTATION",
+      "evidence": [
+        "tracked_files=1702",
+        "changed=[]",
+        "git_status_changed=False"
+      ],
+      "message": "Child tests left all tracked engine/test/render files bit-identical",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "BASELINE-MISSING",
+      "evidence": [
+        "engine/forensics/baseline.json"
+      ],
+      "message": "No reviewed baseline exists; drift comparison is unavailable",
+      "severity": "high",
+      "status": "warn"
+    }
+  ],
+  "generated_at": "2026-08-25T05:28:34+00:00",
+  "inventory": [
+    {
+      "bytes": 27369,
+      "path": "engine/ANALYSIS-beat.md",
+      "sha256": "859326dd924f8d48b4c597ea598be6430c33d27eb4f29b71d238ce53721f8020"
+    },
+    {
+      "bytes": 39657,
+      "path": "engine/ANALYSIS-clip.md",
+      "sha256": "17cf91e8dbe2e5587f3cdffe0b996a6ea2c27656bcaaf7dd0258d11f912ab44d"
+    },
+    {
+      "bytes": 35229,
+      "path": "engine/ANALYSIS-selector.md",
+      "sha256": "0fe713268becd1544b873b085a007df56639a35431a7ab2b21d618d099e30aa2"
+    },
+    {
+      "bytes": 25183,
+      "path": "engine/CYBER-FORENSIC-SPEC.md",
+      "sha256": "b68b4a35beb4827dfd0bb41e4e22d1d7bfc08fa750804cc7f433535e0c4fe58e"
+    },
+    {
+      "bytes": 6,
+      "path": "engine/VERSION",
+      "sha256": "c28fcca53637bc88e124af1725df13cb98c69dedefd62fb3cdbe1cdb6b760624"
+    },
+    {
+      "bytes": 20656,
+      "path": "engine/analysis_jobs.py",
+      "sha256": "9b5550b367d26708f5404f0ff62e260a0f6711a97c1c035ff7f307c8f5065083"
+    },
+    {
+      "bytes": 15486,
+      "path": "engine/beat_analysis.py",
+      "sha256": "cd7d805b9fd819bd2afee3f1cd7fec6519b58b7dabc3f72deaea52252f554608"
+    },
+    {
+      "bytes": 33707,
+      "path": "engine/clip_analysis.py",
+      "sha256": "e2c80f512a6fff8ba504f3e1f664b281f36c63b8f107557130c1c336055e4551"
+    },
+    {
+      "bytes": 5043,
+      "path": "engine/media_tools.py",
+      "sha256": "0b3616ef02c4bac98752cc91e6593f8d97a35e82c30db156a4087afee8baec4e"
+    },
+    {
+      "bytes": 662,
+      "path": "engine/requirements-windows.lock",
+      "sha256": "d5d16939b2e938bc54fe2beee89574b42ea349a84c10c1570007199edf2fc16b"
+    },
+    {
+      "bytes": 244,
+      "path": "engine/requirements.txt",
+      "sha256": "afa534232d7b3dc8515bf8c16bc8689d4b5b22172b8aed06d1843449a5e8c3bc"
+    },
+    {
+      "bytes": 1427,
+      "path": "engine/self_test.py",
+      "sha256": "b2d8f8ae85f248259cafe5c1f8252d832033c2bc4a9070dc4563613e72dc6440"
+    },
+    {
+      "bytes": 15307,
+      "path": "engine/server.py",
+      "sha256": "bf0b7ae803d40efaf12eafa81fced9a775aeebb755beef13de3afb516ed4aebb"
+    },
+    {
+      "bytes": 39912,
+      "path": "engine/shot_selector.py",
+      "sha256": "a4faec413215232c0e906a46514e50218db7a588b8b0308c46c23aa3b4c28cfe"
+    },
+    {
+      "bytes": 27368,
+      "path": "engine/test_cutting_engine.py",
+      "sha256": "7314a9527158e167069d9233b1b0b91d5dede6141c001bb6b320709c612f00e8"
+    },
+    {
+      "bytes": 65565,
+      "path": "scripts/cyber_forensic_protocol.py",
+      "sha256": "44084a4e923ea425011134f1d016357fd0f129ddeebeec437933263d0ed58ab0"
+    },
+    {
+      "bytes": 24584,
+      "path": "scripts/test-ae-bridge.mjs",
+      "sha256": "5e04b26dbf6cf946ee7e81906f8e4378cfb44ec022aeb0ad3f6b3df7265111f1"
+    },
+    {
+      "bytes": 6285,
+      "path": "scripts/test-analysis-jobs.py",
+      "sha256": "ec2d1e9cc3499790fa634bd64d865af9857f650e5c57355af4fa857fb2d3de46"
+    },
+    {
+      "bytes": 11169,
+      "path": "scripts/test-backend-search.mjs",
+      "sha256": "85a5b5d141ade8fc9a1b0b6306fcb5806ae6c4c97b9243c69814560710518b40"
+    },
+    {
+      "bytes": 6309,
+      "path": "scripts/test-cyber-forensic-protocol.py",
+      "sha256": "bc583357cb8ce599884f76d26ff097d0555223fb8db0551a2dcf425ae533ea2a"
+    },
+    {
+      "bytes": 3976,
+      "path": "scripts/test-engine-contracts.py",
+      "sha256": "70f13f6b6a2eb817ccde2fbb05cc8d6cdc5f9ac473e708bee72d38fe8b4e051f"
+    },
+    {
+      "bytes": 2461,
+      "path": "scripts/test-prores-fixtures.py",
+      "sha256": "02edf1da5a89bf25296d3a5094fe4c32d52c59d291dbd42d7908f3370f2de3af"
+    },
+    {
+      "bytes": 830,
+      "path": "scripts/test-server-health.py",
+      "sha256": "bd52bd497d4faf21c751f678bf73e9559e297d0503c2973c1ad868768063046d"
+    },
+    {
+      "bytes": 4104,
+      "path": "scripts/test-ui-job-recovery.mjs",
+      "sha256": "cb1fcd3380c6d44051203c0c9a9a3bf3ca67b12cc430ace00beb93f37b7ac56c"
+    },
+    {
+      "bytes": 8681,
+      "path": "scripts/test-windows-package.mjs",
+      "sha256": "66c5f8ec39253c71425a632b362b6969661e90bb9bbbf8c33891f204cd115f65"
+    },
+    {
+      "bytes": 39188,
+      "path": "src/js/main/App.tsx",
+      "sha256": "a3a840359553760f8b0fb2e10abc0ca1bb2c5bef9e30685edcd02c73314861d5"
+    },
+    {
+      "bytes": 9962,
+      "path": "src/js/main/lib/python.ts",
+      "sha256": "6c28d129fc1fb5f3cc73e28bc19013285790fe7d64932c651359949acff3625f"
+    },
+    {
+      "bytes": 26159,
+      "path": "src/jsx/aeft/aeft.ts",
+      "sha256": "4f0228135e8015481d8b66038dcda0c0b00a3515e28da9cdac0adfd199c09959"
+    },
+    {
+      "bytes": 2809,
+      "path": "styles/cmd_command_drill.json",
+      "sha256": "98012f885be39b7f738cb29bf757144b34c0336d6b4941bb3c65493319ca7b00"
+    },
+    {
+      "bytes": 1536,
+      "path": "styles/custom.json",
+      "sha256": "c681486d094483ac3cc0c00662af3bf914922899248cb407d2dea501365fcaa1"
+    },
+    {
+      "bytes": 2574,
+      "path": "styles/jack_rottier.json",
+      "sha256": "5c9e097b43bea7c41c0eaa0c32d8f204c29e1b92f290a714b5b20f4c6abfc277"
+    },
+    {
+      "bytes": 2963,
+      "path": "styles/lyrical_lemonade.json",
+      "sha256": "6d57b92b1f17430c0077ab742d907d1dc500addb36ed3650bd679ed873e46309"
+    },
+    {
+      "bytes": 2729,
+      "path": "styles/ninetive.json",
+      "sha256": "36eaeca38f9d15223d9d320e3513b0c02811c64cd2b8e18606cb296a2b8cab52"
+    },
+    {
+      "bytes": 2894,
+      "path": "styles/worldwide_films.json",
+      "sha256": "37e9aeeff676f0b9494a6635788f11e1a5712a82be094d3c90cc7bc5de1c8d6e"
+    }
+  ],
+  "limitations": [
+    "No real media fixture is decoded by the forensic cross-engine invariant gate.",
+    "No native Windows or After Effects host is exercised.",
+    "No subjective edit-quality claim is inferred from passing tests.",
+    "Analysis-note claims marked as requiring validation remain unproven."
+  ],
+  "network_boundary": {
+    "child_process_network_sandboxed": false,
+    "protocol_network_calls": false
+  },
+  "project": "FlagshipEditor",
+  "protocol_version": "1.0.0",
+  "provenance": {
+    "branch": "main",
+    "commit": "8f850d71d1b4826a3fd118b509a202ea7a0588d9",
+    "engine_status": "M engine/shot_selector.py\n M scripts/test-engine-contracts.py\n?? engine/ANALYSIS-beat.md\n?? engine/ANALYSIS-clip.md\n?? engine/ANALYSIS-selector.md\n?? engine/CYBER-FORENSIC-SPEC.md\n?? engine/forensics/\n?? scripts/cyber_forensic_protocol.py\n?? scripts/test-cyber-forensic-protocol.py"
+  },
+  "runtime": {
+    "engine_venv_selected": true,
+    "machine": "x86_64",
+    "packages": {
+      "fastapi": "0.141.1",
+      "librosa": "1.0.0",
+      "numpy": "2.2.6",
+      "opencv-python": "missing",
+      "opencv-python-headless": "4.14.0.94",
+      "pydantic": "2.13.4",
+      "scipy": "1.18.1"
+    },
+    "platform": "macOS-15.7.5-x86_64-i386-64bit",
+    "protocol_process_executable": "/Users/issandre/.openclaw/workspace/projects/flagshipeditor/engine/.venv/bin/python",
+    "python_executable": "/Users/issandre/.openclaw/workspace/projects/flagshipeditor/engine/.venv/bin/python",
+    "python_sha256": "cce81969b8ba0d7c81d5143ceb4474b8b551627df4cfa4d34e6a0bc168481e03",
+    "python_version": "3.12.13 (main, Mar  3 2026, 12:39:30) [Clang 17.0.0 (clang-1700.6.3.2)]"
+  },
+  "schema_version": 1,
+  "signatures": {
+    "engine/CYBER-FORENSIC-SPEC.md": {
+      "ast_sha256": "b68b4a35beb4827dfd0bb41e4e22d1d7bfc08fa750804cc7f433535e0c4fe58e",
+      "sha256": "b68b4a35beb4827dfd0bb41e4e22d1d7bfc08fa750804cc7f433535e0c4fe58e",
+      "symbols": {}
+    },
+    "engine/beat_analysis.py": {
+      "ast_sha256": "8453ed1c9423bfed1d2c6924d5ffcce3932063d37fc281deb0e1dcdd42b0aaa2",
+      "sha256": "cd7d805b9fd819bd2afee3f1cd7fec6519b58b7dabc3f72deaea52252f554608",
+      "symbols": {
+        "_BEAT_CACHE_DB": 30,
+        "_BEAT_CACHE_DIR": 21,
+        "_beat_cache_connection": 33,
+        "_beat_cache_key": 50,
+        "_correct_tempo": 62,
+        "analyze_track": 81,
+        "assign_section_types": 315,
+        "classify_section_type": 246,
+        "detect_phrase_boundaries": 403,
+        "estimate_key": 366,
+        "frequency_filter": 71,
+        "labels_to_sections": 214,
+        "simple_segmentation": 349
+      }
+    },
+    "engine/clip_analysis.py": {
+      "ast_sha256": "ac8fb8a73b8868aa866c387a31323e6cf3394a1c53e253b549c3962b411d86c2",
+      "sha256": "e2c80f512a6fff8ba504f3e1f664b281f36c63b8f107557130c1c336055e4551",
+      "symbols": {
+        "ANALYSIS_MAX_DIMENSION": 25,
+        "ANALYSIS_SAMPLES": 26,
+        "ANALYSIS_SCHEMA_VERSION": 24,
+        "BASE_CACHE_DIR": 33,
+        "CACHE_DB": 53,
+        "CLIP_TIMEOUT_SECONDS": 29,
+        "ClipAnalysisError": 56,
+        "FFMPEG_PATH": 31,
+        "FFPROBE_PATH": 30,
+        "FRAME_TIMEOUT_SECONDS": 28,
+        "PROBE_TIMEOUT_SECONDS": 27,
+        "THUMBNAIL_DIR": 52,
+        "_cache_connection": 124,
+        "_cancelled": 64,
+        "_check_cancel": 68,
+        "_check_deadline": 73,
+        "_extract_frames_ffmpeg_timed": 336,
+        "_extract_frames_opencv_timed": 262,
+        "_frame_metrics": 463,
+        "_run_cancellable": 292,
+        "_source_identity": 146,
+        "classify_clip": 731,
+        "classify_clip_cached": 821,
+        "classify_probe_failure": 181,
+        "compute_brightness_stability": 502,
+        "compute_motion_intensity": 488,
+        "compute_motion_variance": 494,
+        "compute_visual_scores": 692,
+        "detect_faces": 608,
+        "extract_frames": 391,
+        "extract_frames_ffmpeg": 323,
+        "extract_frames_opencv": 253,
+        "extract_frames_timed": 405,
+        "find_best_moment": 549,
+        "get_video_metadata": 197,
+        "optical_flow_series": 437,
+        "parse_frame_rate": 97,
+        "per_frame_motion": 524,
+        "resize_for_analysis": 110,
+        "safe_float": 82,
+        "safe_int": 90,
+        "save_thumbnail": 160
+      }
+    },
+    "engine/requirements-windows.lock": {
+      "ast_sha256": "d5d16939b2e938bc54fe2beee89574b42ea349a84c10c1570007199edf2fc16b",
+      "sha256": "d5d16939b2e938bc54fe2beee89574b42ea349a84c10c1570007199edf2fc16b",
+      "symbols": {}
+    },
+    "engine/requirements.txt": {
+      "ast_sha256": "afa534232d7b3dc8515bf8c16bc8689d4b5b22172b8aed06d1843449a5e8c3bc",
+      "sha256": "afa534232d7b3dc8515bf8c16bc8689d4b5b22172b8aed06d1843449a5e8c3bc",
+      "symbols": {}
+    },
+    "engine/shot_selector.py": {
+      "ast_sha256": "88eb4b3b8e8684a6c667acb89eb7d2a4af1dc3e77a98c561e482d63017d74eb8",
+      "sha256": "a4faec413215232c0e906a46514e50218db7a588b8b0308c46c23aa3b4c28cfe",
+      "symbols": {
+        "AFFINITY_BONUS": 99,
+        "DEFAULT_CUT_BEATS": 138,
+        "DEFAULT_MAX_BEATS": 139,
+        "DEFAULT_WEIGHTS": 79,
+        "MAX_CUTS": 105,
+        "MIN_CUT_SECONDS": 103,
+        "MIN_SECTION_SECONDS": 104,
+        "OVERUSE_PENALTY": 101,
+        "REPEAT_WINDOW": 102,
+        "SECTION_CUT_BEATS": 118,
+        "SECTION_MAX_BEATS": 129,
+        "SECTION_SCENE_AFFINITY": 90,
+        "SECTION_WEIGHTS": 28,
+        "SHORT_CLIP_PENALTY": 100,
+        "_CUT_BOUNDARY": 114,
+        "_CUT_GRID": 112,
+        "_CUT_ONSET": 113,
+        "_DEDUPE_TOLERANCE": 106,
+        "_absorb_runt_tails": 679,
+        "_beat_position": 336,
+        "_canonical_clip_path": 142,
+        "_clean_times": 363,
+        "_dedupe_times": 591,
+        "_eligible_indices": 841,
+        "_enforce_min_spacing": 610,
+        "_has_onset_between": 783,
+        "_max_beats_for_section": 483,
+        "_median_beat_period": 351,
+        "_parse_cut_interval": 318,
+        "_section_beat_indices": 520,
+        "_section_cut_candidates": 530,
+        "_snap_to_beat": 499,
+        "_subdivide_long_slots": 639,
+        "_validated_usable_clips": 166,
+        "best_moment_window": 807,
+        "bounded_duration": 203,
+        "bounded_score": 192,
+        "face_quality_score": 234,
+        "filter_clips_for_section": 791,
+        "get_cut_interval_for_section": 463,
+        "get_section_boundary_times": 449,
+        "histogram_distance": 214,
+        "normalize_sections": 377,
+        "plan_cuts": 708,
+        "resolve_media_profile": 1001,
+        "score_clip": 262,
+        "section_affinity": 246,
+        "select_best_clips": 866
+      }
+    },
+    "scripts/cyber_forensic_protocol.py": {
+      "ast_sha256": "44084a4e923ea425011134f1d016357fd0f129ddeebeec437933263d0ed58ab0",
+      "sha256": "44084a4e923ea425011134f1d016357fd0f129ddeebeec437933263d0ed58ab0",
+      "symbols": {}
+    },
+    "scripts/test-analysis-jobs.py": {
+      "ast_sha256": "ec2d1e9cc3499790fa634bd64d865af9857f650e5c57355af4fa857fb2d3de46",
+      "sha256": "ec2d1e9cc3499790fa634bd64d865af9857f650e5c57355af4fa857fb2d3de46",
+      "symbols": {}
+    },
+    "scripts/test-cyber-forensic-protocol.py": {
+      "ast_sha256": "bc583357cb8ce599884f76d26ff097d0555223fb8db0551a2dcf425ae533ea2a",
+      "sha256": "bc583357cb8ce599884f76d26ff097d0555223fb8db0551a2dcf425ae533ea2a",
+      "symbols": {}
+    },
+    "scripts/test-engine-contracts.py": {
+      "ast_sha256": "70f13f6b6a2eb817ccde2fbb05cc8d6cdc5f9ac473e708bee72d38fe8b4e051f",
+      "sha256": "70f13f6b6a2eb817ccde2fbb05cc8d6cdc5f9ac473e708bee72d38fe8b4e051f",
+      "symbols": {}
+    },
+    "scripts/test-server-health.py": {
+      "ast_sha256": "bd52bd497d4faf21c751f678bf73e9559e297d0503c2973c1ad868768063046d",
+      "sha256": "bd52bd497d4faf21c751f678bf73e9559e297d0503c2973c1ad868768063046d",
+      "symbols": {}
+    },
+    "src/js/main/App.tsx": {
+      "ast_sha256": "a3a840359553760f8b0fb2e10abc0ca1bb2c5bef9e30685edcd02c73314861d5",
+      "sha256": "a3a840359553760f8b0fb2e10abc0ca1bb2c5bef9e30685edcd02c73314861d5",
+      "symbols": {}
+    },
+    "src/js/main/lib/python.ts": {
+      "ast_sha256": "6c28d129fc1fb5f3cc73e28bc19013285790fe7d64932c651359949acff3625f",
+      "sha256": "6c28d129fc1fb5f3cc73e28bc19013285790fe7d64932c651359949acff3625f",
+      "symbols": {}
+    },
+    "src/jsx/aeft/aeft.ts": {
+      "ast_sha256": "4f0228135e8015481d8b66038dcda0c0b00a3515e28da9cdac0adfd199c09959",
+      "sha256": "4f0228135e8015481d8b66038dcda0c0b00a3515e28da9cdac0adfd199c09959",
+      "symbols": {}
+    },
+    "styles/cmd_command_drill.json": {
+      "ast_sha256": "98012f885be39b7f738cb29bf757144b34c0336d6b4941bb3c65493319ca7b00",
+      "sha256": "98012f885be39b7f738cb29bf757144b34c0336d6b4941bb3c65493319ca7b00",
+      "symbols": {}
+    },
+    "styles/custom.json": {
+      "ast_sha256": "c681486d094483ac3cc0c00662af3bf914922899248cb407d2dea501365fcaa1",
+      "sha256": "c681486d094483ac3cc0c00662af3bf914922899248cb407d2dea501365fcaa1",
+      "symbols": {}
+    },
+    "styles/jack_rottier.json": {
+      "ast_sha256": "5c9e097b43bea7c41c0eaa0c32d8f204c29e1b92f290a714b5b20f4c6abfc277",
+      "sha256": "5c9e097b43bea7c41c0eaa0c32d8f204c29e1b92f290a714b5b20f4c6abfc277",
+      "symbols": {}
+    },
+    "styles/lyrical_lemonade.json": {
+      "ast_sha256": "6d57b92b1f17430c0077ab742d907d1dc500addb36ed3650bd679ed873e46309",
+      "sha256": "6d57b92b1f17430c0077ab742d907d1dc500addb36ed3650bd679ed873e46309",
+      "symbols": {}
+    },
+    "styles/ninetive.json": {
+      "ast_sha256": "36eaeca38f9d15223d9d320e3513b0c02811c64cd2b8e18606cb296a2b8cab52",
+      "sha256": "36eaeca38f9d15223d9d320e3513b0c02811c64cd2b8e18606cb296a2b8cab52",
+      "symbols": {}
+    },
+    "styles/worldwide_films.json": {
+      "ast_sha256": "37e9aeeff676f0b9494a6635788f11e1a5712a82be094d3c90cc7bc5de1c8d6e",
+      "sha256": "37e9aeeff676f0b9494a6635788f11e1a5712a82be094d3c90cc7bc5de1c8d6e",
+      "symbols": {}
+    }
+  },
+  "summary": {
+    "engine_count": 3,
+    "finding_counts": {
+      "fail": 1,
+      "pass": 22,
+      "warn": 16
+    },
+    "integrity_target_count": 20,
+    "inventory_count": 34,
+    "test_counts": {
+      "fail": 0,
+      "not_run": 0,
+      "pass": 2
+    }
+  },
+  "tests": [
+    {
+      "command": [
+        "/Users/issandre/.openclaw/workspace/projects/flagshipeditor/engine/.venv/bin/python",
+        "scripts/test-engine-contracts.py"
+      ],
+      "duration_ms": 271,
+      "exit_code": 0,
+      "name": "engine-contracts",
+      "status": "pass",
+      "stderr": "",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout": "Engine contract tests passed (metadata, scoring, variety, scene alignment, clip identity).\n",
+      "stdout_sha256": "d554614c17cf383a6e09a2961c87e6d34cba2d6a4582ebddd4967f528331c255",
+      "timed_out": false
+    },
+    {
+      "command": [
+        "/Users/issandre/.openclaw/workspace/projects/flagshipeditor/engine/.venv/bin/python",
+        "scripts/test-server-health.py"
+      ],
+      "duration_ms": 1743,
+      "exit_code": 0,
+      "name": "server-health",
+      "status": "pass",
+      "stderr": "",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout": "Server health contract passed (application, version, and exact process identity).\n",
+      "stdout_sha256": "a953ffec512a75af25c13980726d00bac039253ca10bec732df0121a40bb6535",
+      "timed_out": false
+    }
+  ],
+  "verdict": {
+    "exit_code": 1,
+    "status": "FAIL"
+  }
+}

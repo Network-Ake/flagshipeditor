@@ -149,7 +149,7 @@ function addLumetri(layer: any, lutName: string, context: VFXContext): any {
 }
 
 function setLUTPath(lumetri: any, lutFile: any, lutName: string, context: VFXContext): boolean {
-  var candidates = ["ADBE Lumetri Color-0001", "ADBE Lumetri Color 2-0001", 1];
+  var candidates = ["ADBE Lumetri Color-0001", "ADBE Lumetri Color 2-0001"];
   for (var i = 0; i < candidates.length; i++) {
     try {
       var property = lumetri.property(candidates[i]);

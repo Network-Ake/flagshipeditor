@@ -33,7 +33,7 @@ thisObj.getBridgeHealth = function () {
   return JSON.stringify({
     __result: {
       appId: "com.akestudio.flagshipeditor.bridge",
-      version: "2.0.0",
+      version: "3.0.0",
       hostName: "After Effects",
       hostVersion: app.version,
     },
@@ -142,6 +142,25 @@ function flagshipEditorPush(list: string[], seen: any, path: string): void {
   list.push(path);
 }
 
+// The numeric runs in a path's last segment ("...\\2.0.0" -> [2, 0, 0]), for
+// version-aware folder ordering. A folder without digits yields [] and sorts
+// oldest.
+function flagshipEditorVersionParts(path: string): number[] {
+  var name = path.replace(/[\\\/]+$/, "");
+  var cut = name.lastIndexOf("\\");
+  var slash = name.lastIndexOf("/");
+  if (slash > cut) cut = slash;
+  if (cut !== -1) name = name.substring(cut + 1);
+  var runs = name.match(/\d+/g);
+  var parts: number[] = [];
+  if (runs) {
+    for (var i = 0; i < runs.length; i++) {
+      parts[parts.length] = parseInt(runs[i], 10);
+    }
+  }
+  return parts;
+}
+
 // Every directory a FlagshipEditor *install* can occupy, newest layout first:
 // v2.0.0's MSI is per-machine under Program Files, v0.1.x's .cmd installer was
 // per-user under LOCALAPPDATA, and a dev build runs out of the checkout itself.
@@ -167,8 +186,22 @@ function flagshipEditorInstallRoots(): string[] {
       for (i = 0; i < entries.length; i++) {
         if (entries[i] instanceof Folder) versions.push(entries[i].fsName);
       }
-      // Newest install first, so an upgrade wins over a leftover build.
-      versions.sort();
+      // Newest install first, so an upgrade wins over a leftover build. The
+      // entries are full fsName paths, so only the last path segment is
+      // compared, and its digit runs are compared numerically: a plain string
+      // sort put 1.10.0 before 1.9.0. ES3-safe — ExtendScript has no
+      // Array.prototype.map.
+      versions.sort(function (a, b) {
+        var aParts = flagshipEditorVersionParts(a);
+        var bParts = flagshipEditorVersionParts(b);
+        var length = aParts.length > bParts.length ? aParts.length : bParts.length;
+        for (var part = 0; part < length; part++) {
+          var aValue = part < aParts.length ? aParts[part] : 0;
+          var bValue = part < bParts.length ? bParts[part] : 0;
+          if (aValue !== bValue) return aValue - bValue;
+        }
+        return a < b ? -1 : a > b ? 1 : 0;
+      });
       for (var v = versions.length - 1; v >= 0; v--) flagshipEditorPush(roots, seen, versions[v]);
       flagshipEditorPush(roots, seen, installRoot.fsName);
     }

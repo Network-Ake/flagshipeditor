@@ -30,10 +30,47 @@ def _data_dir() -> Path:
 
 
 DATA_DIR = _data_dir()
-CACHE_DIR = Path(os.environ.get("FLAGSHIPEDITOR_CACHE") or (DATA_DIR / "cache"))
-LOG_DIR = DATA_DIR / "logs"
-for _directory in (CACHE_DIR, LOG_DIR):
-    _directory.mkdir(parents=True, exist_ok=True)
+
+# Everything below runs before the standard streams exist (pythonw.exe leaves
+# them None), so a raised exception here would die invisibly. Directory
+# creation therefore falls back to a per-user temp location instead of
+# raising, and the reasons are replayed into the log once it is open.
+_DEFERRED_WARNINGS: list[str] = []
+
+
+def _report_fatal(message: str) -> None:
+    """Last-resort diagnostics for a windowless process with no log file."""
+    if sys.platform == "win32":
+        try:
+            import ctypes
+
+            ctypes.windll.user32.MessageBoxW(0, message, "FlagshipEditor Backend", 0x10)
+        except Exception:
+            pass
+
+
+def _usable_dir(primary: Path, fallback_name: str) -> Path:
+    """Create ``primary`` or fall back to a writable per-user temp directory."""
+    try:
+        primary.mkdir(parents=True, exist_ok=True)
+        return primary
+    except OSError as error:
+        fallback = Path(tempfile.gettempdir()) / "FlagshipEditor" / fallback_name
+        _DEFERRED_WARNINGS.append(
+            f"Could not create {primary} ({error}); using {fallback} instead."
+        )
+    try:
+        fallback.mkdir(parents=True, exist_ok=True)
+        return fallback
+    except OSError as error:
+        _report_fatal(f"FlagshipEditor could not create {primary} or {fallback}: {error}")
+        raise
+
+
+CACHE_DIR = _usable_dir(
+    Path(os.environ.get("FLAGSHIPEDITOR_CACHE") or (DATA_DIR / "cache")), "cache"
+)
+LOG_DIR = _usable_dir(DATA_DIR / "logs", "logs")
 
 os.environ["FLAGSHIPEDITOR_DATA"] = str(DATA_DIR)
 os.environ["FLAGSHIPEDITOR_CACHE"] = str(CACHE_DIR)
@@ -43,9 +80,20 @@ os.environ.setdefault("FLAGSHIPEDITOR_FFPROBE", str(INSTALL_DIR / "runtime" / "b
 
 # pythonw.exe runs without a console, so the standard streams are None and the
 # first uvicorn log record would raise. Both are rebound to the per-user log
-# files before anything that logs is imported.
-sys.stdout = open(LOG_DIR / "backend.log", "a", encoding="utf-8", errors="replace", buffering=1)
-sys.stderr = open(LOG_DIR / "backend-error.log", "a", encoding="utf-8", errors="replace", buffering=1)
+# files before anything that logs is imported; if even those cannot be opened
+# the streams fall back to os.devnull so the backend still starts.
+def _stream(path: Path):
+    try:
+        return open(path, "a", encoding="utf-8", errors="replace", buffering=1)
+    except OSError as error:
+        _report_fatal(f"FlagshipEditor could not open its log file {path}: {error}")
+        return open(os.devnull, "a", encoding="utf-8")
+
+
+sys.stdout = _stream(LOG_DIR / "backend.log")
+sys.stderr = _stream(LOG_DIR / "backend-error.log")
+for _warning in _DEFERRED_WARNINGS:
+    print(f"[backend_launcher] {_warning}", file=sys.stderr)
 
 if sys.platform == "win32":
     # FFmpeg and FFprobe are console programs: launched from a windowless host
@@ -70,7 +118,13 @@ PID_FILE = DATA_DIR / "backend.pid"
 
 def main() -> int:
     """Run the backend, publishing a PID file the stop script can use."""
-    PID_FILE.write_text(str(os.getpid()), encoding="ascii")
+    try:
+        PID_FILE.write_text(str(os.getpid()), encoding="ascii")
+    except OSError as error:
+        # The stop script's clean path is the /shutdown endpoint; the PID file
+        # only backs its force-kill fallback, so a failed write must not keep
+        # the backend from starting.
+        print(f"[backend_launcher] Could not write {PID_FILE}: {error}", file=sys.stderr)
     try:
         uvicorn.run(
             server.app,

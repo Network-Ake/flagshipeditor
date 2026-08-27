@@ -5,9 +5,13 @@
  *
  * Output: FlagshipEditor-<version>-Windows.exe
  *
- * The file is a hybrid: a CMD header that uses certutil to decode an embedded
- * base64 ZIP payload, extracts it to %TEMP%, runs INSTALL-FLAGSHIPEDITOR.cmd,
- * and cleans up.  No 7-Zip, no PowerShell, no admin rights, no internet.
+ * The file is a hybrid: a CMD header followed by the ZIP payload encoded as
+ * base64 between PEM certificate markers.  certutil -decode ignores everything
+ * outside the -----BEGIN CERTIFICATE----- / -----END CERTIFICATE----- pair, so
+ * the script can decode *itself* (%~f0) with no line counting, no findstr pass
+ * and no per-line echo statements.  It then extracts with tar (built into
+ * Windows 10 1803+) and runs INSTALL-FLAGSHIPEDITOR.cmd.
+ * No 7-Zip, no PowerShell, no admin rights, no internet.
  *
  * Windows sees it as a batch file but the user just double-clicks it.
  * We name it .exe so Explorer treats it as an application and the user
@@ -28,53 +32,42 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
 
 const root = process.cwd();
 const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
 const version = packageJson.version;
 const packageName = `FlagshipEditor-${version}-Windows`;
 const zipPath = path.join(root, "flagshipeditor.zip");
-const downloadsPath = path.join("/Users/issandre/Downloads", `${packageName}.zip`);
-const singleExePath = path.join("/Users/issandre/Downloads", `${packageName}.exe`);
+// FLAGSHIPEDITOR_OUT_DIR exists so the deterministic test can build into a
+// scratch directory instead of the real Downloads folder.
+const outDir = process.env.FLAGSHIPEDITOR_OUT_DIR || "/Users/issandre/Downloads";
+const singleExePath = path.join(outDir, `${packageName}.exe`);
 
 // ── Verify the ZIP exists and was built ──────────────────────────────────
 if (!fs.existsSync(zipPath)) {
   throw new Error("flagshipeditor.zip not found. Run package-windows.mjs first.");
 }
 
+const minimumZipBytes = Number(process.env.FLAGSHIPEDITOR_MIN_ZIP_BYTES || 1_000_000);
 const zipSize = fs.statSync(zipPath).size;
-if (zipSize < 1_000_000) {
+if (zipSize < minimumZipBytes) {
   throw new Error(`ZIP is suspiciously small: ${zipSize} bytes. Run package-windows.mjs first.`);
 }
 
 console.log(`Source ZIP: ${zipPath} (${(zipSize / 1024 / 1024).toFixed(1)} MB)`);
 
-// ── Read the ZIP and encode as base64 ────────────────────────────────────
-const zipBytes = fs.readFileSync(zipPath);
-const base64 = zipBytes.toString("base64");
-
-// certutil can decode base64 but has a line-length limit.  We chunk it
-// into 76-character lines which is the standard base64 line width.
-const lines = [];
-for (let i = 0; i < base64.length; i += 76) {
-  lines.push(base64.slice(i, i + 76));
-}
-
-console.log(`Base64 payload: ${lines.length} lines, ${(base64.length / 1024 / 1024).toFixed(1)} MB encoded`);
-
-// ── Build the self-extracting CMD ────────────────────────────────────────
+// ── Build the self-extracting CMD header ─────────────────────────────────
 // The CMD script:
-// 1. Creates a temp extraction folder
-// 2. Writes the base64 payload to a .b64 file
-// 3. Uses certutil to decode it to a .zip
-// 4. Uses tar (built into Windows 10+) to extract the ZIP
-// 5. Runs INSTALL-FLAGSHIPEDITOR.cmd
-// 6. Cleans up the temp folder
+// 1. Creates a unique temp extraction folder (mkdir is the atomic test)
+// 2. Decodes its own embedded payload with certutil into a .zip
+// 3. Uses tar (built into Windows 10+) to extract the ZIP
+// 4. Runs INSTALL-FLAGSHIPEDITOR.cmd
+// 5. Cleans up the temp folder
 //
 // We use tar instead of PowerShell's Expand-Archive because tar is
 // built into Windows 10 1803+ and doesn't require PowerShell.
-// certutil is built into every Windows since NT 4.0.
+// certutil is built into every Windows since NT 4.0 and skips everything
+// outside the BEGIN/END CERTIFICATE markers when decoding.
 
 const cmd = `@echo off
 setlocal EnableExtensions DisableDelayedExpansion
@@ -89,33 +82,32 @@ echo ============================================================
 echo.
 
 rem ── Create a unique temp folder ──────────────────────────────
-set "EXTRACT_DIR=%TEMP%\\FlagshipEditor-${version}-%RANDOM%"
-mkdir "%EXTRACT_DIR%" >nul 2>&1
-if not exist "%EXTRACT_DIR%" (
+rem mkdir is atomic: it fails when the folder already exists, so a fresh
+rem private folder is guaranteed even when %RANDOM% repeats.
+set /a MKTEMP_TRIES=0
+:mktemp
+set /a MKTEMP_TRIES+=1
+if %MKTEMP_TRIES% GTR 20 (
   echo ERROR: Could not create a temporary folder.
   echo Your TEMP directory may be full. Free up space and retry.
   endlocal & exit /b 1
 )
+set "EXTRACT_DIR=%TEMP%\\FlagshipEditor-${version}-%RANDOM%%RANDOM%"
+mkdir "%EXTRACT_DIR%" >nul 2>&1 || goto :mktemp
 
-echo [1/4] Writing installer payload...
-set "B64_FILE=%EXTRACT_DIR%\\payload.b64"
+echo [1/3] Decoding payload...
 set "ZIP_FILE=%EXTRACT_DIR%\\payload.zip"
-
-> "%B64_FILE%" (
-${lines.map(line => `echo ${line}`).join("\n")}
-)
-
-echo [2/4] Decoding payload...
-certutil -decode "%B64_FILE%" "%ZIP_FILE%" >nul 2>&1
+rem The ZIP payload is appended after this script between certificate
+rem markers; certutil decodes only what sits between them.
+certutil -decode "%~f0" "%ZIP_FILE%" >nul 2>&1
 if errorlevel 1 (
   echo ERROR: Could not decode the installer payload.
   echo This should never happen. The file may have been corrupted during transfer.
   rmdir /s /q "%EXTRACT_DIR%" >nul 2>&1
   endlocal & exit /b 2
 )
-del /q "%B64_FILE%" >nul 2>&1
 
-echo [3/4] Extracting FlagshipEditor...
+echo [2/3] Extracting FlagshipEditor...
 tar -xf "%ZIP_FILE%" -C "%EXTRACT_DIR%" 2>nul
 if errorlevel 1 (
   echo ERROR: Could not extract the ZIP archive.
@@ -125,7 +117,7 @@ if errorlevel 1 (
 )
 del /q "%ZIP_FILE%" >nul 2>&1
 
-echo [4/4] Running installer...
+echo [3/3] Running installer...
 echo.
 
 rem ── Find the extracted folder ────────────────────────────────
@@ -161,18 +153,72 @@ endlocal & exit /b 0
 `;
 
 // ── Write the self-extracting file ───────────────────────────────────────
-fs.writeFileSync(singleExePath, cmd, "utf8");
+// The batch header gets CRLF line endings (cmd.exe's native format); the
+// payload keeps bare LF, which certutil accepts, to save a few megabytes.
+async function drainWrite(stream, text) {
+  if (!stream.write(text)) {
+    await new Promise((resolve) => stream.once("drain", resolve));
+  }
+}
+
+// Stream the ZIP through base64 in 57-byte groups: 57 source bytes become one
+// standard 76-character base64 line, so nothing larger than a read chunk is
+// ever held in memory (the old version built one string with the whole
+// payload in it, then one `echo` batch line per base64 line).
+async function writeBase64Payload(sourcePath, stream) {
+  const BYTES_PER_LINE = 57;
+  let carry = Buffer.alloc(0);
+  for await (const chunk of fs.createReadStream(sourcePath)) {
+    const data = carry.length ? Buffer.concat([carry, chunk]) : chunk;
+    const usable = data.length - (data.length % BYTES_PER_LINE);
+    carry = data.subarray(usable);
+    if (!usable) continue;
+    const encoded = data.subarray(0, usable).toString("base64");
+    let lines = "";
+    for (let i = 0; i < encoded.length; i += 76) {
+      lines += encoded.slice(i, i + 76) + "\n";
+    }
+    await drainWrite(stream, lines);
+  }
+  if (carry.length) {
+    await drainWrite(stream, carry.toString("base64") + "\n");
+  }
+}
+
+async function sha256File(filePath) {
+  const digest = crypto.createHash("sha256");
+  for await (const chunk of fs.createReadStream(filePath)) {
+    digest.update(chunk);
+  }
+  return digest.digest("hex");
+}
+
+const outStream = fs.createWriteStream(singleExePath, { encoding: "utf8" });
+outStream.on("error", (error) => {
+  // A failed write (disk full, revoked path) must abort the build loudly:
+  // drainWrite would otherwise wait forever on a "drain" that never comes.
+  console.error(`Writing ${singleExePath} failed: ${error.message}`);
+  process.exit(1);
+});
+await drainWrite(outStream, cmd.replace(/\n/g, "\r\n"));
+await drainWrite(outStream, "-----BEGIN CERTIFICATE-----\r\n");
+await writeBase64Payload(zipPath, outStream);
+await drainWrite(outStream, "-----END CERTIFICATE-----\r\n");
+await new Promise((resolve, reject) => {
+  outStream.end(() => resolve(undefined));
+  outStream.on("error", reject);
+});
 fs.chmodSync(singleExePath, 0o755);
 
 const exeSize = fs.statSync(singleExePath).size;
-const sha256 = crypto.createHash("sha256").update(fs.readFileSync(singleExePath)).digest("hex");
+const sha256 = await sha256File(singleExePath);
 
 console.log(`\nSingle-file installer created: ${singleExePath}`);
 console.log(`Size: ${(exeSize / 1024 / 1024).toFixed(1)} MB`);
 console.log(`SHA-256: ${sha256}`);
 
-// ── Also copy to Downloads with a .cmd extension as fallback ──────────────
-const cmdPath = path.join("/Users/issandre/Downloads", `${packageName}.cmd`);
+// ── Also copy alongside with a .cmd extension as fallback ────────────────
+const cmdPath = path.join(outDir, `${packageName}.cmd`);
 fs.copyFileSync(singleExePath, cmdPath);
 fs.chmodSync(cmdPath, 0o755);
 

@@ -396,6 +396,9 @@ export class MockComp extends MockItem {
         comp.layerList.unshift(layer);
         return layer;
       },
+      byName(name) {
+        return comp.layerByName(name);
+      },
     };
   }
 

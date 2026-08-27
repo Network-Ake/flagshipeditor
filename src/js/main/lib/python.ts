@@ -15,6 +15,40 @@ export interface BeatSection {
   type: string;
   start: number;
   end: number;
+  // What the audio measured before position overrode it, and how much the
+  // published name is worth. Optional: a result restored from an older cache
+  // carries neither.
+  measured_type?: string;
+  label_source?: "measured" | "measured_energy" | "positional";
+  label_confidence?: number;
+}
+
+// How one musical label was derived and how sure that is. Every label this
+// engine publishes is an inference; this is what separates a measurement from
+// a convention.
+export interface BeatLabel {
+  method: string;
+  confidence: number;
+  claim: string;
+  [key: string]: unknown;
+}
+
+// The stretch of the track measured as its peak. Optional so a beat analysis
+// restored from an older cache still type-checks.
+export interface BeatHook {
+  index: number;
+  type: string;
+  start: number;
+  end: number;
+  score: number;
+  confidence: number;
+}
+
+// A span where sub-bass is held rather than re-struck — the part of an 808 that
+// percussive isolation deliberately keeps out of the onset list.
+export interface BassSustainSpan {
+  start: number;
+  end: number;
 }
 
 export interface BeatAnalysis {
@@ -28,6 +62,20 @@ export interface BeatAnalysis {
   key: string;
   mode: string;
   duration: number;
+  bass_sustain?: BassSustainSpan[];
+  hook?: BeatHook | null;
+  rhythm_source?: "percussive" | "full_mix";
+  analysis_schema?: string;
+  // Where the phrases turn over, and the time base of the energy curve. Both
+  // optional: a result restored from a cache written before they existed has
+  // neither, and the selector falls back to what it did then.
+  phrase_boundaries?: number[];
+  energy_times?: number[];
+  energy_sample_rate?: number;
+  energy_hop_length?: number;
+  energy_frame_length?: number;
+  labels?: Record<string, BeatLabel>;
+  cache_state?: string;
 }
 
 export interface BeatProgress {
@@ -51,10 +99,32 @@ export interface ClipInfo {
   has_face: boolean;
   brightness: number;
   motion_intensity: number;
+  motion_variance?: number;
+  motion_intensity_per_second?: number | null;
+  motion_variance_per_second?: number | null;
+  motion_sample_times?: number[];
+  motion_sample_policy?: Record<string, unknown>;
   face_size_ratio?: number;
+  face_consistency?: number;
+  face_detector?: string;
+  face_detector_fallback?: string;
+  face_detector_model?: string;
+  face_detector_confidence?: number;
+  face_detector_confidence_kind?: "detector_score" | "unavailable";
+  face_frames_examined?: number;
   composition_score?: number;
   energy_score?: number;
   sharpness_score?: number;
+  // Seven-level shot scale and camera movement, published alongside the legacy
+  // scene_type rather than replacing it. Optional: a clip analysed before these
+  // existed is scored without them.
+  shot_type?: string;
+  shot_type_confidence?: number;
+  shot_scale?: number;
+  shot_type_basis?: string;
+  camera_movement?: string;
+  camera_movement_confidence?: number;
+  camera_movement_source?: string;
   histogram?: number[];
   thumbnail_id?: string;
   codec?: string;
@@ -120,17 +190,42 @@ export interface CutAlternative {
   clipName: string;
   thumbnailId: string;
   sceneType: string;
+  shotType: string;
+  cameraMovement: string;
+  clipDuration: number;
+  sourceStart: number;
+  sourceEnd: number;
   score: number;
+}
+
+// What put a cut where it is. ``origin`` names the input event behind it,
+// ``sourceTime`` is that event as it was measured and ``snapDelta`` how far
+// quantisation moved it, so a claim like "this lands on the 808" is traceable.
+export interface CutProvenance {
+  origin: "boundary" | "onset" | "phrase" | "grid" | "subdivision";
+  sourceTime: number | null;
+  snapDelta: number | null;
+  beatDelta: number | null;
+  beatAligned: boolean;
+  snapTolerance: number;
+  energyTarget?: number;
+  energySource?: "measured_curve" | "section_default";
 }
 
 export interface CutDecision {
   beatTime: number;
   endTime: number;
+  sourceStart: number;
+  sourceEnd: number;
   sectionType: string;
+  // Optional so a project saved before provenance existed still type-checks.
+  cutProvenance?: CutProvenance;
   clipPath: string;
   clipName: string;
   thumbnailId: string;
   sceneType: string;
+  shotType: string;
+  cameraMovement: string;
   clipDuration: number;
   score: number;
   scores: ClipScores;
@@ -321,7 +416,17 @@ export interface ShotSelectionInput {
   duration: number;
   tempo: number;
   bassOnsets: number[];
+  downbeats?: number[];
   seed: number;
+  hook?: BeatHook | null;
+  // Optional beat signals. Omitting them is exactly the previous behaviour:
+  // cuts fall on the grid alone and every cut in a section shares one energy
+  // target.
+  phraseBoundaries?: number[];
+  energy?: number[];
+  energyTimes?: number[];
+  energyHopLength?: number;
+  energySampleRate?: number;
 }
 
 export function selectShots(input: ShotSelectionInput): Promise<ShotSelection> {
@@ -335,6 +440,8 @@ export interface ClipScoreResult {
   clipName: string;
   thumbnailId: string;
   sceneType: string;
+  shotType: string;
+  cameraMovement: string;
 }
 
 export function scoreClip(clip: ClipInfo, sectionType: string): Promise<ClipScoreResult> {

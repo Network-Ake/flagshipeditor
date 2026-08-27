@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions DisableDelayedExpansion
 cd /d "%~dp0"
-set "FLAGSHIP_VERSION=2.0.0"
+set "FLAGSHIP_VERSION=3.0.0"
 set "BACKEND_ID=com.akestudio.flagshipeditor.backend"
 set "PYTHON=%CD%\runtime\python\python.exe"
 set "PYTHONW=%CD%\runtime\python\pythonw.exe"
@@ -45,46 +45,37 @@ echo FlagshipEditor backend %FLAGSHIP_VERSION% is healthy.
 exit /b 0
 
 :CheckHealth
-set "HEALTH_FILE=%TEMP%\flagshipeditor-health-%RANDOM%.json"
+rem mkdir is atomic: it fails when the folder already exists, so the probe
+rem always lands in a fresh private folder even when %RANDOM% repeats.
+set /a HEALTH_TRIES=0
+:HealthTempDir
+set /a HEALTH_TRIES+=1
+if %HEALTH_TRIES% GTR 20 exit /b 1
+set "HEALTH_DIR=%TEMP%\flagshipeditor-health-%RANDOM%%RANDOM%"
+mkdir "%HEALTH_DIR%" >nul 2>&1 || goto :HealthTempDir
+set "HEALTH_FILE=%HEALTH_DIR%\health.json"
 curl.exe -fsS --max-time 3 "http://127.0.0.1:18791/health" >"%HEALTH_FILE%" 2>nul
-if not exist "%HEALTH_FILE%" exit /b 1
+if not exist "%HEALTH_FILE%" goto :HealthFail
 findstr /C:"%BACKEND_ID%" "%HEALTH_FILE%" >nul 2>&1
-if errorlevel 1 (
-  del /q "%HEALTH_FILE%" >nul 2>&1
-  exit /b 1
-)
+if errorlevel 1 goto :HealthFail
 findstr /C:"%FLAGSHIP_VERSION%" "%HEALTH_FILE%" >nul 2>&1
-if errorlevel 1 (
-  del /q "%HEALTH_FILE%" >nul 2>&1
-  exit /b 1
-)
+if errorlevel 1 goto :HealthFail
 findstr /C:"\"librosa\":true" "%HEALTH_FILE%" >nul 2>&1
-if errorlevel 1 (
-  del /q "%HEALTH_FILE%" >nul 2>&1
-  exit /b 1
-)
+if errorlevel 1 goto :HealthFail
 findstr /C:"\"opencv\":true" "%HEALTH_FILE%" >nul 2>&1
-if errorlevel 1 (
-  del /q "%HEALTH_FILE%" >nul 2>&1
-  exit /b 1
-)
+if errorlevel 1 goto :HealthFail
 findstr /C:"\"shot_selector\":true" "%HEALTH_FILE%" >nul 2>&1
-if errorlevel 1 (
-  del /q "%HEALTH_FILE%" >nul 2>&1
-  exit /b 1
-)
+if errorlevel 1 goto :HealthFail
 findstr /C:"\"ffprobe\":true" "%HEALTH_FILE%" >nul 2>&1
-if errorlevel 1 (
-  del /q "%HEALTH_FILE%" >nul 2>&1
-  exit /b 1
-)
+if errorlevel 1 goto :HealthFail
 findstr /C:"\"ffmpeg\":true" "%HEALTH_FILE%" >nul 2>&1
-if errorlevel 1 (
-  del /q "%HEALTH_FILE%" >nul 2>&1
-  exit /b 1
-)
-del /q "%HEALTH_FILE%" >nul 2>&1
+if errorlevel 1 goto :HealthFail
+rmdir /s /q "%HEALTH_DIR%" >nul 2>&1
 exit /b 0
+
+:HealthFail
+rmdir /s /q "%HEALTH_DIR%" >nul 2>&1
+exit /b 1
 
 :StopStartedBackend
 set "BACKEND_PID="

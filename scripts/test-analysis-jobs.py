@@ -14,6 +14,17 @@ from analysis_jobs import AnalysisJobManager, TERMINAL_STATES
 from clip_analysis import ClipAnalysisError
 
 
+def join_queue(manager: AnalysisJobManager, timeout: float = 10.0) -> None:
+    """Bounded work_queue.join(): a lost task_done must fail, not hang."""
+    joiner = threading.Thread(target=manager.work_queue.join, daemon=True)
+    joiner.start()
+    joiner.join(timeout)
+    assert not joiner.is_alive(), (
+        "work_queue.join() blocked: unfinished-task ledger desynced "
+        f"(unfinished_tasks={manager.work_queue.unfinished_tasks})"
+    )
+
+
 def wait_for(manager: AnalysisJobManager, job_id: str, timeout: float = 15.0):
     deadline = time.time() + timeout
     progress = []
@@ -63,7 +74,7 @@ def main() -> None:
         result = manager.get_results(created["jobId"])
         assert len(result["results"]) == 1000
         assert len(result["errors"]) == 1
-        manager.work_queue.join()
+        join_queue(manager)
 
     with tempfile.TemporaryDirectory() as directory:
         manager = AnalysisJobManager(Path(directory) / "jobs.sqlite3", worker_count=2, analyzer=analyzer)
@@ -78,7 +89,35 @@ def main() -> None:
         followup_result = wait_for(manager, followup["jobId"], timeout=2.0)
         assert followup_result["state"] == "completed"
         assert time.monotonic() - followup_started < 2.0, "cancelled queue delayed the next job"
-        manager.work_queue.join()
+        join_queue(manager)
+
+    # Cancelling a job whose scheduler tokens are still sitting in the queue
+    # (workers busy elsewhere) must keep the queue's unfinished-task ledger
+    # balanced, or every later work_queue.join() deadlocks.
+    gate = threading.Event()
+
+    def gated_analyzer(path: str, cancel_event=None):
+        if "blocker" in path:
+            gate.wait(timeout=30)
+        if cancel_event and cancel_event.is_set():
+            raise ClipAnalysisError("cancelled", "cancelled")
+        return ({"path": path, "name": Path(path).name, "usable": True}, False)
+
+    with tempfile.TemporaryDirectory() as directory:
+        manager = AnalysisJobManager(
+            Path(directory) / "jobs.sqlite3", worker_count=2, analyzer=gated_analyzer
+        )
+        blockers = manager.create_job(["/virtual/blocker-0.mov", "/virtual/blocker-1.mov"])
+        deadline = time.time() + 5.0
+        while time.time() < deadline and manager.work_queue.qsize() > 0:
+            time.sleep(0.01)  # both workers now hold their tokens
+        parked = manager.create_job(["/virtual/parked-0.mov", "/virtual/parked-1.mov"])
+        assert manager.work_queue.qsize() >= 2, "parked job tokens must be queued"
+        manager.cancel(parked["jobId"])
+        gate.set()
+        assert wait_for(manager, blockers["jobId"])["state"] == "completed"
+        assert wait_for(manager, parked["jobId"])["state"] == "cancelled"
+        join_queue(manager)
 
     with tempfile.TemporaryDirectory() as directory:
         database = Path(directory) / "jobs.sqlite3"
@@ -96,7 +135,7 @@ def main() -> None:
         recovered = wait_for(recovered_manager, "recovered-job")
         assert recovered["state"] == "completed"
         assert recovered["succeeded"] == 2
-        recovered_manager.work_queue.join()
+        join_queue(recovered_manager)
 
     with tempfile.TemporaryDirectory() as directory:
         database = Path(directory) / "jobs.sqlite3"
@@ -134,7 +173,8 @@ def main() -> None:
     print(
         "Analysis job tests passed "
         "(1,001-file bounded run, isolation, dedupe, progress, 50,000-file cancellation, "
-        "prompt follow-up, ordinary restart recovery, cancelling restart recovery)."
+        "prompt follow-up, token-drain ledger balance, ordinary restart recovery, "
+        "cancelling restart recovery)."
     )
 
 

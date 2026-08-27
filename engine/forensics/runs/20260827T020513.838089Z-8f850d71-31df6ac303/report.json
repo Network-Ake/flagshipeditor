@@ -1,0 +1,1135 @@
+{
+  "baseline": {
+    "added": [],
+    "changed": [
+      {
+        "actual": {
+          "ast_sha256": "81995221f7e26502594c3186b371b3aa70502ea8243e14924592ed7df32b3f2e",
+          "sha256": "81995221f7e26502594c3186b371b3aa70502ea8243e14924592ed7df32b3f2e"
+        },
+        "expected": {
+          "ast_sha256": "ec2d1e9cc3499790fa634bd64d865af9857f650e5c57355af4fa857fb2d3de46",
+          "sha256": "ec2d1e9cc3499790fa634bd64d865af9857f650e5c57355af4fa857fb2d3de46"
+        },
+        "path": "scripts/test-analysis-jobs.py"
+      }
+    ],
+    "contract_actual_sha256": "ee86bc586f0c7e5d83104b4f8fd3eb6ba6db3c3b50c14e8d12cc0b0b079288b5",
+    "contract_changed": false,
+    "contract_expected_sha256": "ee86bc586f0c7e5d83104b4f8fd3eb6ba6db3c3b50c14e8d12cc0b0b079288b5",
+    "missing": [],
+    "status": "drift"
+  },
+  "baseline_path": "engine/forensics/baseline.json",
+  "baseline_sha256": "fb58831c88a595fe004bd24845ff9f7d292dc1347b8ba4fcc51c1f1d54092a15",
+  "contract_metrics": {
+    "duplicate_identity_rejected": true,
+    "phrase_boundaries_sha256": "904d61bcd89892cf7a3ddac6e6bb48b4ba893474a437266e1011ff2b978aa74a",
+    "phrase_boundary_count": 6,
+    "section_weight_sums": {
+      "bridge": 1.0,
+      "chorus": 1.0,
+      "drop": 1.0,
+      "intro": 1.0,
+      "outro": 1.0,
+      "verse": 1.0
+    },
+    "selection_count": 27,
+    "selection_sha256": "7e9690123fee7df1dd4820e7d6d08ddf9ed459485b4cc07a54d93a1c0b28f9ac",
+    "selection_three_run_equal": true,
+    "slot_count": 27,
+    "slot_sha256": "871b018268856ddb14eea0e71593e07d7d02077673cf97c472fe9d6fa109765f",
+    "visual_feature_keys": [
+      "composition_score",
+      "energy_score",
+      "histogram",
+      "sharpness_score"
+    ],
+    "visual_histogram_bins": 32
+  },
+  "findings": [
+    {
+      "check": "required-symbols",
+      "evidence": [
+        "engine/beat_analysis.py:581 analyze_track",
+        "engine/beat_analysis.py:1222 detect_phrase_boundaries",
+        "engine/beat_analysis.py:199 frequency_filter"
+      ],
+      "message": "engine/beat_analysis.py exposes every required contract symbol",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "network-surface",
+      "evidence": [],
+      "message": "No network-capable imports found in engine/beat_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "dynamic-code-execution",
+      "evidence": [],
+      "message": "No eval/exec/compile calls in engine/beat_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "shell-injection-surface",
+      "evidence": [],
+      "message": "No shell=True subprocess in engine/beat_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "selector-determinism-surface",
+      "evidence": [],
+      "message": "No forbidden random selection calls in engine/beat_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "required-symbols",
+      "evidence": [
+        "engine/clip_analysis.py:24 ANALYSIS_SCHEMA_VERSION",
+        "engine/clip_analysis.py:1450 classify_clip",
+        "engine/clip_analysis.py:1411 compute_visual_scores",
+        "engine/clip_analysis.py:1129 find_best_moment"
+      ],
+      "message": "engine/clip_analysis.py exposes every required contract symbol",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "network-surface",
+      "evidence": [],
+      "message": "No network-capable imports found in engine/clip_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "dynamic-code-execution",
+      "evidence": [],
+      "message": "No eval/exec/compile calls in engine/clip_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "shell-injection-surface",
+      "evidence": [],
+      "message": "No shell=True subprocess in engine/clip_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "selector-determinism-surface",
+      "evidence": [],
+      "message": "No forbidden random selection calls in engine/clip_analysis.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "required-symbols",
+      "evidence": [
+        "engine/shot_selector.py:28 SECTION_WEIGHTS",
+        "engine/shot_selector.py:90 SECTION_SCENE_AFFINITY",
+        "engine/shot_selector.py:175 MIN_CUT_SECONDS",
+        "engine/shot_selector.py:1145 plan_cuts",
+        "engine/shot_selector.py:554 score_clip",
+        "engine/shot_selector.py:1540 select_best_clips"
+      ],
+      "message": "engine/shot_selector.py exposes every required contract symbol",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "network-surface",
+      "evidence": [],
+      "message": "No network-capable imports found in engine/shot_selector.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "dynamic-code-execution",
+      "evidence": [],
+      "message": "No eval/exec/compile calls in engine/shot_selector.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "shell-injection-surface",
+      "evidence": [],
+      "message": "No shell=True subprocess in engine/shot_selector.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "selector-determinism-surface",
+      "evidence": [],
+      "message": "No forbidden random selection calls in engine/shot_selector.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "required-symbols",
+      "evidence": [
+        "engine/server.py:83 app",
+        "engine/server.py:446 main"
+      ],
+      "message": "engine/server.py exposes every required contract symbol",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "network-surface",
+      "evidence": [
+        "engine/server.py:18 import uvicorn",
+        "engine/server.py:19 import fastapi",
+        "engine/server.py:20 import fastapi.middleware.cors",
+        "engine/server.py:21 import fastapi.staticfiles"
+      ],
+      "message": "Network imports in engine/server.py match its declared server surface",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "dynamic-code-execution",
+      "evidence": [],
+      "message": "No eval/exec/compile calls in engine/server.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "shell-injection-surface",
+      "evidence": [],
+      "message": "No shell=True subprocess in engine/server.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "selector-determinism-surface",
+      "evidence": [],
+      "message": "No forbidden random selection calls in engine/server.py",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "S13",
+      "evidence": [
+        "engine/shot_selector.py:1762 selector emits sourceStart",
+        "src/js/main/lib/python.ts:215 CutDecision source fields=True",
+        "src/js/main/App.tsx:105 payload source fields=True",
+        "src/js/main/App.tsx:174 serialization drops source fields=False",
+        "src/jsx/aeft/aeft.ts:80 renderer contract source fields=True",
+        "src/jsx/aeft/aeft.ts:275 renderer source offset applied=True"
+      ],
+      "message": "Selector best-moment source window reaches and is applied by After Effects",
+      "severity": "critical",
+      "status": "pass"
+    },
+    {
+      "check": "ROADMAP-REAL-MEDIA",
+      "evidence": [
+        "v1 preflight scope boundary"
+      ],
+      "message": "Real-media decoder and semantic accuracy are not exercised by preflight",
+      "severity": "info",
+      "status": "warn"
+    },
+    {
+      "check": "ROADMAP-CACHE-REPLAY",
+      "evidence": [
+        "v1 preflight scope boundary"
+      ],
+      "message": "Cached-vs-uncached semantic equality is not exercised by preflight",
+      "severity": "info",
+      "status": "warn"
+    },
+    {
+      "check": "ROADMAP-NATIVE-AE",
+      "evidence": [
+        "v1 preflight scope boundary"
+      ],
+      "message": "Native Windows/After Effects composition inspection is not exercised",
+      "severity": "info",
+      "status": "warn"
+    },
+    {
+      "check": "ROADMAP-ARTISTIC",
+      "evidence": [
+        "v1 preflight scope boundary"
+      ],
+      "message": "Artistic quality has no labelled fixtures or blind human validation",
+      "severity": "info",
+      "status": "warn"
+    },
+    {
+      "check": "ROADMAP-NETWORK-SANDBOX",
+      "evidence": [
+        "v1 preflight scope boundary"
+      ],
+      "message": "The protocol performs no network calls, but child tests are not kernel-level network-sandboxed",
+      "severity": "info",
+      "status": "warn"
+    },
+    {
+      "check": "ROADMAP-PROCESS-CONTAINMENT",
+      "evidence": [
+        "v1 preflight scope boundary"
+      ],
+      "message": "Child output is buffered and timeout handling does not guarantee termination of descendant processes",
+      "severity": "info",
+      "status": "warn"
+    },
+    {
+      "check": "ROADMAP-TS-PARSER",
+      "evidence": [
+        "v1 preflight scope boundary"
+      ],
+      "message": "The S13 contract uses multi-boundary source inspection, not a TypeScript AST parser or native AE execution",
+      "severity": "info",
+      "status": "warn"
+    },
+    {
+      "check": "B06",
+      "evidence": [
+        "energy_envelope reproduces n*hop/sr within 1ms=True",
+        "non_finite_samples_reported=1",
+        "analyze_track_missing_keys=[]"
+      ],
+      "message": "Energy samples carry an emitted, exact time base",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "check": "B09",
+      "evidence": [
+        "accented_phase_recovered=2 confidence=1.0",
+        "no_accent_evidence_method=assumed_first_beat",
+        "section_label_sources=['measured', 'measured_energy', 'positional']",
+        "drop_label_method=measured_energy",
+        "selector_first_measured_downbeat_cut=0.5",
+        "analyze_track_missing_keys=[]"
+      ],
+      "message": "Musical labels carry a measured method and a bounded confidence",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "check": "CACHE-BEAT-PROVENANCE",
+      "evidence": [
+        "identity_fields=['code', 'config', 'dependencies', 'schema']",
+        "distinct_keys_under_drift=4/4",
+        "restored_key_stable=True"
+      ],
+      "message": "Beat cache identity binds schema, code hash, configuration and dependencies",
+      "severity": "high",
+      "status": "pass"
+    },
+    {
+      "check": "C02",
+      "evidence": [
+        "identity_fields=['code', 'config', 'dependencies', 'schema', 'tools']",
+        "tool_identities=['ffmpeg', 'ffprobe']",
+        "distinct_keys_under_drift=5/5",
+        "same_path_face_model_replacement_moves_key=True"
+      ],
+      "message": "Clip cache identity binds schema, code, sampling config and tool identity",
+      "severity": "high",
+      "status": "pass"
+    },
+    {
+      "check": "C06",
+      "evidence": [
+        "detector=haar_cascade fallback='dnn_not_configured'",
+        "has_face_implies_ratio=True",
+        "dnn_volume_boxes_above_threshold=1",
+        "haar_loads_for_two_clips_same_thread=1",
+        "haar_confidence_kind=unavailable",
+        "classify_clip_missing_keys=[]"
+      ],
+      "message": "Face results record the detector, its confidence and any fallback",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "check": "C10",
+      "evidence": [
+        "magnitude_per_second_times_elapsed_equals_magnitude=True",
+        "both_decoders_share_sample_window=True",
+        "policy_declares_normalization=True",
+        "selector_prefers_higher_rate_over_higher_raw_displacement=True",
+        "selector_rejects_unverified_rate_fields=True",
+        "classify_clip_missing_keys=[]"
+      ],
+      "message": "Motion evidence is normalized by elapsed source time and declares its sampling policy",
+      "severity": "high",
+      "status": "pass"
+    },
+    {
+      "check": "UNUSED_SIGNAL",
+      "evidence": [
+        "phrase_boundaries_create_cuts=True",
+        "downbeats_shift_bar_grid=True",
+        "energy_curve_changes_selection=True",
+        "normalized_motion_changes_ranking=True",
+        "energy_source_declared_per_cut=True"
+      ],
+      "message": "Every audited upstream signal changes selector output when supplied",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "check": "S12",
+      "evidence": [
+        "slots_with_declared_origin=True",
+        "section_boundaries_traced=True",
+        "onset_cuts_match_input_onsets=True count=5",
+        "beat_aligned_claims_within_tolerance=True",
+        "all_origins_reconstruct_from_source_time_and_snap=True",
+        "selection_carries_provenance=True"
+      ],
+      "message": "Every cut records the boundary/onset/phrase/grid evidence behind it",
+      "severity": "medium",
+      "status": "pass"
+    },
+    {
+      "check": "section-contract",
+      "evidence": [
+        "required=['bridge', 'chorus', 'drop', 'intro', 'outro', 'verse']",
+        "missing_weights=[]",
+        "missing_affinities=[]",
+        "weight_sums={'bridge': 1.0, 'chorus': 1.0, 'drop': 1.0, 'intro': 1.0, 'outro': 1.0, 'verse': 1.0}"
+      ],
+      "message": "Beat/clip/selector section vocabulary is aligned",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "clip-selector-feature-contract",
+      "evidence": [
+        "keys=['composition_score', 'energy_score', 'histogram', 'sharpness_score']",
+        "histogram_bins=32"
+      ],
+      "message": "Clip features satisfy selector input contracts",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "timeline-invariants",
+      "evidence": [
+        "slot_count=27",
+        "boundary_count=4",
+        "minimum_slot_seconds=0.25",
+        "contiguous=True",
+        "deterministic=True"
+      ],
+      "message": "Cut planner is deterministic and tiles the full timeline",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "selection-invariants",
+      "evidence": [
+        "selection_count=27",
+        "slot_count=27",
+        "repeat_violations=0",
+        "three_run_deterministic=True",
+        "source_window_failures=[]",
+        "score_failures=[]",
+        "alternative_failures=[]"
+      ],
+      "message": "Selector output is deterministic, bounded, and non-repeating",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "S04-DUPLICATE-IDENTITY",
+      "evidence": [
+        "input_count=9",
+        "unique_paths=8",
+        "output_count=0"
+      ],
+      "message": "Duplicate clip identities are explicitly rejected",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "beat-selector-time-contract",
+      "evidence": [
+        "phrase_boundary_count=6",
+        "first_phrase_anchored_to_measured_downbeat=8.5"
+      ],
+      "message": "Beat-derived phrase times are ordered and bounded",
+      "severity": "info",
+      "status": "pass"
+    },
+    {
+      "check": "TEST-MUTATION",
+      "evidence": [
+        "tracked_files=1702",
+        "changed=[]",
+        "git_status_changed=False"
+      ],
+      "message": "Child tests left all tracked engine/test/render files bit-identical",
+      "severity": "info",
+      "status": "pass"
+    }
+  ],
+  "generated_at": "2026-08-27T02:05:25+00:00",
+  "inventory": [
+    {
+      "bytes": 27369,
+      "path": "engine/ANALYSIS-beat.md",
+      "sha256": "859326dd924f8d48b4c597ea598be6430c33d27eb4f29b71d238ce53721f8020"
+    },
+    {
+      "bytes": 39657,
+      "path": "engine/ANALYSIS-clip.md",
+      "sha256": "17cf91e8dbe2e5587f3cdffe0b996a6ea2c27656bcaaf7dd0258d11f912ab44d"
+    },
+    {
+      "bytes": 35229,
+      "path": "engine/ANALYSIS-selector.md",
+      "sha256": "0fe713268becd1544b873b085a007df56639a35431a7ab2b21d618d099e30aa2"
+    },
+    {
+      "bytes": 25183,
+      "path": "engine/CYBER-FORENSIC-SPEC.md",
+      "sha256": "b68b4a35beb4827dfd0bb41e4e22d1d7bfc08fa750804cc7f433535e0c4fe58e"
+    },
+    {
+      "bytes": 6,
+      "path": "engine/VERSION",
+      "sha256": "c28fcca53637bc88e124af1725df13cb98c69dedefd62fb3cdbe1cdb6b760624"
+    },
+    {
+      "bytes": 21082,
+      "path": "engine/analysis_jobs.py",
+      "sha256": "b026e18d1e53f7c24280bece2802c119d839fab567e0187a82ea9dd897b35c65"
+    },
+    {
+      "bytes": 50003,
+      "path": "engine/beat_analysis.py",
+      "sha256": "132327ce5afd5191a5903f171e247c5f0929715a52e4fa1ae83ea48ec634e482"
+    },
+    {
+      "bytes": 66298,
+      "path": "engine/clip_analysis.py",
+      "sha256": "881eebbd55da33cf8e091c121dc5d3203880b6014cc0bea37ee60421f03c4dff"
+    },
+    {
+      "bytes": 5043,
+      "path": "engine/media_tools.py",
+      "sha256": "0b3616ef02c4bac98752cc91e6593f8d97a35e82c30db156a4087afee8baec4e"
+    },
+    {
+      "bytes": 662,
+      "path": "engine/requirements-windows.lock",
+      "sha256": "d5d16939b2e938bc54fe2beee89574b42ea349a84c10c1570007199edf2fc16b"
+    },
+    {
+      "bytes": 244,
+      "path": "engine/requirements.txt",
+      "sha256": "afa534232d7b3dc8515bf8c16bc8689d4b5b22172b8aed06d1843449a5e8c3bc"
+    },
+    {
+      "bytes": 1427,
+      "path": "engine/self_test.py",
+      "sha256": "b2d8f8ae85f248259cafe5c1f8252d832033c2bc4a9070dc4563613e72dc6440"
+    },
+    {
+      "bytes": 17170,
+      "path": "engine/server.py",
+      "sha256": "8bfc4124cb65ab84ab814f7cb30c399fd8afc9d30f095333f39ddb1d4dced050"
+    },
+    {
+      "bytes": 73471,
+      "path": "engine/shot_selector.py",
+      "sha256": "1ab60c71289bb85c1be5c3bcdac56c906642c388d21f547acc2c3afc92667a5b"
+    },
+    {
+      "bytes": 27368,
+      "path": "engine/test_cutting_engine.py",
+      "sha256": "7314a9527158e167069d9233b1b0b91d5dede6141c001bb6b320709c612f00e8"
+    },
+    {
+      "bytes": 91183,
+      "path": "scripts/cyber_forensic_protocol.py",
+      "sha256": "a00644493d04ac174c3d51e15d2e71d9bc3deb94adca23ea01e6cbf4e9f9369c"
+    },
+    {
+      "bytes": 31351,
+      "path": "scripts/test-ae-bridge.mjs",
+      "sha256": "e51ab36793b5cbdaa3aff47f4ad06eeafc1a691e5ce060bd8c467096d3644134"
+    },
+    {
+      "bytes": 8178,
+      "path": "scripts/test-analysis-jobs.py",
+      "sha256": "81995221f7e26502594c3186b371b3aa70502ea8243e14924592ed7df32b3f2e"
+    },
+    {
+      "bytes": 12026,
+      "path": "scripts/test-backend-search.mjs",
+      "sha256": "61df5e79369d83df42a25a9a0291f0aea039bebdbd28055d499ebe1de7a418fa"
+    },
+    {
+      "bytes": 3984,
+      "path": "scripts/test-build-single-exe.mjs",
+      "sha256": "68ae1bb520a2d4493c1adcce284d09aa8272955713bc6a02abee574d4ae9f822"
+    },
+    {
+      "bytes": 9171,
+      "path": "scripts/test-cyber-forensic-protocol.py",
+      "sha256": "ddaf2f9e8ea6c807f56f72514999655bf0ed6db85fcad12906922e9dd146da42"
+    },
+    {
+      "bytes": 35991,
+      "path": "scripts/test-engine-contracts.py",
+      "sha256": "78e35a9f8bc5b78001e419ce263295a49e70bda33e69a2ced64c7aa78fddcc0a"
+    },
+    {
+      "bytes": 4641,
+      "path": "scripts/test-generate-luts.mjs",
+      "sha256": "0140d268bdeabe8e5e9a2c2e8f11d9b35dac0685c57935475580aab5c77a881e"
+    },
+    {
+      "bytes": 2461,
+      "path": "scripts/test-prores-fixtures.py",
+      "sha256": "02edf1da5a89bf25296d3a5094fe4c32d52c59d291dbd42d7908f3370f2de3af"
+    },
+    {
+      "bytes": 830,
+      "path": "scripts/test-server-health.py",
+      "sha256": "bd52bd497d4faf21c751f678bf73e9559e297d0503c2973c1ad868768063046d"
+    },
+    {
+      "bytes": 4104,
+      "path": "scripts/test-ui-job-recovery.mjs",
+      "sha256": "cb1fcd3380c6d44051203c0c9a9a3bf3ca67b12cc430ace00beb93f37b7ac56c"
+    },
+    {
+      "bytes": 8681,
+      "path": "scripts/test-windows-package.mjs",
+      "sha256": "66c5f8ec39253c71425a632b362b6969661e90bb9bbbf8c33891f204cd115f65"
+    },
+    {
+      "bytes": 40658,
+      "path": "src/js/main/App.tsx",
+      "sha256": "00477633edc51debf6c6bab90bc95a9d275bfda6b64735bf0694a884b56ae972"
+    },
+    {
+      "bytes": 13729,
+      "path": "src/js/main/lib/python.ts",
+      "sha256": "61483476f9d3cc7f5cc68bb63a3e97343c0ed935fcda084f66f1b133a1591fcd"
+    },
+    {
+      "bytes": 31911,
+      "path": "src/jsx/aeft/aeft.ts",
+      "sha256": "70031de03d2eac6d78c91fed64697981eeaad520c10da4debdd945cb1684661a"
+    },
+    {
+      "bytes": 2809,
+      "path": "styles/cmd_command_drill.json",
+      "sha256": "98012f885be39b7f738cb29bf757144b34c0336d6b4941bb3c65493319ca7b00"
+    },
+    {
+      "bytes": 1536,
+      "path": "styles/custom.json",
+      "sha256": "c681486d094483ac3cc0c00662af3bf914922899248cb407d2dea501365fcaa1"
+    },
+    {
+      "bytes": 2574,
+      "path": "styles/jack_rottier.json",
+      "sha256": "5c9e097b43bea7c41c0eaa0c32d8f204c29e1b92f290a714b5b20f4c6abfc277"
+    },
+    {
+      "bytes": 2963,
+      "path": "styles/lyrical_lemonade.json",
+      "sha256": "6d57b92b1f17430c0077ab742d907d1dc500addb36ed3650bd679ed873e46309"
+    },
+    {
+      "bytes": 2729,
+      "path": "styles/ninetive.json",
+      "sha256": "36eaeca38f9d15223d9d320e3513b0c02811c64cd2b8e18606cb296a2b8cab52"
+    },
+    {
+      "bytes": 2894,
+      "path": "styles/worldwide_films.json",
+      "sha256": "37e9aeeff676f0b9494a6635788f11e1a5712a82be094d3c90cc7bc5de1c8d6e"
+    }
+  ],
+  "limitations": [
+    "No real media fixture is decoded by the forensic cross-engine invariant gate.",
+    "No native Windows or After Effects host is exercised.",
+    "No subjective edit-quality claim is inferred from passing tests.",
+    "Analysis-note claims marked as requiring validation remain unproven.",
+    "network_boundary.measured_imports is a static AST measurement; that the protocol itself performs no network calls, and that child tests are not kernel-level network-sandboxed, are declared scope boundaries, not measured runtime properties."
+  ],
+  "network_boundary": {
+    "declared_surfaces": {
+      "engine/beat_analysis.py": [],
+      "engine/clip_analysis.py": [],
+      "engine/server.py": [
+        "fastapi",
+        "uvicorn"
+      ],
+      "engine/shot_selector.py": []
+    },
+    "measured_imports": {
+      "engine/beat_analysis.py": [],
+      "engine/clip_analysis.py": [],
+      "engine/server.py": [
+        "engine/server.py:18 import uvicorn",
+        "engine/server.py:19 import fastapi",
+        "engine/server.py:20 import fastapi.middleware.cors",
+        "engine/server.py:21 import fastapi.staticfiles"
+      ],
+      "engine/shot_selector.py": []
+    },
+    "unexpected_imports": {}
+  },
+  "project": "FlagshipEditor",
+  "protocol_version": "1.0.0",
+  "provenance": {
+    "branch": "main",
+    "commit": "8f850d71d1b4826a3fd118b509a202ea7a0588d9",
+    "engine_status": "M engine/__pycache__/beat_analysis.cpython-312.pyc\n M engine/__pycache__/server.cpython-312.pyc\n M engine/analysis_jobs.py\n M engine/beat_analysis.py\n M engine/clip_analysis.py\n M engine/server.py\n M engine/shot_selector.py\n M engine/test_results.json\n M engine/test_results.md\n M scripts/Start-FlagshipEditor-Backend.cmd\n M scripts/build-single-exe.mjs\n M scripts/flagshipeditor-installer.nsi\n M scripts/flagshipeditor-msi-main.wxs\n M scripts/flagshipeditor-msi.wxs\n M scripts/flagshipeditor-zip.nsi\n M scripts/flagshipeditor.nsi\n M scripts/generate-luts.mjs\n M scripts/lib/ae-mock.mjs\n M scripts/postbuild.mjs\n M scripts/test-ae-bridge.mjs\n M scripts/test-analysis-jobs.py\n M scripts/test-backend-search.mjs\n M scripts/test-engine-contracts.py\n?? engine/ANALYSIS-beat.md\n?? engine/ANALYSIS-clip.md\n?? engine/ANALYSIS-selector.md\n?? engine/CYBER-FORENSIC-SPEC.md\n?? engine/forensics/\n?? scripts/build-single-exe.mjs.bak\n?? scripts/cyber_forensic_protocol.py\n?? scripts/cyber_forensic_protocol.py.bak\n?? scripts/flagshipeditor-msi-main.wxs.bak\n?? scripts/flagshipeditor-msi.wxs.bak\n?? scripts/flagshipeditor-zip.nsi.bak\n?? scripts/flagshipeditor.nsi.bak\n?? scripts/generate-luts.mjs.bak\n?? scripts/postbuild.mjs.bak\n?? scripts/run-engine-contracts.mjs\n?? scripts/test-build-single-exe.mjs\n?? scripts/test-cyber-forensic-protocol.py\n?? scripts/test-generate-luts.mjs"
+  },
+  "runtime": {
+    "engine_venv_selected": true,
+    "machine": "x86_64",
+    "packages": {
+      "fastapi": "0.141.1",
+      "librosa": "1.0.0",
+      "numpy": "2.3.5",
+      "opencv-python": "4.14.0.94",
+      "opencv-python-headless": "missing",
+      "pydantic": "2.13.4",
+      "scipy": "1.18.1"
+    },
+    "platform": "macOS-15.7.5-x86_64-i386-64bit",
+    "protocol_process_executable": "/Users/issandre/.openclaw/workspace/projects/flagshipeditor/.venv-test/bin/python",
+    "python_executable": "/Users/issandre/.openclaw/workspace/projects/flagshipeditor/engine/.venv/bin/python",
+    "python_sha256": "cce81969b8ba0d7c81d5143ceb4474b8b551627df4cfa4d34e6a0bc168481e03",
+    "python_version": "3.12.13 (main, Mar  3 2026, 12:39:30) [Clang 17.0.0 (clang-1700.6.3.2)]"
+  },
+  "schema_version": 2,
+  "signatures": {
+    "engine/CYBER-FORENSIC-SPEC.md": {
+      "ast_sha256": "b68b4a35beb4827dfd0bb41e4e22d1d7bfc08fa750804cc7f433535e0c4fe58e",
+      "sha256": "b68b4a35beb4827dfd0bb41e4e22d1d7bfc08fa750804cc7f433535e0c4fe58e",
+      "symbols": {}
+    },
+    "engine/beat_analysis.py": {
+      "ast_sha256": "295a1547de6e60d473e3afe91498b7c12e25a0716a7d5a0ce65f773ca9e46842",
+      "sha256": "132327ce5afd5191a5903f171e247c5f0929715a52e4fa1ae83ea48ec634e482",
+      "symbols": {
+        "ACCENT_TOLERANCE_SECONDS": 60,
+        "ANALYSIS_SAMPLE_RATE": 30,
+        "BASS_BAND_HZ": 45,
+        "BASS_MIN_SPACING_SECONDS": 51,
+        "BEAT_ANALYSIS_SCHEMA_VERSION": 25,
+        "DEFAULT_HOOK_SECTION_WEIGHT": 1084,
+        "DOWNBEAT_METER": 56,
+        "ENERGY_FRAME_LENGTH": 31,
+        "ENERGY_HOP_LENGTH": 32,
+        "HIHAT_BAND_HZ": 46,
+        "HOOK_SECTION_WEIGHT": 1076,
+        "HPSS_HOP_LENGTH": 38,
+        "HPSS_MAX_SECONDS": 42,
+        "HPSS_N_FFT": 37,
+        "POSITIONAL_LABEL_CONFIDENCE": 63,
+        "_BEAT_CACHE_DB": 75,
+        "_BEAT_CACHE_DIR": 66,
+        "_CODE_HASH_CACHE": 95,
+        "_beat_cache_connection": 78,
+        "_beat_cache_key": 164,
+        "_correct_tempo": 190,
+        "_coverage": 1108,
+        "_dependency_versions": 118,
+        "_module_code_hash": 98,
+        "_section_mean_energy": 1087,
+        "analysis_identity": 127,
+        "analyze_track": 581,
+        "assign_section_types": 952,
+        "band_onsets": 274,
+        "bass_sustain_intervals": 318,
+        "beat_grid_regularity": 461,
+        "classify_section_type": 883,
+        "detect_hook_section": 1125,
+        "detect_phrase_boundaries": 1222,
+        "drop_label_provenance": 446,
+        "energy_envelope": 386,
+        "estimate_downbeat_phase": 506,
+        "estimate_key": 1036,
+        "frequency_filter": 199,
+        "identity_fingerprint": 157,
+        "label_provenance": 424,
+        "labels_to_sections": 851,
+        "onset_grid_alignment": 484,
+        "separate_percussion": 209,
+        "simple_segmentation": 1019
+      }
+    },
+    "engine/clip_analysis.py": {
+      "ast_sha256": "dd6fcf823ab62bea946d7cf829f7823621be5c2de26dc2379b483000d886f4c9",
+      "sha256": "881eebbd55da33cf8e091c121dc5d3203880b6014cc0bea37ee60421f03c4dff",
+      "symbols": {
+        "ANALYSIS_MAX_DIMENSION": 25,
+        "ANALYSIS_SAMPLES": 26,
+        "ANALYSIS_SAMPLE_WINDOW": 34,
+        "ANALYSIS_SCHEMA_VERSION": 24,
+        "BASE_CACHE_DIR": 72,
+        "CACHE_DB": 92,
+        "CAMERA_MOVEMENTS": 65,
+        "CLIP_TIMEOUT_SECONDS": 68,
+        "ClipAnalysisError": 95,
+        "FACE_CONFIDENCE_THRESHOLD": 1188,
+        "FFMPEG_PATH": 70,
+        "FFPROBE_PATH": 69,
+        "FRAME_TIMEOUT_SECONDS": 67,
+        "MOTION_BURST_FRAMES": 41,
+        "MOTION_BURST_MAX_DIMENSION": 42,
+        "PROBE_TIMEOUT_SECONDS": 66,
+        "SHOT_FACE_RATIO_THRESHOLDS": 59,
+        "SHOT_TIGHTNESS_THRESHOLDS": 63,
+        "SHOT_TYPES": 47,
+        "THUMBNAIL_DIR": 91,
+        "_CODE_HASH_CACHE": 185,
+        "_FACE_DETECTOR_LOCAL": 1214,
+        "_bucket": 1023,
+        "_cache_connection": 163,
+        "_cached_dnn_face_detector": 1225,
+        "_cached_haar_face_detector": 1237,
+        "_cancelled": 103,
+        "_check_cancel": 107,
+        "_check_deadline": 112,
+        "_configured_face_model_identity": 257,
+        "_dnn_face_boxes": 1247,
+        "_extract_frames_ffmpeg_timed": 513,
+        "_extract_frames_opencv_timed": 432,
+        "_face_detector_cache": 1217,
+        "_face_result": 1281,
+        "_file_identity": 230,
+        "_frame_metrics": 750,
+        "_module_code_hash": 188,
+        "_resolve_face_model": 1191,
+        "_run_cancellable": 469,
+        "_source_identity": 306,
+        "_split_bmp_stream": 702,
+        "_tool_identity": 206,
+        "analysis_identity": 268,
+        "classify_camera_movement": 919,
+        "classify_clip": 1450,
+        "classify_clip_cached": 1597,
+        "classify_probe_failure": 351,
+        "classify_shot_type": 1030,
+        "compute_brightness_stability": 1082,
+        "compute_motion_intensity": 1068,
+        "compute_motion_variance": 1074,
+        "compute_visual_scores": 1411,
+        "detect_faces": 1314,
+        "extract_frames": 572,
+        "extract_frames_ffmpeg": 500,
+        "extract_frames_opencv": 423,
+        "extract_frames_timed": 586,
+        "extract_motion_burst": 618,
+        "find_best_moment": 1129,
+        "flow_descriptors": 775,
+        "framing_tightness": 982,
+        "get_video_metadata": 367,
+        "identity_fingerprint": 299,
+        "motion_sample_policy": 876,
+        "optical_flow_series": 728,
+        "parse_frame_rate": 136,
+        "per_frame_motion": 1104,
+        "resize_for_analysis": 149,
+        "safe_float": 121,
+        "safe_int": 129,
+        "save_thumbnail": 330
+      }
+    },
+    "engine/requirements-windows.lock": {
+      "ast_sha256": "d5d16939b2e938bc54fe2beee89574b42ea349a84c10c1570007199edf2fc16b",
+      "sha256": "d5d16939b2e938bc54fe2beee89574b42ea349a84c10c1570007199edf2fc16b",
+      "symbols": {}
+    },
+    "engine/requirements.txt": {
+      "ast_sha256": "afa534232d7b3dc8515bf8c16bc8689d4b5b22172b8aed06d1843449a5e8c3bc",
+      "sha256": "afa534232d7b3dc8515bf8c16bc8689d4b5b22172b8aed06d1843449a5e8c3bc",
+      "symbols": {}
+    },
+    "engine/server.py": {
+      "ast_sha256": "8bbbdbf88710c171d272690c5c31d608292ec79afca2e958e45405f7d12c588a",
+      "sha256": "8bfc4124cb65ab84ab814f7cb30c399fd8afc9d30f095333f39ddb1d4dced050",
+      "symbols": {
+        "ANALYSIS_JOBS": 93,
+        "ANALYSIS_WORKERS": 92,
+        "APP_ID": 30,
+        "APP_VERSION": 32,
+        "AnalysisJobRequest": 121,
+        "BEAT_EXECUTOR": 97,
+        "BEAT_LOCK": 98,
+        "BEAT_STATE": 99,
+        "BEAT_TIMEOUT_SECONDS": 35,
+        "BeatRequest": 109,
+        "ClipRequest": 115,
+        "FolderScanRequest": 127,
+        "IMPORT_ERRORS": 42,
+        "LIBROSA_AVAILABLE": 39,
+        "MAX_SCANNED_FILES": 37,
+        "OPENCV_AVAILABLE": 40,
+        "PID_FILE": 33,
+        "SERVER_PORT": 34,
+        "SHOT_SELECTOR_AVAILABLE": 41,
+        "SUPPORTED_MEDIA_EXTENSIONS": 36,
+        "ScoreRequest": 160,
+        "ShotSelectionRequest": 134,
+        "VERSION_FILE": 31,
+        "_run_beat_analysis": 174,
+        "_set_beat_state": 168,
+        "analysis_job_result": 296,
+        "analysis_job_status": 285,
+        "analyze_beat": 220,
+        "analyze_beat_progress": 248,
+        "analyze_clip_endpoint": 259,
+        "app": 83,
+        "cancel_analysis_job": 309,
+        "create_analysis_job": 274,
+        "health": 198,
+        "main": 446,
+        "scan_media_folder": 320,
+        "score_clip_endpoint": 412,
+        "select_shots": 368,
+        "shutdown_server": 434
+      }
+    },
+    "engine/shot_selector.py": {
+      "ast_sha256": "5335d4f3fa7b752d764fe5430761d378799d69277f3f0d32e8fec4a9285ae417",
+      "sha256": "1ab60c71289bb85c1be5c3bcdac56c906642c388d21f547acc2c3afc92667a5b",
+      "symbols": {
+        "AFFINITY_BONUS": 136,
+        "CUT_ORIGINS": 194,
+        "CUT_SNAP_TOLERANCE_SECONDS": 204,
+        "DEFAULT_CUT_BEATS": 243,
+        "DEFAULT_ENERGY_TARGET": 134,
+        "DEFAULT_HOOK_SECTION_WEIGHT": 174,
+        "DEFAULT_MAX_BEATS": 244,
+        "DEFAULT_WEIGHTS": 79,
+        "ENERGY_CURVE_WEIGHT": 209,
+        "ENERGY_MATCH_WEIGHT": 142,
+        "HOOK_RELEASE_BONUS": 154,
+        "HOOK_SECTIONS": 150,
+        "HOOK_SECTION_WEIGHT": 166,
+        "MAX_CUTS": 177,
+        "MIN_CUT_SECONDS": 175,
+        "MIN_SECTION_SECONDS": 176,
+        "MOVEMENT_AFFINITY_BONUS": 138,
+        "OVERUSE_PENALTY": 144,
+        "REPEAT_WINDOW": 145,
+        "RESERVATION_EXPOSURE_RATIO": 160,
+        "RESERVATION_FRACTION": 152,
+        "RESERVATION_MIN_CLIPS": 151,
+        "RESERVATION_PENALTY": 153,
+        "SECTION_CUT_BEATS": 223,
+        "SECTION_ENERGY_TARGETS": 126,
+        "SECTION_MAX_BEATS": 234,
+        "SECTION_MOVEMENT_AFFINITY": 113,
+        "SECTION_SCENE_AFFINITY": 90,
+        "SECTION_SHOT_AFFINITY": 102,
+        "SECTION_WEIGHTS": 28,
+        "SHORT_CLIP_PENALTY": 143,
+        "SHOT_AFFINITY_BONUS": 137,
+        "TrackEnergyCurve": 1334,
+        "_CUT_BOUNDARY": 189,
+        "_CUT_GRID": 186,
+        "_CUT_ONSET": 188,
+        "_CUT_PHRASE": 187,
+        "_Candidate": 212,
+        "_DEDUPE_TOLERANCE": 178,
+        "_ORIGIN_BY_PRIORITY": 195,
+        "_absorb_runt_tails": 1068,
+        "_beat_position": 677,
+        "_canonical_clip_path": 247,
+        "_clean_times": 704,
+        "_cut_provenance": 1114,
+        "_dedupe_times": 971,
+        "_eligible_indices": 1296,
+        "_enforce_min_spacing": 990,
+        "_finite": 410,
+        "_has_onset_between": 1238,
+        "_infer_hook_window": 1437,
+        "_max_beats_for_section": 824,
+        "_median_beat_period": 692,
+        "_parse_cut_interval": 659,
+        "_phrase_times": 1098,
+        "_ranked_bonus": 399,
+        "_section_beat_indices": 861,
+        "_section_cut_candidates": 871,
+        "_snap_to_beat": 840,
+        "_subdivide_long_slots": 1019,
+        "_validated_usable_clips": 271,
+        "best_moment_window": 1262,
+        "bounded_duration": 312,
+        "bounded_score": 301,
+        "clip_energy_profile": 469,
+        "cut_energy_target": 1407,
+        "energy_match_adjustment": 524,
+        "face_quality_score": 343,
+        "filter_clips_for_section": 1246,
+        "get_cut_interval_for_section": 804,
+        "get_section_boundary_times": 790,
+        "histogram_distance": 323,
+        "movement_affinity": 387,
+        "normalize_motion_evidence": 421,
+        "normalize_sections": 718,
+        "plan_cuts": 1145,
+        "reserved_clip_paths": 1516,
+        "resolve_hook_window": 1491,
+        "resolve_media_profile": 1799,
+        "score_clip": 554,
+        "section_affinity": 355,
+        "section_energy_target": 512,
+        "select_best_clips": 1540,
+        "shot_affinity": 371,
+        "track_energy_curve": 1354
+      }
+    },
+    "scripts/cyber_forensic_protocol.py": {
+      "ast_sha256": "a00644493d04ac174c3d51e15d2e71d9bc3deb94adca23ea01e6cbf4e9f9369c",
+      "sha256": "a00644493d04ac174c3d51e15d2e71d9bc3deb94adca23ea01e6cbf4e9f9369c",
+      "symbols": {}
+    },
+    "scripts/test-analysis-jobs.py": {
+      "ast_sha256": "81995221f7e26502594c3186b371b3aa70502ea8243e14924592ed7df32b3f2e",
+      "sha256": "81995221f7e26502594c3186b371b3aa70502ea8243e14924592ed7df32b3f2e",
+      "symbols": {}
+    },
+    "scripts/test-cyber-forensic-protocol.py": {
+      "ast_sha256": "ddaf2f9e8ea6c807f56f72514999655bf0ed6db85fcad12906922e9dd146da42",
+      "sha256": "ddaf2f9e8ea6c807f56f72514999655bf0ed6db85fcad12906922e9dd146da42",
+      "symbols": {}
+    },
+    "scripts/test-engine-contracts.py": {
+      "ast_sha256": "78e35a9f8bc5b78001e419ce263295a49e70bda33e69a2ced64c7aa78fddcc0a",
+      "sha256": "78e35a9f8bc5b78001e419ce263295a49e70bda33e69a2ced64c7aa78fddcc0a",
+      "symbols": {}
+    },
+    "scripts/test-server-health.py": {
+      "ast_sha256": "bd52bd497d4faf21c751f678bf73e9559e297d0503c2973c1ad868768063046d",
+      "sha256": "bd52bd497d4faf21c751f678bf73e9559e297d0503c2973c1ad868768063046d",
+      "symbols": {}
+    },
+    "src/js/main/App.tsx": {
+      "ast_sha256": "00477633edc51debf6c6bab90bc95a9d275bfda6b64735bf0694a884b56ae972",
+      "sha256": "00477633edc51debf6c6bab90bc95a9d275bfda6b64735bf0694a884b56ae972",
+      "symbols": {}
+    },
+    "src/js/main/lib/python.ts": {
+      "ast_sha256": "61483476f9d3cc7f5cc68bb63a3e97343c0ed935fcda084f66f1b133a1591fcd",
+      "sha256": "61483476f9d3cc7f5cc68bb63a3e97343c0ed935fcda084f66f1b133a1591fcd",
+      "symbols": {}
+    },
+    "src/jsx/aeft/aeft.ts": {
+      "ast_sha256": "70031de03d2eac6d78c91fed64697981eeaad520c10da4debdd945cb1684661a",
+      "sha256": "70031de03d2eac6d78c91fed64697981eeaad520c10da4debdd945cb1684661a",
+      "symbols": {}
+    },
+    "styles/cmd_command_drill.json": {
+      "ast_sha256": "98012f885be39b7f738cb29bf757144b34c0336d6b4941bb3c65493319ca7b00",
+      "sha256": "98012f885be39b7f738cb29bf757144b34c0336d6b4941bb3c65493319ca7b00",
+      "symbols": {}
+    },
+    "styles/custom.json": {
+      "ast_sha256": "c681486d094483ac3cc0c00662af3bf914922899248cb407d2dea501365fcaa1",
+      "sha256": "c681486d094483ac3cc0c00662af3bf914922899248cb407d2dea501365fcaa1",
+      "symbols": {}
+    },
+    "styles/jack_rottier.json": {
+      "ast_sha256": "5c9e097b43bea7c41c0eaa0c32d8f204c29e1b92f290a714b5b20f4c6abfc277",
+      "sha256": "5c9e097b43bea7c41c0eaa0c32d8f204c29e1b92f290a714b5b20f4c6abfc277",
+      "symbols": {}
+    },
+    "styles/lyrical_lemonade.json": {
+      "ast_sha256": "6d57b92b1f17430c0077ab742d907d1dc500addb36ed3650bd679ed873e46309",
+      "sha256": "6d57b92b1f17430c0077ab742d907d1dc500addb36ed3650bd679ed873e46309",
+      "symbols": {}
+    },
+    "styles/ninetive.json": {
+      "ast_sha256": "36eaeca38f9d15223d9d320e3513b0c02811c64cd2b8e18606cb296a2b8cab52",
+      "sha256": "36eaeca38f9d15223d9d320e3513b0c02811c64cd2b8e18606cb296a2b8cab52",
+      "symbols": {}
+    },
+    "styles/worldwide_films.json": {
+      "ast_sha256": "37e9aeeff676f0b9494a6635788f11e1a5712a82be094d3c90cc7bc5de1c8d6e",
+      "sha256": "37e9aeeff676f0b9494a6635788f11e1a5712a82be094d3c90cc7bc5de1c8d6e",
+      "symbols": {}
+    }
+  },
+  "summary": {
+    "engine_count": 4,
+    "finding_counts": {
+      "fail": 0,
+      "pass": 36,
+      "warn": 7
+    },
+    "integrity_target_count": 21,
+    "inventory_count": 36,
+    "test_counts": {
+      "fail": 0,
+      "not_run": 0,
+      "pass": 3
+    }
+  },
+  "tests": [
+    {
+      "command": [
+        "/Users/issandre/.openclaw/workspace/projects/flagshipeditor/engine/.venv/bin/python",
+        "scripts/test-engine-contracts.py"
+      ],
+      "duration_ms": 3059,
+      "exit_code": 0,
+      "name": "engine-contracts",
+      "status": "pass",
+      "stderr": "",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout": "Engine contract tests passed (metadata, HPSS, energy matching, shot taxonomy, camera movement, hook reservation, determinism, source windows, clip identity, energy time base, label provenance, cache identity, face provenance, motion normalization, consumed beat signals, cut provenance).\n",
+      "stdout_sha256": "5ea384633b3294c3a7cd2a26e1784990b4a2a83141d50db92449510a3eb09aa1",
+      "timed_out": false
+    },
+    {
+      "command": [
+        "/Users/issandre/.openclaw/workspace/projects/flagshipeditor/engine/.venv/bin/python",
+        "scripts/test-analysis-jobs.py"
+      ],
+      "duration_ms": 4033,
+      "exit_code": 0,
+      "name": "analysis-jobs",
+      "status": "pass",
+      "stderr": "",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout": "Analysis job tests passed (1,001-file bounded run, isolation, dedupe, progress, 50,000-file cancellation, prompt follow-up, token-drain ledger balance, ordinary restart recovery, cancelling restart recovery).\n",
+      "stdout_sha256": "6c9074b60174f2bf8b029ae9ab2ab1f5e21fd954e4957266942700b947c1d02b",
+      "timed_out": false
+    },
+    {
+      "command": [
+        "/Users/issandre/.openclaw/workspace/projects/flagshipeditor/engine/.venv/bin/python",
+        "scripts/test-server-health.py"
+      ],
+      "duration_ms": 1910,
+      "exit_code": 0,
+      "name": "server-health",
+      "status": "pass",
+      "stderr": "",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout": "Server health contract passed (application, version, and exact process identity).\n",
+      "stdout_sha256": "a953ffec512a75af25c13980726d00bac039253ca10bec732df0121a40bb6535",
+      "timed_out": false
+    }
+  ],
+  "verdict": {
+    "exit_code": 2,
+    "status": "WARN"
+  }
+}

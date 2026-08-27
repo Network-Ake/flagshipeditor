@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
-  <?define AppVersion = "2.0.0" ?>
+  <?define AppVersion = "3.0.0" ?>
   <?define AppName = "FlagshipEditor" ?>
   <?define AppPublisher = "ake-studio" ?>
   <?define AppId = "com.akestudio.flagshipeditor" ?>
@@ -35,7 +35,7 @@
         </Directory>
       </Directory>
 
-      <!-- Runtime: %LOCALAPPDATA%\ake-studio\FlagshipEditor\2.0.0 -->
+      <!-- Runtime: %LOCALAPPDATA%\ake-studio\FlagshipEditor\3.0.0 -->
       <Directory Id="LocalAppDataFolder">
         <Directory Id="INSTALLDIR" Name="$(var.AppPublisher)">
           <Directory Id="APPDIR" Name="$(var.AppName)">
@@ -123,13 +123,6 @@
         <RegistryValue Name="Version" Type="string" Value="$(var.AppVersion)" />
         <RegistryValue Name="InstallPath" Type="string" Value="[INSTALLDIR]" />
         <RegistryValue Name="CEPPath" Type="string" Value="[CEPAPPDIR]" />
-      </RegistryKey>
-      <RegistryKey Root="HKCU" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\FlagshipEditor">
-        <RegistryValue Name="DisplayName" Type="string" Value="$(var.AppName) $(var.AppVersion)" />
-        <RegistryValue Name="DisplayVersion" Type="string" Value="$(var.AppVersion)" />
-        <RegistryValue Name="Publisher" Type="string" Value="$(var.AppPublisher)" />
-        <RegistryValue Name="NoModify" Type="integer" Value="1" />
-        <RegistryValue Name="NoRepair" Type="integer" Value="1" />
       </RegistryKey>
     </Component>
   </Fragment>

@@ -69,6 +69,9 @@ interface SectionSpan {
 
 interface CutDecision {
   beatTime: number;
+  endTime: number;
+  sourceStart: number;
+  sourceEnd: number;
   clipPath: string;
   clipName: string;
   sectionType: string;
@@ -76,6 +79,8 @@ interface CutDecision {
 
 interface TimelineCut extends CutDecision {
   endTime: number;
+  sourceStart: number;
+  sourceEnd: number;
 }
 
 // Effects animated on the clip layer that starts on the beat.
@@ -114,8 +119,6 @@ var MAX_CUTS_PER_BATCH = 30;
 
 var activeBuild: any = null;
 
-// `typeof value.length === "number"` also accepts strings, which is exactly the
-// shape a malformed evalScript payload arrives in.
 function isArray(value: any): boolean {
   return Object.prototype.toString.call(value) === "[object Array]";
 }
@@ -241,8 +244,35 @@ export function appendCutBatch(cuts: TimelineCut[]): string {
         skipped++;
         continue;
       }
+      // AE evaluates an un-remapped footage layer at `compTime - startTime`.
+      // Moving startTime back by sourceStart therefore makes the selected
+      // best-moment frame land exactly on the cut's beatTime. Time-remap VFX
+      // use the same relationship (`inPoint - startTime`) as their source-time
+      // origin, so speed ramps, slow motion and freeze frames inherit the
+      // selected offset instead of resetting to source time zero.
+      var clipDuration = Math.max(0, toNumber(clipItem.duration, 0));
+      var sourceStart = Math.max(0, toNumber(cut.sourceStart, 0));
+      if (clipDuration > 0) sourceStart = Math.min(sourceStart, clipDuration);
+      var fallbackSourceEnd = clipDuration > 0
+        ? clipDuration
+        : sourceStart + (cut.endTime - cut.beatTime);
+      var sourceEnd = Math.max(sourceStart, toNumber(cut.sourceEnd, fallbackSourceEnd));
+      if (clipDuration > 0) sourceEnd = Math.min(sourceEnd, clipDuration);
+      if (sourceEnd <= sourceStart) {
+        activeBuild.warnings.push(
+          "Cut skipped: " + cut.clipName + " has no usable selected source window"
+        );
+        skipped++;
+        continue;
+      }
+      if (sourceEnd - sourceStart + 0.001 < cut.endTime - cut.beatTime) {
+        activeBuild.warnings.push(
+          "Selected source window is shorter than the timeline slot for " + cut.clipName +
+          "; After Effects will preserve the target slot and may hold the final source frame"
+        );
+      }
       var clipLayer = activeBuild.comp.layers.add(clipItem);
-      clipLayer.startTime = cut.beatTime;
+      clipLayer.startTime = cut.beatTime - sourceStart;
       clipLayer.inPoint = cut.beatTime;
       clipLayer.outPoint = Math.min(cut.endTime, activeBuild.comp.duration);
       clipLayer.name = cut.clipName + " [" + cut.sectionType + "]";
@@ -460,23 +490,51 @@ export function swapCut(
   beatTime: number,
   sectionType: string,
   clipPath: string,
-  clipName: string
+  clipName: string,
+  endTime: number,
+  sourceStart: number,
+  sourceEnd: number
 ): string {
   try {
     var comp = findGeneratedComp();
     if (!comp) return JSON.stringify({ __result: { updated: 0, message: "Generated comp not found" } });
     var layer = findCutLayer(comp, beatTime, sectionType);
     if (!layer) return JSON.stringify({ __result: { updated: 0, message: "Cut layer not found" } });
+    var rawSourceStart = Math.max(0, toNumber(sourceStart, 0));
+    var rawSourceEnd = toNumber(sourceEnd, 0);
+    if (rawSourceEnd <= rawSourceStart) {
+      return JSON.stringify({ __error: "Replacement clip has no usable selected source window" });
+    }
+    var existingFootage = findProjectFootage(clipPath);
     var footage = findOrImportProjectFootage(clipPath);
     if (!footage) return JSON.stringify({ __result: { updated: 0, message: "Replacement file is missing" } });
+    var footageDuration = Math.max(0, toNumber(footage.duration, 0));
+    var selectedSourceStart = rawSourceStart;
+    if (footageDuration > 0) selectedSourceStart = Math.min(selectedSourceStart, footageDuration);
+    var selectedSourceEnd = Math.max(
+      selectedSourceStart,
+      rawSourceEnd
+    );
+    if (footageDuration > 0) selectedSourceEnd = Math.min(selectedSourceEnd, footageDuration);
+    if (selectedSourceEnd <= selectedSourceStart) {
+      if (!existingFootage) removeProjectItem(footage);
+      return JSON.stringify({ __error: "Replacement clip has no usable selected source window" });
+    }
     app.beginUndoGroup("FlagshipEditor Swap Cut");
     try {
       layer.replaceSource(footage, false);
+      layer.startTime = beatTime - selectedSourceStart;
+      layer.inPoint = beatTime;
+      if (endTime > beatTime) layer.outPoint = Math.min(endTime, comp.duration);
+      retargetTimeRemapSourceOffset(layer, selectedSourceStart, footageDuration);
       layer.name = clipName + " [" + sectionType + "]";
     } finally {
       endUndoGroupSafely();
     }
-    return JSON.stringify({ __result: { updated: 1 } });
+    var sourceWarning = selectedSourceEnd - selectedSourceStart + 0.001 < endTime - beatTime
+      ? "Selected source window is shorter than the timeline slot; the target slot was preserved"
+      : "";
+    return JSON.stringify({ __result: { updated: 1, message: sourceWarning } });
   } catch (e) {
     endUndoGroupSafely();
     return JSON.stringify({ __error: String(e) });
@@ -501,12 +559,42 @@ export function replaceSectionCuts(sectionType: string, decisions: CutDecision[]
           missing++;
           continue;
         }
+        var rawReplacementSourceStart = Math.max(0, toNumber(decision.sourceStart, 0));
+        var rawReplacementSourceEnd = toNumber(decision.sourceEnd, 0);
+        if (rawReplacementSourceEnd <= rawReplacementSourceStart) {
+          missing++;
+          continue;
+        }
+        var existingReplacementFootage = findProjectFootage(decision.clipPath);
         var footage = findOrImportProjectFootage(decision.clipPath);
         if (!footage) {
           missing++;
           continue;
         }
+        var footageDuration = Math.max(0, toNumber(footage.duration, 0));
+        var replacementSourceStart = rawReplacementSourceStart;
+        if (footageDuration > 0) {
+          replacementSourceStart = Math.min(replacementSourceStart, footageDuration);
+        }
+        var replacementSourceEnd = Math.max(
+          replacementSourceStart,
+          rawReplacementSourceEnd
+        );
+        if (footageDuration > 0) {
+          replacementSourceEnd = Math.min(replacementSourceEnd, footageDuration);
+        }
+        if (replacementSourceEnd <= replacementSourceStart) {
+          if (!existingReplacementFootage) removeProjectItem(footage);
+          missing++;
+          continue;
+        }
         layer.replaceSource(footage, false);
+        layer.startTime = decision.beatTime - replacementSourceStart;
+        layer.inPoint = decision.beatTime;
+        if (decision.endTime > decision.beatTime) {
+          layer.outPoint = Math.min(decision.endTime, comp.duration);
+        }
+        retargetTimeRemapSourceOffset(layer, replacementSourceStart, footageDuration);
         layer.name = decision.clipName + " [" + sectionType + "]";
         updated++;
       }
@@ -569,6 +657,35 @@ function cutTag(beatTime: number, sectionType: string): string {
   return "FlagshipEditorCut|" + sectionType + "|" + beatTime.toFixed(4);
 }
 
+// Replacing the footage does not reset AE's existing Time Remap keys. Shift
+// their source-time values as a group so manual swaps, reorders and section
+// regeneration preserve the speed/slow/freeze pattern while moving its first
+// rendered frame to the newly selected best-moment offset.
+function retargetTimeRemapSourceOffset(
+  layer: any,
+  selectedSourceStart: number,
+  footageDuration: number
+): void {
+  if (!layer || layer.timeRemapEnabled !== true) return;
+  var remap = layer.property("ADBE Time Remapping");
+  if (!remap || remap.numKeys < 1) return;
+  var currentSourceAtIn = toNumber(remap.valueAtTime(layer.inPoint, false), selectedSourceStart);
+  var delta = selectedSourceStart - currentSourceAtIn;
+  if (Math.abs(delta) < 0.000001) return;
+  var keyTimes: number[] = [];
+  var shiftedValues: number[] = [];
+  for (var i = 1; i <= remap.numKeys; i++) {
+    keyTimes.push(remap.keyTime(i));
+    var shifted = toNumber(remap.keyValue(i), 0) + delta;
+    shiftedValues.push(
+      footageDuration > 0 ? Math.max(0, Math.min(footageDuration, shifted)) : Math.max(0, shifted)
+    );
+  }
+  for (var keyIndex = 0; keyIndex < keyTimes.length; keyIndex++) {
+    remap.setValueAtTime(keyTimes[keyIndex], shiftedValues[keyIndex]);
+  }
+}
+
 function findGeneratedComp(): any {
   var project = app.project;
   if (!project) return null;
@@ -604,7 +721,7 @@ function normalizeMediaPath(path: string): string {
   return String(path || "").replace(/\\/g, "/").toLowerCase();
 }
 
-function findOrImportProjectFootage(path: string): any {
+function findProjectFootage(path: string): any {
   var project = app.project;
   var expected = normalizeMediaPath(path);
   if (project && typeof project.numItems === "number") {
@@ -617,6 +734,13 @@ function findOrImportProjectFootage(path: string): any {
       } catch (e) {}
     }
   }
+  return null;
+}
+
+function findOrImportProjectFootage(path: string): any {
+  var project = app.project;
+  var existing = findProjectFootage(path);
+  if (existing) return existing;
   var imported = importFile(path);
   if (!imported || !project || typeof project.numItems !== "number") return imported;
   for (var folderIndex = project.numItems; folderIndex >= 1; folderIndex--) {

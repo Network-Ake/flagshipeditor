@@ -1,10 +1,10 @@
 ; ============================================================
-; FlagshipEditor v2.0.0 - NSIS Installer
+; FlagshipEditor v3.0.0 - NSIS Installer
 ; Contains a compressed ZIP payload extracted at install time.
 ; ============================================================
 
 !define APP_NAME "FlagshipEditor"
-!define APP_VERSION "2.0.0"
+!define APP_VERSION "3.0.0"
 !define APP_PUBLISHER "ake-studio"
 !define APP_ID "com.akestudio.flagshipeditor"
 !define CEP_PATH "$APPDATA\Adobe\CEP\extensions\${APP_ID}"
@@ -16,13 +16,18 @@ SetCompressor lzma
 !include "LogicLib.nsh"
 
 Name "${APP_NAME} ${APP_VERSION}"
-OutFile "..\..\Downloads\FlagshipEditor-${APP_VERSION}-Windows-Setup.exe"
+; OutFile resolves against the makensis working directory, so pin the default
+; to this script's own folder; override with /DOUT_FILE=<path>.
+!ifndef OUT_FILE
+  !define OUT_FILE "${__FILEDIR__}\..\FlagshipEditor-${APP_VERSION}-Windows-Setup.exe"
+!endif
+OutFile "${OUT_FILE}"
 InstallDir "$LOCALAPPDATA\ake-studio\FlagshipEditor"
 RequestExecutionLevel user
 ShowInstDetails show
 BrandingText "ake-studio - FlagshipEditor ${APP_VERSION}"
 
-VIProductVersion "2.0.0.0"
+VIProductVersion "3.0.0.0"
 VIAddVersionKey "ProductName" "FlagshipEditor"
 VIAddVersionKey "CompanyName" "ake-studio"
 VIAddVersionKey "LegalCopyright" "(c) 2026 ake-studio"
@@ -74,16 +79,16 @@ Section "FlagshipEditor" SecMain
   ; --- Copy CEP extension to Adobe CEP folder ---
   DetailPrint "Installing CEP extension..."
   CreateDirectory "${CEP_PATH}"
-  nsExec::ExecToLog 'xcopy /E /I /Y "$INSTDIR\FlagshipEditor-2.0.0-Windows\dist\cep\*" "${CEP_PATH}\"'
+  nsExec::ExecToLog 'xcopy /E /I /Y "$INSTDIR\FlagshipEditor-3.0.0-Windows\dist\cep\*" "${CEP_PATH}\"'
 
   ; --- Copy runtime to app data ---
   DetailPrint "Installing runtime..."
   CreateDirectory "${APP_PATH}"
-  nsExec::ExecToLog 'xcopy /E /I /Y "$INSTDIR\FlagshipEditor-2.0.0-Windows\engine" "${APP_PATH}\engine\"'
-  nsExec::ExecToLog 'xcopy /E /I /Y "$INSTDIR\FlagshipEditor-2.0.0-Windows\luts" "${APP_PATH}\luts\"'
-  nsExec::ExecToLog 'xcopy /E /I /Y "$INSTDIR\FlagshipEditor-2.0.0-Windows\styles" "${APP_PATH}\styles\"'
-  nsExec::ExecToLog 'xcopy /E /I /Y "$INSTDIR\FlagshipEditor-2.0.0-Windows\runtime" "${APP_PATH}\runtime\"'
-  nsExec::ExecToLog 'xcopy /E /I /Y "$INSTDIR\FlagshipEditor-2.0.0-Windows\scripts" "${APP_PATH}\scripts\"'
+  nsExec::ExecToLog 'xcopy /E /I /Y "$INSTDIR\FlagshipEditor-3.0.0-Windows\engine" "${APP_PATH}\engine\"'
+  nsExec::ExecToLog 'xcopy /E /I /Y "$INSTDIR\FlagshipEditor-3.0.0-Windows\luts" "${APP_PATH}\luts\"'
+  nsExec::ExecToLog 'xcopy /E /I /Y "$INSTDIR\FlagshipEditor-3.0.0-Windows\styles" "${APP_PATH}\styles\"'
+  nsExec::ExecToLog 'xcopy /E /I /Y "$INSTDIR\FlagshipEditor-3.0.0-Windows\runtime" "${APP_PATH}\runtime\"'
+  nsExec::ExecToLog 'xcopy /E /I /Y "$INSTDIR\FlagshipEditor-3.0.0-Windows\scripts" "${APP_PATH}\scripts\"'
 
   ; --- Write registry entries ---
   WriteRegStr HKCU "Software\ake-studio\FlagshipEditor" "Version" "${APP_VERSION}"
@@ -108,7 +113,7 @@ Section "FlagshipEditor" SecMain
   CreateShortcut "$SMPROGRAMS\ake-studio\Uninstall FlagshipEditor.lnk" "$INSTDIR\uninstall.exe" "" "" "" SW_SHOWNORMAL "" "Uninstall FlagshipEditor"
 
   ; --- Clean up extracted folder ---
-  RMDir /r "$INSTDIR\FlagshipEditor-2.0.0-Windows"
+  RMDir /r "$INSTDIR\FlagshipEditor-3.0.0-Windows"
 
   DetailPrint "FlagshipEditor ${APP_VERSION} installed successfully."
   DetailPrint "CEP Extension: ${CEP_PATH}"

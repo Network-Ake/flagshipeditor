@@ -301,6 +301,42 @@ export function applyStrobe(
 
 // A picture flash is a white frame punched over the cut, not the clip fading
 // in from nothing (which is what the previous implementation actually did).
+// One solid carries every flash: creating a fresh solid per cut used to grow
+// the comp by one layer per flashed beat.
+var FLASH_LAYER_NAME = "FlagshipEditor_Flash";
+
+function findOrCreateFlashSolid(context: VFXContext): any {
+  var comp = context.comp;
+  var flash: any = null;
+  try {
+    flash = comp.layers.byName(FLASH_LAYER_NAME);
+  } catch (findError) {
+    flash = null;
+  }
+  if (flash) return flash;
+  try {
+    flash = comp.layers.addSolid([1, 1, 1], FLASH_LAYER_NAME, comp.width, comp.height, comp.pixelAspect, comp.duration);
+    flash.startTime = 0;
+    flash.inPoint = 0;
+    flash.outPoint = comp.duration;
+    flash.blendingMode = BlendingMode.ADD;
+  } catch (createError) {
+    reportWarning(context, "Picture flash skipped: " + String(createError));
+    return null;
+  }
+  // Invisible except during a keyed flash; the first keyframe would otherwise
+  // hold its peak value across everything before the first flashed beat.
+  var opacity = transformProperty(flash, "ADBE Opacity");
+  if (opacity) {
+    try {
+      opacity.setValue(0);
+    } catch (baselineError) {
+      reportWarning(context, "Picture flash baseline opacity failed: " + String(baselineError));
+    }
+  }
+  return flash;
+}
+
 export function applyPictureFlash(
   layer: any,
   config: any,
@@ -313,17 +349,14 @@ export function applyPictureFlash(
   var frames = Math.max(1, readNumber(config, ["duration_frames"], 2));
   var peak = clamp(readNumber(config, ["opacity_peak"], 90), 0, 100);
   var duration = frames / fps;
-  var flash: any = null;
+  var flash = findOrCreateFlashSolid(context);
+  if (!flash) return;
   try {
-    flash = comp.layers.addSolid([1, 1, 1], "FlagshipEditor_Flash", comp.width, comp.height, comp.pixelAspect, duration);
-    flash.startTime = beatTime;
-    flash.inPoint = beatTime;
-    flash.outPoint = beatTime + duration;
-    flash.blendingMode = BlendingMode.ADD;
+    // Keep the shared solid above the newest cut layer so every flash renders
+    // over the footage it belongs to.
     flash.moveBefore(layer);
-  } catch (createError) {
-    reportWarning(context, "Picture flash skipped: " + String(createError));
-    return;
+  } catch (moveError) {
+    reportWarning(context, "Picture flash could not be restacked: " + String(moveError));
   }
   var opacity = transformProperty(flash, "ADBE Opacity");
   if (!opacity) {
@@ -331,6 +364,9 @@ export function applyPictureFlash(
     return;
   }
   try {
+    // A zero key one frame ahead pins the shared solid dark between flashes.
+    var rampStart = beatTime - 1 / fps;
+    if (rampStart > 0) opacity.setValueAtTime(rampStart, 0);
     opacity.setValueAtTime(beatTime, peak);
     opacity.setValueAtTime(beatTime + duration, 0);
     setLinearInterpolation(opacity);
@@ -486,6 +522,34 @@ export function applyWhipPan(
 // Chromatic aberration built from two channel-isolated duplicates screened over
 // the original. The original keeps its own blending mode: forcing it to Screen
 // used to wash out everything beneath it.
+var CHANNEL_GHOST_SUFFIXES = [" [RGB-R]", " [RGB-B]"];
+// Two ghost layers per treated cut; beyond this the comp is already carrying
+// more duplicate footage layers than After Effects previews comfortably, so
+// further cuts keep the displacement part of the effect and skip the split.
+var MAX_CHANNEL_GHOST_LAYERS = 40;
+
+function countChannelGhosts(comp: any): number {
+  var count = 0;
+  try {
+    for (var index = 1; index <= comp.numLayers; index++) {
+      var name = String(comp.layer(index).name);
+      for (var s = 0; s < CHANNEL_GHOST_SUFFIXES.length; s++) {
+        var suffix = CHANNEL_GHOST_SUFFIXES[s];
+        if (
+          name.length >= suffix.length &&
+          name.substring(name.length - suffix.length) === suffix
+        ) {
+          count++;
+          break;
+        }
+      }
+    }
+  } catch (countError) {
+    // A partially built comp still gets an answer; the cap is best-effort.
+  }
+  return count;
+}
+
 function addChannelGhost(
   layer: any,
   context: VFXContext,
@@ -544,9 +608,16 @@ export function applyRGBSplit(
   context: VFXContext
 ): void {
   if (!context.comp) return;
+  if (countChannelGhosts(context.comp) >= MAX_CHANNEL_GHOST_LAYERS) {
+    reportWarning(
+      context,
+      "RGB split capped: the comp already holds " + MAX_CHANNEL_GHOST_LAYERS + " channel layers; later cuts skip the split"
+    );
+    return;
+  }
   var offset = readNumber(config, ["displacement_px", "offset_px"], 4);
-  var red = addChannelGhost(layer, context, "red", " [RGB-R]");
-  var blue = addChannelGhost(layer, context, "blue", " [RGB-B]");
+  var red = addChannelGhost(layer, context, "red", CHANNEL_GHOST_SUFFIXES[0]);
+  var blue = addChannelGhost(layer, context, "blue", CHANNEL_GHOST_SUFFIXES[1]);
   var ghosts = [
     { layer: red, sign: 1 },
     { layer: blue, sign: -1 },

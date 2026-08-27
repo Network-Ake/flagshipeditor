@@ -174,6 +174,21 @@ console.log("\nScenario 5 — v0.1.x per-user install still works (backward comp
     assert(r.__result && r.__result.launcher === `${old}\\0.1.9\\Start-FlagshipEditor-Backend.cmd`, `got ${JSON.stringify(r)}`));
 }
 
+console.log("\nScenario 5b — version folders sort numerically: 1.10.0 beats 1.9.0");
+{
+  const old = "C:\\Users\\Steve\\AppData\\Local\\ake-studio\\FlagshipEditor";
+  const files = [
+    `${old}\\1.9.0\\Start-FlagshipEditor-Backend.cmd`,
+    `${old}\\1.10.0\\Start-FlagshipEditor-Backend.cmd`,
+    `C:\\Users\\Steve\\AppData\\Roaming\\Adobe\\CEP\\extensions\\com.akestudio.flagshipeditor\\jsx\\index.js`,
+  ];
+  const h = makeHost({ files, env: winEnv, os: "Windows 10",
+    scriptFile: `C:\\Users\\Steve\\AppData\\Roaming\\Adobe\\CEP\\extensions\\com.akestudio.flagshipeditor\\jsx\\index.js` });
+  const r = JSON.parse(h.thisObj.startBackend());
+  check("1.10.0 wins over 1.9.0 (a plain string sort picks 1.9.0)", () =>
+    assert(r.__result && r.__result.launcher === `${old}\\1.10.0\\Start-FlagshipEditor-Backend.cmd`, `got ${JSON.stringify(r)}`));
+}
+
 console.log("\nScenario 6 — engine present but launcher gone: server.py fallback");
 {
   const files = [`${PF}\\engine\\server.py`, `${CEP}\\jsx\\index.js`];

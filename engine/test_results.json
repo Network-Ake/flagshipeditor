@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-24T20:48:13.119295",
+  "timestamp": "2026-08-27T00:47:38.027094",
   "tests": {
     "imports": true,
     "cut_placement": true,
@@ -19,52 +19,132 @@
     {
       "beatTime": 0.0,
       "endTime": 1.5,
-      "sectionType": "intro"
+      "sectionType": "intro",
+      "cutProvenance": {
+        "origin": "boundary",
+        "sourceTime": 0.0,
+        "snapDelta": 0.0,
+        "beatDelta": 0.0,
+        "beatAligned": true,
+        "snapTolerance": 0.08
+      }
     },
     {
       "beatTime": 1.5,
       "endTime": 3.0,
-      "sectionType": "intro"
+      "sectionType": "intro",
+      "cutProvenance": {
+        "origin": "grid",
+        "sourceTime": 1.5,
+        "snapDelta": 0.0,
+        "beatDelta": 0.0,
+        "beatAligned": true,
+        "snapTolerance": 0.08
+      }
     },
     {
       "beatTime": 3.0,
       "endTime": 4.5,
-      "sectionType": "intro"
+      "sectionType": "intro",
+      "cutProvenance": {
+        "origin": "grid",
+        "sourceTime": 3.0,
+        "snapDelta": 0.0,
+        "beatDelta": 0.0,
+        "beatAligned": true,
+        "snapTolerance": 0.08
+      }
     },
     {
       "beatTime": 4.5,
       "endTime": 6.0,
-      "sectionType": "intro"
+      "sectionType": "intro",
+      "cutProvenance": {
+        "origin": "grid",
+        "sourceTime": 4.5,
+        "snapDelta": 0.0,
+        "beatDelta": 0.0,
+        "beatAligned": true,
+        "snapTolerance": 0.08
+      }
     },
     {
       "beatTime": 6.0,
       "endTime": 8.0,
-      "sectionType": "intro"
+      "sectionType": "intro",
+      "cutProvenance": {
+        "origin": "grid",
+        "sourceTime": 6.0,
+        "snapDelta": 0.0,
+        "beatDelta": 0.0,
+        "beatAligned": true,
+        "snapTolerance": 0.08
+      }
     },
     {
       "beatTime": 8.0,
       "endTime": 9.0,
-      "sectionType": "verse"
+      "sectionType": "verse",
+      "cutProvenance": {
+        "origin": "boundary",
+        "sourceTime": 8.0,
+        "snapDelta": 0.0,
+        "beatDelta": 0.0,
+        "beatAligned": true,
+        "snapTolerance": 0.08
+      }
     },
     {
       "beatTime": 9.0,
       "endTime": 10.0,
-      "sectionType": "verse"
+      "sectionType": "verse",
+      "cutProvenance": {
+        "origin": "grid",
+        "sourceTime": 9.0,
+        "snapDelta": 0.0,
+        "beatDelta": 0.0,
+        "beatAligned": true,
+        "snapTolerance": 0.08
+      }
     },
     {
       "beatTime": 10.0,
       "endTime": 11.0,
-      "sectionType": "verse"
+      "sectionType": "verse",
+      "cutProvenance": {
+        "origin": "grid",
+        "sourceTime": 10.0,
+        "snapDelta": 0.0,
+        "beatDelta": 0.0,
+        "beatAligned": true,
+        "snapTolerance": 0.08
+      }
     },
     {
       "beatTime": 11.0,
       "endTime": 12.0,
-      "sectionType": "verse"
+      "sectionType": "verse",
+      "cutProvenance": {
+        "origin": "grid",
+        "sourceTime": 11.0,
+        "snapDelta": 0.0,
+        "beatDelta": 0.0,
+        "beatAligned": true,
+        "snapTolerance": 0.08
+      }
     },
     {
       "beatTime": 12.0,
       "endTime": 13.0,
-      "sectionType": "verse"
+      "sectionType": "verse",
+      "cutProvenance": {
+        "origin": "grid",
+        "sourceTime": 12.0,
+        "snapDelta": 0.0,
+        "beatDelta": 0.0,
+        "beatAligned": true,
+        "snapTolerance": 0.08
+      }
     }
   ]
 }

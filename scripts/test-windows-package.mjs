@@ -4,6 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 import vm from "node:vm";
 
+import { createHostContext } from "./lib/ae-mock.mjs";
+
 const root = process.cwd();
 const version = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version;
 const stage = path.join(root, ".build", "windows", `FlagshipEditor-${version}-Windows`);
@@ -96,14 +98,27 @@ for (const bridgeFunction of [
 ]) {
   assert.ok(jsx.includes(`thisObj.${bridgeFunction}`), `Missing AE bridge: ${bridgeFunction}`);
 }
-const jsxContext = {};
+// The bundle reads ExtendScript globals ($.os, Folder, app) at load time, so
+// it must run inside the same host mock the ae-bridge gate uses; a bare
+// context throws before any bridge function is installed.
+const jsxContext = createHostContext().context;
 vm.createContext(jsxContext);
 vm.runInContext(jsx, jsxContext, { filename: "jsx/index.js" });
 for (const bridgeFunction of ["getBridgeHealth", "beginComp", "appendCutBatch", "finishComp", "abortComp"]) {
   assert.equal(typeof jsxContext[bridgeFunction], "function", `AE bridge failed to initialize: ${bridgeFunction}`);
 }
 assert.ok(!jsx.includes("parseInt(parts[0])"), "Fractional beat intervals regressed.");
-assert.ok(!jsx.includes(".indexOf("), "ExtendScript bundle regressed to an ES3-unsafe Array.indexOf call.");
+// ExtendScript (ES3) has String.prototype.indexOf but not Array.prototype
+// .indexOf. The registry parse calls it on a String()-wrapped value, which is
+// safe; anything beyond that reviewed call must fail until it is reviewed too.
+const unreviewedIndexOf = jsx
+  .split("\n")
+  .filter((line) => line.includes(".indexOf(") && !line.includes('out.indexOf("REG_SZ")'));
+assert.equal(
+  unreviewedIndexOf.length,
+  0,
+  `ExtendScript bundle gained unreviewed .indexOf( calls (Array.prototype.indexOf does not exist in ES3): ${unreviewedIndexOf.join(" | ")}`
+);
 assert.ok(jsx.includes("Style effect is not implemented and was skipped"),
   "Unsupported enabled style effects must not be silently ignored.");
 assert.ok(jsx.includes("Math.abs(taggedBeat - beatTime) < 0.05"),

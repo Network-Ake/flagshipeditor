@@ -23,6 +23,9 @@ function grade(rgb, preset) {
   let values = rgb.map((value) => Math.pow(value, preset.gamma));
   values = values.map((value) => (value - 0.5) * preset.contrast + 0.5);
   values = values.map((value, channel) => value * preset.exposure + preset.tint[channel]);
+  // Clamp before measuring luma: contrast/exposure overshoot outside [0, 1]
+  // used to leak into the luma estimate and skew the saturation mix.
+  values = values.map(clamp);
   const luma = values[0] * 0.2126 + values[1] * 0.7152 + values[2] * 0.0722;
   return values.map((value) => clamp(luma + (value - luma) * preset.saturation));
 }

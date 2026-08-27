@@ -1,4 +1,4 @@
-' FlagshipEditor 2.0.0 - windowless backend launcher.
+' FlagshipEditor 3.0.0 - windowless backend launcher.
 '
 ' The Start Menu shortcut and the CEP panel both come through here. Running the
 ' backend under wscript keeps every window off the screen: pythonw.exe has no
@@ -22,7 +22,7 @@ launcher = baseDir & "\engine\backend_launcher.py"
 If Not fso.FileExists(pythonw) Or Not fso.FileExists(launcher) Then
   MsgBox "The FlagshipEditor runtime is incomplete in:" & vbCrLf & vbCrLf & _
          baseDir & vbCrLf & vbCrLf & _
-         "Reinstall FlagshipEditor 2.0.0 to repair it.", _
+         "Reinstall FlagshipEditor 3.0.0 to repair it.", _
          vbExclamation, "FlagshipEditor"
   WScript.Quit 60
 End If

@@ -333,8 +333,16 @@ class AnalysisJobManager:
                 break
             if token != job_id:
                 drained.append(token)
+            else:
+                # A retired token must settle the queue's unfinished-task
+                # ledger, or work_queue.join() blocks forever on a token
+                # nobody holds.
+                self.work_queue.task_done()
         for token in drained:
+            # put-then-task_done keeps unfinished_tasks from transiently
+            # hitting zero, which would wake a concurrent join() early.
             self.work_queue.put(token)
+            self.work_queue.task_done()
 
     def _refresh_job_state_locked(self, connection: sqlite3.Connection, job_id: str) -> None:
         """Refresh job state using an existing connection (for recovery paths)."""

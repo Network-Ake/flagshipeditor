@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  FlagshipEditor v2.0.0 — WiX MSI Installer
+  FlagshipEditor v3.0.0 — WiX MSI Installer
   Built with WiX Toolset 3.14 via Docker (felfert/wix)
 -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
-  <?define AppVersion = "2.0.0" ?>
+  <?define AppVersion = "3.0.0" ?>
   <?define AppName = "FlagshipEditor" ?>
   <?define AppPublisher = "ake-studio" ?>
   <?define AppId = "com.akestudio.flagshipeditor" ?>
@@ -247,15 +247,6 @@
         <RegistryValue Name="InstallPath" Type="string" Value="[INSTALLDIR]" />
         <RegistryValue Name="CEPPath" Type="string" Value="[CEPAPPDIR]" />
         <RegistryValue Name="AppPath" Type="string" Value="[VERSIONDIR]" />
-      </RegistryKey>
-      <RegistryKey Root="HKCU" Key="Software\Microsoft\Windows\CurrentVersion\Uninstall\FlagshipEditor">
-        <RegistryValue Name="DisplayName" Type="string" Value="$(var.AppName) $(var.AppVersion)" />
-        <RegistryValue Name="DisplayVersion" Type="string" Value="$(var.AppVersion)" />
-        <RegistryValue Name="Publisher" Type="string" Value="$(var.AppPublisher)" />
-        <RegistryValue Name="URLInfoAbout" Type="string" Value="$(var.AppUrl)" />
-        <RegistryValue Name="InstallLocation" Type="string" Value="[INSTALLDIR]" />
-        <RegistryValue Name="NoModify" Type="integer" Value="1" />
-        <RegistryValue Name="NoRepair" Type="integer" Value="1" />
       </RegistryKey>
     </Component>
   </Fragment>

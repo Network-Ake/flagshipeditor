@@ -29,7 +29,7 @@ from media_tools import FFMPEG, FFPROBE, describe as describe_media_tools, missi
 
 APP_ID = "com.akestudio.flagshipeditor.backend"
 VERSION_FILE = Path(__file__).resolve().parent / "VERSION"
-APP_VERSION = VERSION_FILE.read_text(encoding="utf-8").strip() if VERSION_FILE.exists() else "2.0.0"
+APP_VERSION = VERSION_FILE.read_text(encoding="utf-8").strip() if VERSION_FILE.exists() else "3.0.0"
 PID_FILE = Path(__file__).resolve().parent / ".flagshipeditor.pid"
 SERVER_PORT = int(os.environ.get("FLAGSHIPEDITOR_PORT", "18791"))
 BEAT_TIMEOUT_SECONDS = max(30, int(os.environ.get("FLAGSHIPEDITOR_BEAT_TIMEOUT", "180")))
@@ -58,7 +58,12 @@ except ImportError as error:  # opencv missing from the runtime
     IMPORT_ERRORS["opencv"] = str(error)
 
 try:
-    from shot_selector import resolve_media_profile, score_clip, select_best_clips
+    from shot_selector import (
+        normalize_motion_evidence,
+        resolve_media_profile,
+        score_clip,
+        select_best_clips,
+    )
 
     SHOT_SELECTOR_AVAILABLE = True
 except ImportError as error:  # numpy missing from the runtime
@@ -136,7 +141,20 @@ class ShotSelectionRequest(BaseModel):
     duration: float = 0.0
     tempo: float = 0.0
     bassOnsets: List[float] = Field(default_factory=list)
+    downbeats: List[float] = Field(default_factory=list)
     seed: int = 1
+    # The hook measured by beat analysis. Optional: a caller that has none — or
+    # an older panel that does not send one — gets the selector's own estimate.
+    hook: Optional[Dict[str, Any]] = None
+    # Two more beat signals the selector consumes when they are available:
+    # phrase boundaries become cut points, and the energy curve (with the time
+    # base it was measured on) tunes each cut's energy target. Every one is
+    # optional, so an older panel keeps the previous behaviour exactly.
+    phraseBoundaries: List[float] = Field(default_factory=list)
+    energy: List[float] = Field(default_factory=list)
+    energyTimes: List[float] = Field(default_factory=list)
+    energyHopLength: Optional[float] = None
+    energySampleRate: Optional[float] = None
 
 
 class ScoreRequest(BaseModel):
@@ -144,6 +162,7 @@ class ScoreRequest(BaseModel):
 
     clip: Dict[str, Any]
     sectionType: str = ""
+    library: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 def _set_beat_state(**changes: Any) -> None:
@@ -365,7 +384,16 @@ def select_shots(req: ShotSelectionRequest) -> Dict[str, Any]:
             tempo=req.tempo,
             bass_onsets=req.bassOnsets,
             seed=req.seed,
+            hook=req.hook,
+            phrase_boundaries=req.phraseBoundaries,
+            energy=req.energy,
+            energy_times=req.energyTimes,
+            energy_hop_length=req.energyHopLength,
+            energy_sample_rate=req.energySampleRate,
+            downbeats=req.downbeats,
         )
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=f"Invalid shot-selection input: {error}") from error
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"Shot selection failed: {error}") from error
     if not selections:
@@ -386,7 +414,18 @@ def score_clip_endpoint(req: ScoreRequest) -> Dict[str, Any]:
     if not SHOT_SELECTOR_AVAILABLE:
         raise HTTPException(status_code=503, detail="Shot scoring is unavailable")
     try:
-        return score_clip(req.clip, None, req.sectionType)
+        target_identity = str(req.clip.get("path", "")).replace("\\", "/").lower()
+        peers = [
+            clip
+            for clip in req.library
+            if str(clip.get("path", "")).replace("\\", "/").lower() != target_identity
+        ]
+        normalized = normalize_motion_evidence(peers + [req.clip])
+        result = score_clip(normalized[-1], None, req.sectionType)
+        result["motionNormalizationContext"] = (
+            "library" if req.library else "legacy_single_clip"
+        )
+        return result
     except Exception as error:
         raise HTTPException(status_code=500, detail=f"Clip scoring failed: {error}") from error
 

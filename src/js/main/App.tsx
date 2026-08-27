@@ -105,6 +105,8 @@ interface ReplaceSectionResult {
 interface TimelineCutPayload {
   beatTime: number;
   endTime: number;
+  sourceStart: number;
+  sourceEnd: number;
   clipPath: string;
   clipName: string;
   sectionType: string;
@@ -173,6 +175,8 @@ function toPayload(cut: CutDecision): TimelineCutPayload {
   return {
     beatTime: cut.beatTime,
     endTime: cut.endTime,
+    sourceStart: cut.sourceStart,
+    sourceEnd: cut.sourceEnd,
     clipPath: cut.clipPath,
     clipName: cut.clipName,
     sectionType: cut.sectionType,
@@ -714,7 +718,14 @@ const App: React.FC = () => {
           duration: beat.duration,
           tempo: beat.tempo,
           bassOnsets: beat.bass_onsets,
+          downbeats: beat.downbeats,
           seed: params.seed,
+          hook: beat.hook,
+          phraseBoundaries: beat.phrase_boundaries,
+          energy: beat.energy,
+          energyTimes: beat.energy_times,
+          energyHopLength: beat.energy_hop_length,
+          energySampleRate: beat.energy_sample_rate,
         })
       );
       checkpoint();
@@ -787,7 +798,10 @@ const App: React.FC = () => {
         cut.beatTime,
         cut.sectionType,
         alternative.clipPath,
-        alternative.clipName
+        alternative.clipName,
+        cut.endTime,
+        alternative.sourceStart,
+        alternative.sourceEnd
       );
       if (result.updated === 0) {
         pushNotice("warning", "Cut not swapped", result.message || "The cut layer was not found.");
@@ -822,6 +836,11 @@ const App: React.FC = () => {
                 clipName: cut.clipName,
                 thumbnailId: cut.thumbnailId,
                 sceneType: cut.sceneType,
+                shotType: cut.shotType,
+                cameraMovement: cut.cameraMovement,
+                clipDuration: cut.clipDuration,
+                sourceStart: cut.sourceStart,
+                sourceEnd: cut.sourceEnd,
                 score: cut.score,
               };
               return {
@@ -830,6 +849,11 @@ const App: React.FC = () => {
                 clipName: alternative.clipName,
                 thumbnailId: alternative.thumbnailId,
                 sceneType: alternative.sceneType,
+                shotType: alternative.shotType,
+                cameraMovement: alternative.cameraMovement,
+                clipDuration: alternative.clipDuration,
+                sourceStart: alternative.sourceStart,
+                sourceEnd: alternative.sourceEnd,
                 score: alternative.score,
                 alternatives: [replaced].concat(
                   cut.alternatives.filter((entry) => entry.clipPath !== alternative.clipPath)
@@ -872,6 +896,8 @@ const App: React.FC = () => {
         thumbnailId: cut.thumbnailId,
         sceneType: cut.sceneType,
         clipDuration: cut.clipDuration,
+        sourceStart: cut.sourceStart,
+        sourceEnd: cut.sourceEnd,
         score: cut.score,
         scores: cut.scores,
         alternatives: cut.alternatives,
@@ -900,7 +926,10 @@ const App: React.FC = () => {
             cut.beatTime,
             cut.sectionType,
             cut.clipPath,
-            cut.clipName
+            cut.clipName,
+            cut.endTime,
+            cut.sourceStart,
+            cut.sourceEnd
           );
           if (result.updated === 0) {
             pushNotice("warning", "Cut not moved", result.message || "The cut layer was not found.");
@@ -944,6 +973,13 @@ const App: React.FC = () => {
             duration: analysis.duration,
             tempo: analysis.tempo,
             bassOnsets: analysis.bass_onsets,
+            downbeats: analysis.downbeats,
+            hook: analysis.hook,
+            phraseBoundaries: analysis.phrase_boundaries,
+            energy: analysis.energy,
+            energyTimes: analysis.energy_times,
+            energyHopLength: analysis.energy_hop_length,
+            energySampleRate: analysis.energy_sample_rate,
             // A fresh seed is what makes a regeneration produce a new take.
             seed: 1 + Math.floor(Math.random() * 999998),
           })

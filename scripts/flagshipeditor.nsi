@@ -1,11 +1,11 @@
 ; ============================================================
-; FlagshipEditor v2.0.0 - NSIS Installer for Windows
+; FlagshipEditor v3.0.0 - NSIS Installer for Windows
 ; Professional installer with uninstaller, registry entries,
 ; and CEP extension registration.
 ; ============================================================
 
 !define APP_NAME "FlagshipEditor"
-!define APP_VERSION "2.0.0"
+!define APP_VERSION "3.0.0"
 !define APP_PUBLISHER "ake-studio"
 !define APP_ID "com.akestudio.flagshipeditor"
 !define APP_URL "https://github.com/Network-Ake/flagshipeditor"
@@ -22,7 +22,12 @@ SetCompressor /SOLID lzma
 
 ; --- Settings ---
 Name "${APP_NAME} ${APP_VERSION}"
-OutFile "..\..\Downloads\FlagshipEditor-${APP_VERSION}-Windows-Setup.exe"
+; OutFile resolves against the makensis working directory, so pin the default
+; to this script's own folder; override with /DOUT_FILE=<path>.
+!ifndef OUT_FILE
+  !define OUT_FILE "${__FILEDIR__}\..\FlagshipEditor-${APP_VERSION}-Windows-Setup.exe"
+!endif
+OutFile "${OUT_FILE}"
 InstallDir "$LOCALAPPDATA\ake-studio\FlagshipEditor"
 RequestExecutionLevel user
 ShowInstDetails show
@@ -30,7 +35,7 @@ ShowUnInstDetails show
 BrandingText "ake-studio - FlagshipEditor ${APP_VERSION}"
 
 ; --- Version Info ---
-VIProductVersion "2.0.0.0"
+VIProductVersion "3.0.0.0"
 VIAddVersionKey "ProductName" "FlagshipEditor"
 VIAddVersionKey "CompanyName" "ake-studio"
 VIAddVersionKey "LegalCopyright" "(c) 2026 ake-studio"

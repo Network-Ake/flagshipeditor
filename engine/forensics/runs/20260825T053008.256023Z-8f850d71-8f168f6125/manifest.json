@@ -1,0 +1,202 @@
+{
+  "baseline_path": "engine/forensics/baseline.json",
+  "baseline_sha256": "",
+  "generated_at": "2026-08-25T05:30:12+00:00",
+  "inventory": [
+    {
+      "bytes": 27369,
+      "path": "engine/ANALYSIS-beat.md",
+      "sha256": "859326dd924f8d48b4c597ea598be6430c33d27eb4f29b71d238ce53721f8020"
+    },
+    {
+      "bytes": 39657,
+      "path": "engine/ANALYSIS-clip.md",
+      "sha256": "17cf91e8dbe2e5587f3cdffe0b996a6ea2c27656bcaaf7dd0258d11f912ab44d"
+    },
+    {
+      "bytes": 35229,
+      "path": "engine/ANALYSIS-selector.md",
+      "sha256": "0fe713268becd1544b873b085a007df56639a35431a7ab2b21d618d099e30aa2"
+    },
+    {
+      "bytes": 25183,
+      "path": "engine/CYBER-FORENSIC-SPEC.md",
+      "sha256": "b68b4a35beb4827dfd0bb41e4e22d1d7bfc08fa750804cc7f433535e0c4fe58e"
+    },
+    {
+      "bytes": 6,
+      "path": "engine/VERSION",
+      "sha256": "c28fcca53637bc88e124af1725df13cb98c69dedefd62fb3cdbe1cdb6b760624"
+    },
+    {
+      "bytes": 20656,
+      "path": "engine/analysis_jobs.py",
+      "sha256": "9b5550b367d26708f5404f0ff62e260a0f6711a97c1c035ff7f307c8f5065083"
+    },
+    {
+      "bytes": 15486,
+      "path": "engine/beat_analysis.py",
+      "sha256": "cd7d805b9fd819bd2afee3f1cd7fec6519b58b7dabc3f72deaea52252f554608"
+    },
+    {
+      "bytes": 33707,
+      "path": "engine/clip_analysis.py",
+      "sha256": "e2c80f512a6fff8ba504f3e1f664b281f36c63b8f107557130c1c336055e4551"
+    },
+    {
+      "bytes": 5043,
+      "path": "engine/media_tools.py",
+      "sha256": "0b3616ef02c4bac98752cc91e6593f8d97a35e82c30db156a4087afee8baec4e"
+    },
+    {
+      "bytes": 662,
+      "path": "engine/requirements-windows.lock",
+      "sha256": "d5d16939b2e938bc54fe2beee89574b42ea349a84c10c1570007199edf2fc16b"
+    },
+    {
+      "bytes": 244,
+      "path": "engine/requirements.txt",
+      "sha256": "afa534232d7b3dc8515bf8c16bc8689d4b5b22172b8aed06d1843449a5e8c3bc"
+    },
+    {
+      "bytes": 1427,
+      "path": "engine/self_test.py",
+      "sha256": "b2d8f8ae85f248259cafe5c1f8252d832033c2bc4a9070dc4563613e72dc6440"
+    },
+    {
+      "bytes": 15307,
+      "path": "engine/server.py",
+      "sha256": "bf0b7ae803d40efaf12eafa81fced9a775aeebb755beef13de3afb516ed4aebb"
+    },
+    {
+      "bytes": 40223,
+      "path": "engine/shot_selector.py",
+      "sha256": "04535d54ab91019659f1c87b8ae320df8f8f834ebf210be6d062772bf488f1df"
+    },
+    {
+      "bytes": 27368,
+      "path": "engine/test_cutting_engine.py",
+      "sha256": "7314a9527158e167069d9233b1b0b91d5dede6141c001bb6b320709c612f00e8"
+    },
+    {
+      "bytes": 65565,
+      "path": "scripts/cyber_forensic_protocol.py",
+      "sha256": "44084a4e923ea425011134f1d016357fd0f129ddeebeec437933263d0ed58ab0"
+    },
+    {
+      "bytes": 25212,
+      "path": "scripts/test-ae-bridge.mjs",
+      "sha256": "e6f916133330e599a6cea0c250ec43a84c8750f29bd7a8474e9c3f072b0f6d31"
+    },
+    {
+      "bytes": 6285,
+      "path": "scripts/test-analysis-jobs.py",
+      "sha256": "ec2d1e9cc3499790fa634bd64d865af9857f650e5c57355af4fa857fb2d3de46"
+    },
+    {
+      "bytes": 11169,
+      "path": "scripts/test-backend-search.mjs",
+      "sha256": "85a5b5d141ade8fc9a1b0b6306fcb5806ae6c4c97b9243c69814560710518b40"
+    },
+    {
+      "bytes": 6309,
+      "path": "scripts/test-cyber-forensic-protocol.py",
+      "sha256": "bc583357cb8ce599884f76d26ff097d0555223fb8db0551a2dcf425ae533ea2a"
+    },
+    {
+      "bytes": 3976,
+      "path": "scripts/test-engine-contracts.py",
+      "sha256": "70f13f6b6a2eb817ccde2fbb05cc8d6cdc5f9ac473e708bee72d38fe8b4e051f"
+    },
+    {
+      "bytes": 2461,
+      "path": "scripts/test-prores-fixtures.py",
+      "sha256": "02edf1da5a89bf25296d3a5094fe4c32d52c59d291dbd42d7908f3370f2de3af"
+    },
+    {
+      "bytes": 830,
+      "path": "scripts/test-server-health.py",
+      "sha256": "bd52bd497d4faf21c751f678bf73e9559e297d0503c2973c1ad868768063046d"
+    },
+    {
+      "bytes": 4104,
+      "path": "scripts/test-ui-job-recovery.mjs",
+      "sha256": "cb1fcd3380c6d44051203c0c9a9a3bf3ca67b12cc430ace00beb93f37b7ac56c"
+    },
+    {
+      "bytes": 8681,
+      "path": "scripts/test-windows-package.mjs",
+      "sha256": "66c5f8ec39253c71425a632b362b6969661e90bb9bbbf8c33891f204cd115f65"
+    },
+    {
+      "bytes": 39368,
+      "path": "src/js/main/App.tsx",
+      "sha256": "945a5ab5ec9f068d0ea5c5b3c217b69d9b3d098487c8fc82ecf6bcb5074ad0d1"
+    },
+    {
+      "bytes": 10006,
+      "path": "src/js/main/lib/python.ts",
+      "sha256": "fc6f4dadc3ce13cb66923d998fc774cdbda2b57cbb67e1d33e68b334f7a59ea4"
+    },
+    {
+      "bytes": 28497,
+      "path": "src/jsx/aeft/aeft.ts",
+      "sha256": "1d0cd47c636bed25f4408e524776df17f569fb241034ce66666ef9750882e8b2"
+    },
+    {
+      "bytes": 2809,
+      "path": "styles/cmd_command_drill.json",
+      "sha256": "98012f885be39b7f738cb29bf757144b34c0336d6b4941bb3c65493319ca7b00"
+    },
+    {
+      "bytes": 1536,
+      "path": "styles/custom.json",
+      "sha256": "c681486d094483ac3cc0c00662af3bf914922899248cb407d2dea501365fcaa1"
+    },
+    {
+      "bytes": 2574,
+      "path": "styles/jack_rottier.json",
+      "sha256": "5c9e097b43bea7c41c0eaa0c32d8f204c29e1b92f290a714b5b20f4c6abfc277"
+    },
+    {
+      "bytes": 2963,
+      "path": "styles/lyrical_lemonade.json",
+      "sha256": "6d57b92b1f17430c0077ab742d907d1dc500addb36ed3650bd679ed873e46309"
+    },
+    {
+      "bytes": 2729,
+      "path": "styles/ninetive.json",
+      "sha256": "36eaeca38f9d15223d9d320e3513b0c02811c64cd2b8e18606cb296a2b8cab52"
+    },
+    {
+      "bytes": 2894,
+      "path": "styles/worldwide_films.json",
+      "sha256": "37e9aeeff676f0b9494a6635788f11e1a5712a82be094d3c90cc7bc5de1c8d6e"
+    }
+  ],
+  "protocol_version": "1.0.0",
+  "provenance": {
+    "branch": "main",
+    "commit": "8f850d71d1b4826a3fd118b509a202ea7a0588d9",
+    "engine_status": "M engine/shot_selector.py\n M scripts/test-ae-bridge.mjs\n M scripts/test-engine-contracts.py\n?? engine/ANALYSIS-beat.md\n?? engine/ANALYSIS-clip.md\n?? engine/ANALYSIS-selector.md\n?? engine/CYBER-FORENSIC-SPEC.md\n?? engine/forensics/\n?? scripts/cyber_forensic_protocol.py\n?? scripts/test-cyber-forensic-protocol.py"
+  },
+  "runtime": {
+    "engine_venv_selected": true,
+    "machine": "x86_64",
+    "packages": {
+      "fastapi": "0.141.1",
+      "librosa": "1.0.0",
+      "numpy": "2.2.6",
+      "opencv-python": "missing",
+      "opencv-python-headless": "4.14.0.94",
+      "pydantic": "2.13.4",
+      "scipy": "1.18.1"
+    },
+    "platform": "macOS-15.7.5-x86_64-i386-64bit",
+    "protocol_process_executable": "/Users/issandre/.openclaw/workspace/projects/flagshipeditor/engine/.venv/bin/python",
+    "python_executable": "/Users/issandre/.openclaw/workspace/projects/flagshipeditor/engine/.venv/bin/python",
+    "python_sha256": "cce81969b8ba0d7c81d5143ceb4474b8b551627df4cfa4d34e6a0bc168481e03",
+    "python_version": "3.12.13 (main, Mar  3 2026, 12:39:30) [Clang 17.0.0 (clang-1700.6.3.2)]"
+  },
+  "schema_version": 1
+}

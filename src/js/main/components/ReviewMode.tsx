@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CutAlternative, CutDecision, BeatAnalysis, thumbnailUrl } from "../lib/python";
+import { ClipScores, CutAlternative, CutDecision, BeatAnalysis, thumbnailUrl } from "../lib/python";
 
 interface Props {
   cuts: CutDecision[];
@@ -20,13 +20,15 @@ const SECTION_COLORS: Record<string, string> = {
   bridge: "#10b981",
 };
 
-const SCORE_KEYS: { key: string; label: string }[] = [
-  { key: "composition_score", label: "Composition" },
-  { key: "energy_score", label: "Energy" },
-  { key: "variety_score", label: "Variety" },
-  { key: "sharpness_score", label: "Sharpness" },
-  { key: "stability_score", label: "Stability" },
-  { key: "face_quality_score", label: "Face quality" },
+// Keys of the selector's per-cut `scores` payload (ClipScores), not the
+// `*_score` fields that live on the clip analysis itself.
+const SCORE_KEYS: { key: keyof ClipScores; label: string }[] = [
+  { key: "composition", label: "Composition" },
+  { key: "energy", label: "Energy" },
+  { key: "variety", label: "Variety" },
+  { key: "sharpness", label: "Sharpness" },
+  { key: "stability", label: "Stability" },
+  { key: "face_quality", label: "Face quality" },
 ];
 
 function formatTime(seconds: number): string {
@@ -277,7 +279,7 @@ const DetailPanel: React.FC<{
   onSwap: (indices: number[], alt: CutAlternative) => void;
   onToggleLock: (index: number) => void;
 }> = ({ cut, index, busy, onSwap, onToggleLock }) => {
-  const scores = cut.scores as Record<string, number>;
+  const scores = cut.scores;
 
   return (
     <div className="cut-detail">

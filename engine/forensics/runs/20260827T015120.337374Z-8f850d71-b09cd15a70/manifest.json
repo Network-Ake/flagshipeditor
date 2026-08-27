@@ -1,0 +1,212 @@
+{
+  "baseline_path": "engine/forensics/baseline.json",
+  "baseline_sha256": "fb58831c88a595fe004bd24845ff9f7d292dc1347b8ba4fcc51c1f1d54092a15",
+  "generated_at": "2026-08-27T01:53:29+00:00",
+  "inventory": [
+    {
+      "bytes": 27369,
+      "path": "engine/ANALYSIS-beat.md",
+      "sha256": "859326dd924f8d48b4c597ea598be6430c33d27eb4f29b71d238ce53721f8020"
+    },
+    {
+      "bytes": 39657,
+      "path": "engine/ANALYSIS-clip.md",
+      "sha256": "17cf91e8dbe2e5587f3cdffe0b996a6ea2c27656bcaaf7dd0258d11f912ab44d"
+    },
+    {
+      "bytes": 35229,
+      "path": "engine/ANALYSIS-selector.md",
+      "sha256": "0fe713268becd1544b873b085a007df56639a35431a7ab2b21d618d099e30aa2"
+    },
+    {
+      "bytes": 25183,
+      "path": "engine/CYBER-FORENSIC-SPEC.md",
+      "sha256": "b68b4a35beb4827dfd0bb41e4e22d1d7bfc08fa750804cc7f433535e0c4fe58e"
+    },
+    {
+      "bytes": 6,
+      "path": "engine/VERSION",
+      "sha256": "c28fcca53637bc88e124af1725df13cb98c69dedefd62fb3cdbe1cdb6b760624"
+    },
+    {
+      "bytes": 20656,
+      "path": "engine/analysis_jobs.py",
+      "sha256": "9b5550b367d26708f5404f0ff62e260a0f6711a97c1c035ff7f307c8f5065083"
+    },
+    {
+      "bytes": 50003,
+      "path": "engine/beat_analysis.py",
+      "sha256": "132327ce5afd5191a5903f171e247c5f0929715a52e4fa1ae83ea48ec634e482"
+    },
+    {
+      "bytes": 66298,
+      "path": "engine/clip_analysis.py",
+      "sha256": "881eebbd55da33cf8e091c121dc5d3203880b6014cc0bea37ee60421f03c4dff"
+    },
+    {
+      "bytes": 5043,
+      "path": "engine/media_tools.py",
+      "sha256": "0b3616ef02c4bac98752cc91e6593f8d97a35e82c30db156a4087afee8baec4e"
+    },
+    {
+      "bytes": 662,
+      "path": "engine/requirements-windows.lock",
+      "sha256": "d5d16939b2e938bc54fe2beee89574b42ea349a84c10c1570007199edf2fc16b"
+    },
+    {
+      "bytes": 244,
+      "path": "engine/requirements.txt",
+      "sha256": "afa534232d7b3dc8515bf8c16bc8689d4b5b22172b8aed06d1843449a5e8c3bc"
+    },
+    {
+      "bytes": 1427,
+      "path": "engine/self_test.py",
+      "sha256": "b2d8f8ae85f248259cafe5c1f8252d832033c2bc4a9070dc4563613e72dc6440"
+    },
+    {
+      "bytes": 17170,
+      "path": "engine/server.py",
+      "sha256": "8bfc4124cb65ab84ab814f7cb30c399fd8afc9d30f095333f39ddb1d4dced050"
+    },
+    {
+      "bytes": 73471,
+      "path": "engine/shot_selector.py",
+      "sha256": "1ab60c71289bb85c1be5c3bcdac56c906642c388d21f547acc2c3afc92667a5b"
+    },
+    {
+      "bytes": 27368,
+      "path": "engine/test_cutting_engine.py",
+      "sha256": "7314a9527158e167069d9233b1b0b91d5dede6141c001bb6b320709c612f00e8"
+    },
+    {
+      "bytes": 91183,
+      "path": "scripts/cyber_forensic_protocol.py",
+      "sha256": "a00644493d04ac174c3d51e15d2e71d9bc3deb94adca23ea01e6cbf4e9f9369c"
+    },
+    {
+      "bytes": 31351,
+      "path": "scripts/test-ae-bridge.mjs",
+      "sha256": "e51ab36793b5cbdaa3aff47f4ad06eeafc1a691e5ce060bd8c467096d3644134"
+    },
+    {
+      "bytes": 6285,
+      "path": "scripts/test-analysis-jobs.py",
+      "sha256": "ec2d1e9cc3499790fa634bd64d865af9857f650e5c57355af4fa857fb2d3de46"
+    },
+    {
+      "bytes": 12026,
+      "path": "scripts/test-backend-search.mjs",
+      "sha256": "61df5e79369d83df42a25a9a0291f0aea039bebdbd28055d499ebe1de7a418fa"
+    },
+    {
+      "bytes": 3984,
+      "path": "scripts/test-build-single-exe.mjs",
+      "sha256": "68ae1bb520a2d4493c1adcce284d09aa8272955713bc6a02abee574d4ae9f822"
+    },
+    {
+      "bytes": 9171,
+      "path": "scripts/test-cyber-forensic-protocol.py",
+      "sha256": "ddaf2f9e8ea6c807f56f72514999655bf0ed6db85fcad12906922e9dd146da42"
+    },
+    {
+      "bytes": 35991,
+      "path": "scripts/test-engine-contracts.py",
+      "sha256": "78e35a9f8bc5b78001e419ce263295a49e70bda33e69a2ced64c7aa78fddcc0a"
+    },
+    {
+      "bytes": 4641,
+      "path": "scripts/test-generate-luts.mjs",
+      "sha256": "0140d268bdeabe8e5e9a2c2e8f11d9b35dac0685c57935475580aab5c77a881e"
+    },
+    {
+      "bytes": 2461,
+      "path": "scripts/test-prores-fixtures.py",
+      "sha256": "02edf1da5a89bf25296d3a5094fe4c32d52c59d291dbd42d7908f3370f2de3af"
+    },
+    {
+      "bytes": 830,
+      "path": "scripts/test-server-health.py",
+      "sha256": "bd52bd497d4faf21c751f678bf73e9559e297d0503c2973c1ad868768063046d"
+    },
+    {
+      "bytes": 4104,
+      "path": "scripts/test-ui-job-recovery.mjs",
+      "sha256": "cb1fcd3380c6d44051203c0c9a9a3bf3ca67b12cc430ace00beb93f37b7ac56c"
+    },
+    {
+      "bytes": 8681,
+      "path": "scripts/test-windows-package.mjs",
+      "sha256": "66c5f8ec39253c71425a632b362b6969661e90bb9bbbf8c33891f204cd115f65"
+    },
+    {
+      "bytes": 40658,
+      "path": "src/js/main/App.tsx",
+      "sha256": "00477633edc51debf6c6bab90bc95a9d275bfda6b64735bf0694a884b56ae972"
+    },
+    {
+      "bytes": 13729,
+      "path": "src/js/main/lib/python.ts",
+      "sha256": "61483476f9d3cc7f5cc68bb63a3e97343c0ed935fcda084f66f1b133a1591fcd"
+    },
+    {
+      "bytes": 31911,
+      "path": "src/jsx/aeft/aeft.ts",
+      "sha256": "70031de03d2eac6d78c91fed64697981eeaad520c10da4debdd945cb1684661a"
+    },
+    {
+      "bytes": 2809,
+      "path": "styles/cmd_command_drill.json",
+      "sha256": "98012f885be39b7f738cb29bf757144b34c0336d6b4941bb3c65493319ca7b00"
+    },
+    {
+      "bytes": 1536,
+      "path": "styles/custom.json",
+      "sha256": "c681486d094483ac3cc0c00662af3bf914922899248cb407d2dea501365fcaa1"
+    },
+    {
+      "bytes": 2574,
+      "path": "styles/jack_rottier.json",
+      "sha256": "5c9e097b43bea7c41c0eaa0c32d8f204c29e1b92f290a714b5b20f4c6abfc277"
+    },
+    {
+      "bytes": 2963,
+      "path": "styles/lyrical_lemonade.json",
+      "sha256": "6d57b92b1f17430c0077ab742d907d1dc500addb36ed3650bd679ed873e46309"
+    },
+    {
+      "bytes": 2729,
+      "path": "styles/ninetive.json",
+      "sha256": "36eaeca38f9d15223d9d320e3513b0c02811c64cd2b8e18606cb296a2b8cab52"
+    },
+    {
+      "bytes": 2894,
+      "path": "styles/worldwide_films.json",
+      "sha256": "37e9aeeff676f0b9494a6635788f11e1a5712a82be094d3c90cc7bc5de1c8d6e"
+    }
+  ],
+  "protocol_version": "1.0.0",
+  "provenance": {
+    "branch": "main",
+    "commit": "8f850d71d1b4826a3fd118b509a202ea7a0588d9",
+    "engine_status": "M engine/__pycache__/beat_analysis.cpython-312.pyc\n M engine/__pycache__/server.cpython-312.pyc\n M engine/beat_analysis.py\n M engine/clip_analysis.py\n M engine/server.py\n M engine/shot_selector.py\n M scripts/Start-FlagshipEditor-Backend.cmd\n M scripts/build-single-exe.mjs\n M scripts/flagshipeditor-installer.nsi\n M scripts/flagshipeditor-msi-main.wxs\n M scripts/flagshipeditor-msi.wxs\n M scripts/flagshipeditor-zip.nsi\n M scripts/flagshipeditor.nsi\n M scripts/generate-luts.mjs\n M scripts/lib/ae-mock.mjs\n M scripts/postbuild.mjs\n M scripts/test-ae-bridge.mjs\n M scripts/test-backend-search.mjs\n M scripts/test-engine-contracts.py\n?? engine/ANALYSIS-beat.md\n?? engine/ANALYSIS-clip.md\n?? engine/ANALYSIS-selector.md\n?? engine/CYBER-FORENSIC-SPEC.md\n?? engine/forensics/\n?? scripts/build-single-exe.mjs.bak\n?? scripts/cyber_forensic_protocol.py\n?? scripts/cyber_forensic_protocol.py.bak\n?? scripts/flagshipeditor-msi-main.wxs.bak\n?? scripts/flagshipeditor-msi.wxs.bak\n?? scripts/flagshipeditor-zip.nsi.bak\n?? scripts/flagshipeditor.nsi.bak\n?? scripts/generate-luts.mjs.bak\n?? scripts/postbuild.mjs.bak\n?? scripts/run-engine-contracts.mjs\n?? scripts/test-build-single-exe.mjs\n?? scripts/test-cyber-forensic-protocol.py\n?? scripts/test-generate-luts.mjs"
+  },
+  "runtime": {
+    "engine_venv_selected": true,
+    "machine": "x86_64",
+    "packages": {
+      "fastapi": "0.141.1",
+      "librosa": "1.0.0",
+      "numpy": "2.3.5",
+      "opencv-python": "4.14.0.94",
+      "opencv-python-headless": "missing",
+      "pydantic": "2.13.4",
+      "scipy": "1.18.1"
+    },
+    "platform": "macOS-15.7.5-x86_64-i386-64bit",
+    "protocol_process_executable": "/Users/issandre/.openclaw/workspace/projects/flagshipeditor/.venv-test/bin/python",
+    "python_executable": "/Users/issandre/.openclaw/workspace/projects/flagshipeditor/engine/.venv/bin/python",
+    "python_sha256": "cce81969b8ba0d7c81d5143ceb4474b8b551627df4cfa4d34e6a0bc168481e03",
+    "python_version": "3.12.13 (main, Mar  3 2026, 12:39:30) [Clang 17.0.0 (clang-1700.6.3.2)]"
+  },
+  "schema_version": 2
+}

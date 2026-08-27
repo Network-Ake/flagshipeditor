@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  FlagshipEditor 2.0.0 - Windows installer.
+  FlagshipEditor 3.0.0 - Windows installer.
 
   Per-machine, x64. Two payloads land in two places:
 
@@ -23,7 +23,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
 
   <?define AppName        = "FlagshipEditor" ?>
-  <?define AppVersion     = "2.0.0" ?>
+  <?define AppVersion     = "3.0.0" ?>
   <?define AppPublisher   = "ake-studio" ?>
   <?define AppId          = "com.akestudio.flagshipeditor" ?>
 

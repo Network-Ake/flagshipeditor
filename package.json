@@ -1,6 +1,6 @@
 {
   "name": "flagshipeditor",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "FlagshipEditor — AI Music Video Editor Plugin for After Effects",
   "author": "Issandre & HeliMAn",
   "license": "MIT",
@@ -13,11 +13,12 @@
     "zip": "npm run build && node scripts/package-windows.mjs",
     "test:ae-bridge": "node scripts/test-ae-bridge.mjs",
     "test:backend-search": "node scripts/test-backend-search.mjs",
-    "test:engine-contracts": "python3 scripts/test-engine-contracts.py",
+    "test:engine-contracts": "node scripts/run-engine-contracts.mjs",
     "test:analysis-jobs": "python3 scripts/test-analysis-jobs.py",
     "test:ui-recovery": "node scripts/test-ui-job-recovery.mjs",
     "test:prores": "python3 scripts/test-prores-fixtures.py",
-    "test:windows-package": "node scripts/test-windows-package.mjs"
+    "test:windows-package": "node scripts/test-windows-package.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",

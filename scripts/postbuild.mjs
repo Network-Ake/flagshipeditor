@@ -67,9 +67,16 @@ for (const symbol of [
   "appendCutBatch",
   "finishComp",
   "abortComp",
+  "swapCut",
+  "replaceSectionCuts",
+  "describeStyleCoverage",
+  "getBuildWarnings",
+  "probeElement3D",
   "openFileDialog",
   "openFilesDialog",
   "openFolderDialog",
+  "startBackend",
+  "getExtensionRoot",
 ]) {
   if (!jsx.includes(`thisObj.${symbol}`)) {
     throw new Error(`ExtendScript bridge did not expose ${symbol}.`);
