@@ -7,7 +7,7 @@ Option Explicit
 
 Const HEALTH_URL = "http://127.0.0.1:18791/health"
 
-Dim shell, fso, baseDir, dataDir, cacheDir, pythonw, launcher, env
+Dim shell, fso, baseDir, dataDir, cacheDir, pythonw, launcher, env, waited
 
 Set shell = CreateObject("WScript.Shell")
 Set fso = CreateObject("Scripting.FileSystemObject")
@@ -19,10 +19,24 @@ cacheDir = dataDir & "\cache"
 pythonw = baseDir & "\runtime\python\pythonw.exe"
 launcher = baseDir & "\engine\backend_launcher.py"
 
-If Not fso.FileExists(pythonw) Or Not fso.FileExists(launcher) Then
+' This script lands on disk as one of the first files of the MSI payload,
+' several thousand files before pythonw.exe, so the Start Menu shortcut (or
+' anything else) can invoke it while an install or repair is still copying
+' the runtime. A short bounded wait beats declaring a healthy install broken;
+' the field failure of the first 3.0.0 MSI was exactly this message firing
+' mid-copy.
+waited = 0
+Do While waited < 15 And Not RuntimePresent()
+  WScript.Sleep 1000
+  waited = waited + 1
+Loop
+
+If Not RuntimePresent() Then
   MsgBox "The FlagshipEditor runtime is incomplete in:" & vbCrLf & vbCrLf & _
          baseDir & vbCrLf & vbCrLf & _
-         "Reinstall FlagshipEditor 3.0.0 to repair it.", _
+         "If an installation or repair is still running, wait for it to finish, " & _
+         "then use the Start Menu shortcut again." & vbCrLf & _
+         "Otherwise run the FlagshipEditor 3.0.0 installer again to repair it.", _
          vbExclamation, "FlagshipEditor"
   WScript.Quit 60
 End If
@@ -51,6 +65,10 @@ shell.CurrentDirectory = dataDir
 shell.Run """" & pythonw & """ """ & launcher & """", 0, False
 
 WScript.Quit 0
+
+Function RuntimePresent()
+  RuntimePresent = fso.FileExists(pythonw) And fso.FileExists(launcher)
+End Function
 
 Sub EnsureFolder(path)
   Dim parent

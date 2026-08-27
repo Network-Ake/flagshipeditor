@@ -2,7 +2,7 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
     <DirectoryRef Id="INSTALLDIR">
-      <Directory Id="dir7625A42985536E08C5C3056437E1D4D1" Name=".">
+      <Directory Id="dir8F5DB802DAADD5800A30557A632C7B28" Name=".">
         <Component Win64="$(var.Win64)" Id="cmp09D135D15AA7E5251CD8BEED72ED22B3" Guid="*">
           <File Id="filBA82F6AE8AD61317AAF18749F20EC5BE" KeyPath="yes" Source="$(var.RootDir)/Setup-Complete-FlagshipEditor.vbs"/>
         </Component>

@@ -2,21 +2,30 @@
 '
 ' wixl cannot author MSI dialogs, so the package installs with the Windows
 ' Installer native progress UI. This script is the success page. It runs from
-' InstallUISequence after a successful ExecuteAction (interactive installs
-' only, as the invoking user, not elevated) and it must never block or fail
-' the install - its custom action ignores the exit code, and every step in
-' here is best-effort. It:
+' InstallUISequence after ExecuteAction (interactive installs only, as the
+' invoking user, not elevated) and it must never block or fail the install -
+' its custom action ignores the exit code, and every step in here is
+' best-effort. It:
 '
 '   1. writes PlayerDebugMode into the *invoking* user's HKCU (the elevated
 '      server side already writes it, but elevation may run as a different
 '      account than the one that will use After Effects);
-'   2. removes a leftover per-user ZIP installation of this same product, so
+'   2. WAITS until the elevated install has actually committed the payload.
+'      This script is file 1 of 5831 in the package while pythonw.exe is file
+'      5804, and on a real Windows 11 host this script was observed running
+'      while the runtime tree was still being copied - the second field
+'      failure of the 3.0.0 MSI was its own backend launcher declaring the
+'      half-copied install "incomplete". No sequencing assumption replaces
+'      this wait: readiness means the sentinel files exist, the installer's
+'      HKLM version stamp (written at the end of the transaction) matches,
+'      and the biggest sentinel has stopped growing;
+'   3. removes a leftover per-user ZIP installation of this same product, so
 '      After Effects never sees two FlagshipEditor panels fighting over one
 '      backend port;
-'   3. detects After Effects 2024+ by enumerating every installed version -
+'   4. detects After Effects 2024+ by enumerating every installed version -
 '      never by testing a fixed list of registry keys, which is exactly the
 '      false negative that broke the first published 3.0.0 MSI;
-'   4. starts the backend windowlessly and confirms the result clearly.
+'   5. starts the backend windowlessly and confirms the result clearly.
 Option Explicit
 
 Const HEALTH_URL = "http://127.0.0.1:18791/health"
@@ -41,13 +50,25 @@ For generation = 9 To 13
 Next
 On Error GoTo 0
 
-' ── 2. Retire a per-user ZIP installation of this product ───────────
+' ── 2. Wait for the install transaction to finish writing ───────────
+If Not WaitForCommittedPayload() Then
+  MsgBox "FlagshipEditor 3.0.0 has not finished installing its files yet." & vbCrLf & vbCrLf & _
+         "Still missing: " & FirstMissingPiece() & vbCrLf & vbCrLf & _
+         "Wait for the installer window to finish. If it finishes without an error, " & _
+         "start the backend from the Start Menu (Start FlagshipEditor Backend) or just open the panel in After Effects." & vbCrLf & _
+         "If the installer window reported an error, the installation was rolled back - run the installer again. " & _
+         "No uninstall is needed first.", _
+         vbExclamation, "FlagshipEditor 3.0.0"
+  WScript.Quit 0
+End If
+
+' ── 3. Retire a per-user ZIP installation of this product ───────────
 legacyRemoved = RemoveLegacyZipInstall()
 
-' ── 3. Detect After Effects 2024+ ───────────────────────────────────
+' ── 4. Detect After Effects 2024+ ───────────────────────────────────
 aeBestMajor = NewestAfterEffectsMajor()
 
-' ── 4. Start the backend and confirm ────────────────────────────────
+' ── 5. Start the backend and confirm ────────────────────────────────
 If fso.FileExists(startVbs) Then
   On Error Resume Next
   shell.Run "wscript.exe //nologo """ & startVbs & """", 0, True
@@ -94,6 +115,64 @@ MsgBox message & vbCrLf & vbCrLf & _
 WScript.Quit 0
 
 ' ─────────────────────────────────────────────────────────────────────
+Function PayloadReady()
+  ' The sentinels span the payload: the two backend entry points, the last
+  ' big runtime binaries, and the HKLM stamp WriteRegistryValues emits near
+  ' the very end of the install transaction.
+  Dim stamp
+  PayloadReady = False
+  If Not fso.FileExists(baseDir & "\engine\backend_launcher.py") Then Exit Function
+  If Not fso.FileExists(baseDir & "\engine\server.py") Then Exit Function
+  If Not fso.FileExists(baseDir & "\runtime\python\pythonw.exe") Then Exit Function
+  If Not fso.FileExists(baseDir & "\runtime\bin\ffprobe.exe") Then Exit Function
+  stamp = ""
+  On Error Resume Next
+  stamp = shell.RegRead("HKLM\SOFTWARE\ake-studio\FlagshipEditor\Version")
+  Err.Clear
+  On Error GoTo 0
+  If stamp <> "3.0.0" Then Exit Function
+  PayloadReady = True
+End Function
+
+Function FirstMissingPiece()
+  Dim piece
+  For Each piece In Array("\engine\backend_launcher.py", "\engine\server.py", _
+                          "\runtime\python\pythonw.exe", "\runtime\bin\ffprobe.exe")
+    If Not fso.FileExists(baseDir & piece) Then
+      FirstMissingPiece = baseDir & piece
+      Exit Function
+    End If
+  Next
+  FirstMissingPiece = "the installer's registry version stamp"
+End Function
+
+Function WaitForCommittedPayload()
+  ' Poll for up to 5 minutes, then require pythonw.exe to hold a stable size
+  ' across two seconds so a file mid-copy is never treated as done.
+  Dim waitedSeconds, sizeBefore, sizeAfter
+  WaitForCommittedPayload = False
+  waitedSeconds = 0
+  Do While waitedSeconds <= 300
+    If PayloadReady() Then
+      On Error Resume Next
+      sizeBefore = -1
+      sizeAfter = -2
+      sizeBefore = fso.GetFile(baseDir & "\runtime\python\pythonw.exe").Size
+      WScript.Sleep 2000
+      sizeAfter = fso.GetFile(baseDir & "\runtime\python\pythonw.exe").Size
+      Err.Clear
+      On Error GoTo 0
+      If sizeBefore = sizeAfter And sizeBefore > 0 Then
+        WaitForCommittedPayload = True
+        Exit Function
+      End If
+    Else
+      WScript.Sleep 2000
+    End If
+    waitedSeconds = waitedSeconds + 2
+  Loop
+End Function
+
 Function AeYear(major)
   ' Adobe's version-to-year mapping since the 2022 renumbering: 22.x = 2022.
   AeYear = "20" & major

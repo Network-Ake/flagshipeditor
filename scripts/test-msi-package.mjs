@@ -175,6 +175,13 @@ for (const id of ["SetStopBackendExe", "StopBackend"]) {
 const stopSeq = Number(sequence.find(([action]) => action === "StopBackend")[2]);
 const repSeq = Number(sequence.find(([action]) => action === "RemoveExistingProducts")[2]);
 assert.ok(stopSeq < repSeq, "StopBackend must run before RemoveExistingProducts.");
+// REP sits in its "afterInstallValidate" slot: the old product is removed
+// entirely, then the new one is laid down fresh. Any move needs a deliberate
+// review of upgrade/rollback semantics.
+const validateSeq = Number(sequence.find(([action]) => action === "InstallValidate")[2]);
+const initializeSeq = Number(sequence.find(([action]) => action === "InstallInitialize")[2]);
+assert.ok(repSeq > validateSeq && repSeq < initializeSeq,
+  "RemoveExistingProducts left its reviewed scheduling window.");
 
 // Custom action types are pinned: 51 sets a property, 114 = 50 (run EXE from
 // a property) + 64 (continue on failure). Nothing this installer runs may be
@@ -261,7 +268,98 @@ for (const requiredBehaviour of [
     `Setup-Complete script is missing required behaviour: ${requiredBehaviour}`);
 }
 
-// ── 3. Byte-for-byte payload comparison via msiextract ────────────────────
+// ── 3. Install simulation from the MSI tables themselves ──────────────────
+// msiextract dumps every file regardless of feature wiring or directory
+// resolution, so it can validate payload bytes while msiexec would still
+// install nothing, or install to the wrong place. Re-derive what msiexec
+// will actually do purely from the tables.
+const featureRows = exportTable("Feature");
+assert.equal(featureRows.length, 1, "Exactly one feature is expected.");
+assert.equal(featureRows[0][5], "1", "The feature must install at the default INSTALLLEVEL.");
+const componentRows = exportTable("Component");
+const wiredComponents = new Set(exportTable("FeatureComponents").map(([, component]) => component));
+for (const [componentId] of componentRows) {
+  assert.ok(wiredComponents.has(componentId),
+    `Component is not wired to any feature and would silently never install: ${componentId}`);
+}
+
+const longName = (value) => {
+  const target = value.split(":")[0];
+  const parts = target.split("|");
+  return parts[parts.length - 1];
+};
+const directoryRows = exportTable("Directory");
+const directoryById = new Map(directoryRows.map(([id, parent, defaultDir]) => [id, { parent, name: longName(defaultDir) }]));
+const componentDirectory = new Map(componentRows.map((row) => [row[0], row[2]]));
+
+// Resolve a directory to its anchor (INSTALLDIR or CEPEXTDIR) plus the
+// relative segments below it. "." contributes no segment; every payload file
+// must live under one of the two anchors.
+function resolveDirectory(id) {
+  const segments = [];
+  let current = id;
+  while (current) {
+    if (current === "INSTALLDIR" || current === "CEPEXTDIR") {
+      return { anchor: current, relative: segments.join("/") };
+    }
+    const row = directoryById.get(current);
+    assert.ok(row, `Directory table chain is broken at: ${current}`);
+    if (row.name !== "." && row.name !== "SourceDir") segments.unshift(row.name);
+    current = row.parent;
+  }
+  return { anchor: null, relative: segments.join("/") };
+}
+
+const fileRows = exportTable("File");
+const resolvedByAnchor = { INSTALLDIR: new Set(), CEPEXTDIR: new Set() };
+let maxSequence = 0;
+const sequenceByName = new Map();
+for (const [, component, fileName, , , , , sequence] of fileRows) {
+  const directoryId = componentDirectory.get(component);
+  assert.ok(directoryId, `File belongs to an unknown component: ${component}`);
+  const { anchor, relative } = resolveDirectory(directoryId);
+  assert.ok(anchor, `File resolves outside INSTALLDIR and CEPEXTDIR: ${fileName} (directory ${directoryId})`);
+  const name = longName(fileName);
+  resolvedByAnchor[anchor].add(relative ? `${relative}/${name}` : name);
+  sequenceByName.set(name, Number(sequence));
+  if (Number(sequence) > maxSequence) maxSequence = Number(sequence);
+}
+const mediaRows = exportTable("Media");
+assert.equal(Number(mediaRows[0][1]), maxSequence,
+  "Media.LastSequence must cover every file or the tail of the payload is never copied.");
+assert.equal(fileRows.length, maxSequence, "File sequences must be dense.");
+
+// ── 4. Copy-order race contract ───────────────────────────────────────────
+// The VBS scripts are the first files copied while pythonw.exe is nearly the
+// last, so anything that runs them around install time can observe a
+// half-copied tree - that is exactly the second field failure. The scripts
+// must therefore synchronise on the committed payload themselves.
+assert.ok(sequenceByName.get("pythonw.exe") > sequenceByName.get("Start-FlagshipEditor-Backend.vbs"),
+  "Copy-order precondition changed; revisit the payload-wait contract.");
+const setupCompleteSource = fs.readFileSync(
+  path.join(msiStage, "root", "Setup-Complete-FlagshipEditor.vbs"), "utf8");
+for (const waitBehaviour of [
+  "WaitForCommittedPayload",
+  "PayloadReady",
+  "HKLM\\SOFTWARE\\ake-studio\\FlagshipEditor\\Version",
+  "\\runtime\\python\\pythonw.exe",
+  "\\engine\\backend_launcher.py",
+  "sizeBefore = sizeAfter",
+  "waitedSeconds <= 300",
+]) {
+  assert.ok(setupCompleteSource.includes(waitBehaviour),
+    `Setup-Complete no longer waits for the committed payload: missing ${waitBehaviour}`);
+}
+assert.ok(setupCompleteSource.indexOf("WaitForCommittedPayload()") < setupCompleteSource.indexOf("RemoveLegacyZipInstall()"),
+  "Setup-Complete must wait for the payload before doing anything else.");
+const startVbsSource = fs.readFileSync(
+  path.join(msiStage, "root", "Start-FlagshipEditor-Backend.vbs"), "utf8");
+assert.ok(startVbsSource.includes("RuntimePresent()") && startVbsSource.includes("waited < 15"),
+  "The backend launcher must retry before declaring the runtime incomplete.");
+assert.ok(startVbsSource.includes("wait for it to finish"),
+  "The backend launcher's failure message must mention an in-flight installation.");
+
+// ── 5. Byte-for-byte payload comparison via msiextract ────────────────────
 const expectedInstall = new Map();
 for (const [sourceRoot, prefix] of [
   [path.join(msiStage, "root"), ""],
@@ -278,11 +376,24 @@ for (const file of walkFiles(cepSrc)) {
   expectedCep.set(path.relative(cepSrc, file).split(path.sep).join("/"), file);
 }
 
-const fileRows = exportTable("File").length;
 assert.equal(
-  fileRows,
+  fileRows.length,
   expectedInstall.size + expectedCep.size,
   "MSI File table row count must equal the staged payload file count."
+);
+
+// The table-resolved install targets must reproduce the staged trees exactly:
+// this is what msiexec will lay down, feature-wired and directory-resolved,
+// with no msiextract in the loop.
+assert.deepEqual(
+  [...resolvedByAnchor.INSTALLDIR].sort(),
+  [...expectedInstall.keys()].sort(),
+  "Directory-table resolution under INSTALLDIR drifted from the staged backend payload."
+);
+assert.deepEqual(
+  [...resolvedByAnchor.CEPEXTDIR].sort(),
+  [...expectedCep.keys()].sort(),
+  "Directory-table resolution under CEPEXTDIR drifted from the staged panel payload."
 );
 
 const extractDir = fs.mkdtempSync(path.join(os.tmpdir(), "flagshipeditor-msi-verify-"));
