@@ -2,7 +2,10 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
     <DirectoryRef Id="INSTALLDIR">
-      <Directory Id="dirA3335DB471D9EA219C5966460DFC40EA" Name=".">
+      <Directory Id="dirFA8ABC575C9CA13FB6F425F6CB27375B" Name=".">
+        <Component Win64="$(var.Win64)" Id="cmp09D135D15AA7E5251CD8BEED72ED22B3" Guid="*">
+          <File Id="filBA82F6AE8AD61317AAF18749F20EC5BE" KeyPath="yes" Source="$(var.RootDir)/Setup-Complete-FlagshipEditor.vbs"/>
+        </Component>
         <Component Win64="$(var.Win64)" Id="cmp9014C7EFE97CFB75596D735442E6D94A" Guid="*">
           <File Id="fil4781E88087F9BB5D8AFE8EF008540F7A" KeyPath="yes" Source="$(var.RootDir)/Start-FlagshipEditor-Backend.vbs"/>
         </Component>
@@ -14,10 +17,11 @@
   </Fragment>
   <Fragment>
     <ComponentGroup Id="RootFiles">
+      <ComponentRef Id="cmp09D135D15AA7E5251CD8BEED72ED22B3"/>
       <ComponentRef Id="cmp9014C7EFE97CFB75596D735442E6D94A"/>
       <ComponentRef Id="cmp2E754A85F7B625974A4453A53F878D13"/>
     </ComponentGroup>
   </Fragment>
 </Wix>
 <!-- generated with msitools 0.106 -->
-<!-- wixl-heat -var var.RootDir -directory-ref INSTALLDIR -component-group RootFiles -prefix /private/tmp/claude-501/-Users-issandre-openclaw-workspace-projects-flagshipeditor/b4f421b3-d433-40b6-bc88-3d8e75c12519/scratchpad/msi/stage/root/ -win64 -->
+<!-- wixl-heat -var var.RootDir -directory-ref INSTALLDIR -component-group RootFiles -prefix /Users/issandre/.openclaw/workspace/projects/flagshipeditor/.build/msi/stage/root/ -win64 -->

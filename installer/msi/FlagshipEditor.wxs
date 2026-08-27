@@ -49,6 +49,35 @@
 
     <Media Id="1" Cabinet="payload.cab" EmbedCab="yes" />
 
+    <!--
+      The panel only loads inside After Effects 2024+ (CSXS 11-13), so refuse to
+      install without one. AE registers every release under the 64-bit
+      HKLM\SOFTWARE\Adobe\After Effects\<major.minor> key with an InstallPath
+      value; each version this installer supports gets its own search because
+      wixl emits one AppSearch signature per property. "Installed OR ..." keeps
+      repair and uninstall working after AE itself is removed.
+    -->
+    <Property Id="AE2024">
+      <RegistrySearch Id="SearchAe2024" Root="HKLM" Key="SOFTWARE\Adobe\After Effects\24.0" Name="InstallPath" Type="raw" Win64="yes" />
+    </Property>
+    <Property Id="AE2024U">
+      <RegistrySearch Id="SearchAe2024u" Root="HKLM" Key="SOFTWARE\Adobe\After Effects\24.1" Name="InstallPath" Type="raw" Win64="yes" />
+    </Property>
+    <Property Id="AE2025">
+      <RegistrySearch Id="SearchAe2025" Root="HKLM" Key="SOFTWARE\Adobe\After Effects\25.0" Name="InstallPath" Type="raw" Win64="yes" />
+    </Property>
+    <Property Id="AE2025U">
+      <RegistrySearch Id="SearchAe2025u" Root="HKLM" Key="SOFTWARE\Adobe\After Effects\25.1" Name="InstallPath" Type="raw" Win64="yes" />
+    </Property>
+    <Property Id="AE2026">
+      <RegistrySearch Id="SearchAe2026" Root="HKLM" Key="SOFTWARE\Adobe\After Effects\26.0" Name="InstallPath" Type="raw" Win64="yes" />
+    </Property>
+    <Property Id="AE2026U">
+      <RegistrySearch Id="SearchAe2026u" Root="HKLM" Key="SOFTWARE\Adobe\After Effects\26.1" Name="InstallPath" Type="raw" Win64="yes" />
+    </Property>
+
+    <Condition Message="FlagshipEditor requires Adobe After Effects 2024 or newer. No compatible After Effects (2024, 2025 or 2026) was found on this computer. Install After Effects from Creative Cloud first, then run this installer again.">Installed OR AE2024 OR AE2024U OR AE2025 OR AE2025U OR AE2026 OR AE2026U</Condition>
+
     <Icon Id="FlagshipEditor.ico" SourceFile="$(var.AssetDir)/installer-icon.ico" />
     <Property Id="ARPPRODUCTICON" Value="FlagshipEditor.ico" />
 
@@ -105,7 +134,37 @@
       <ComponentRef Id="ShortcutsComponent" />
     </Feature>
 
-    <UIRef Id="WixUI_FlagshipEditor" />
+    <!--
+      No authored dialogs: wixl has no Dialog/Control support at all, so the
+      package deliberately relies on the Windows Installer native UI - the
+      standard progress window plus system message boxes for the launch
+      conditions and any failure. The ui/ directory holds unported WiX v4
+      dialog sources kept for reference only; compiling them adds nothing but
+      dangling Show entries. The success page is Setup-Complete-
+      FlagshipEditor.vbs below, which also starts the backend.
+    -->
+
+    <CustomAction Id="SetSetupCompleteExe"
+                  Property="SetupCompleteExe"
+                  Value="[System64Folder]wscript.exe"
+                  Execute="immediate" />
+
+    <CustomAction Id="SetupComplete"
+                  Property="SetupCompleteExe"
+                  ExeCommand="//nologo &quot;[INSTALLDIR]Setup-Complete-FlagshipEditor.vbs&quot;"
+                  Execute="immediate"
+                  Return="ignore" />
+
+    <!--
+      Interactive installs and upgrades only: the UI sequence never runs
+      silently, "NOT Installed" keeps it off repair and uninstall, and a
+      failed ExecuteAction aborts the sequence before these actions, so the
+      success message can never appear for a failed install.
+    -->
+    <InstallUISequence>
+      <Custom Action="SetSetupCompleteExe" After="ExecuteAction">NOT Installed</Custom>
+      <Custom Action="SetupComplete" After="SetSetupCompleteExe">NOT Installed</Custom>
+    </InstallUISequence>
 
     <!--
       A backend left running from a previous install holds pythonw.exe and the

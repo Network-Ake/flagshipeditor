@@ -729,6 +729,40 @@ if (!JSON) {
 
   // A picture flash is a white frame punched over the cut, not the clip fading
   // in from nothing (which is what the previous implementation actually did).
+  // One solid carries every flash: creating a fresh solid per cut used to grow
+  // the comp by one layer per flashed beat.
+  var FLASH_LAYER_NAME = "FlagshipEditor_Flash";
+  function findOrCreateFlashSolid(context) {
+    var comp = context.comp;
+    var flash = null;
+    try {
+      flash = comp.layers.byName(FLASH_LAYER_NAME);
+    } catch (findError) {
+      flash = null;
+    }
+    if (flash) return flash;
+    try {
+      flash = comp.layers.addSolid([1, 1, 1], FLASH_LAYER_NAME, comp.width, comp.height, comp.pixelAspect, comp.duration);
+      flash.startTime = 0;
+      flash.inPoint = 0;
+      flash.outPoint = comp.duration;
+      flash.blendingMode = BlendingMode.ADD;
+    } catch (createError) {
+      reportWarning(context, "Picture flash skipped: " + String(createError));
+      return null;
+    }
+    // Invisible except during a keyed flash; the first keyframe would otherwise
+    // hold its peak value across everything before the first flashed beat.
+    var opacity = transformProperty(flash, "ADBE Opacity");
+    if (opacity) {
+      try {
+        opacity.setValue(0);
+      } catch (baselineError) {
+        reportWarning(context, "Picture flash baseline opacity failed: " + String(baselineError));
+      }
+    }
+    return flash;
+  }
   function applyPictureFlash(layer, config, beatTime, context) {
     var comp = context.comp;
     if (!comp) return;
@@ -736,17 +770,14 @@ if (!JSON) {
     var frames = Math.max(1, readNumber(config, ["duration_frames"], 2));
     var peak = clamp(readNumber(config, ["opacity_peak"], 90), 0, 100);
     var duration = frames / fps;
-    var flash = null;
+    var flash = findOrCreateFlashSolid(context);
+    if (!flash) return;
     try {
-      flash = comp.layers.addSolid([1, 1, 1], "FlagshipEditor_Flash", comp.width, comp.height, comp.pixelAspect, duration);
-      flash.startTime = beatTime;
-      flash.inPoint = beatTime;
-      flash.outPoint = beatTime + duration;
-      flash.blendingMode = BlendingMode.ADD;
+      // Keep the shared solid above the newest cut layer so every flash renders
+      // over the footage it belongs to.
       flash.moveBefore(layer);
-    } catch (createError) {
-      reportWarning(context, "Picture flash skipped: " + String(createError));
-      return;
+    } catch (moveError) {
+      reportWarning(context, "Picture flash could not be restacked: " + String(moveError));
     }
     var opacity = transformProperty(flash, "ADBE Opacity");
     if (!opacity) {
@@ -754,6 +785,9 @@ if (!JSON) {
       return;
     }
     try {
+      // A zero key one frame ahead pins the shared solid dark between flashes.
+      var rampStart = beatTime - 1 / fps;
+      if (rampStart > 0) opacity.setValueAtTime(rampStart, 0);
       opacity.setValueAtTime(beatTime, peak);
       opacity.setValueAtTime(beatTime + duration, 0);
       setLinearInterpolation(opacity);
@@ -886,6 +920,29 @@ if (!JSON) {
   // Chromatic aberration built from two channel-isolated duplicates screened over
   // the original. The original keeps its own blending mode: forcing it to Screen
   // used to wash out everything beneath it.
+  var CHANNEL_GHOST_SUFFIXES = [" [RGB-R]", " [RGB-B]"];
+  // Two ghost layers per treated cut; beyond this the comp is already carrying
+  // more duplicate footage layers than After Effects previews comfortably, so
+  // further cuts keep the displacement part of the effect and skip the split.
+  var MAX_CHANNEL_GHOST_LAYERS = 40;
+  function countChannelGhosts(comp) {
+    var count = 0;
+    try {
+      for (var index = 1; index <= comp.numLayers; index++) {
+        var name = String(comp.layer(index).name);
+        for (var s = 0; s < CHANNEL_GHOST_SUFFIXES.length; s++) {
+          var suffix = CHANNEL_GHOST_SUFFIXES[s];
+          if (name.length >= suffix.length && name.substring(name.length - suffix.length) === suffix) {
+            count++;
+            break;
+          }
+        }
+      }
+    } catch (countError) {
+      // A partially built comp still gets an answer; the cap is best-effort.
+    }
+    return count;
+  }
   function addChannelGhost(layer, context, channel, suffix) {
     var comp = context.comp;
     var ghost = null;
@@ -932,9 +989,13 @@ if (!JSON) {
   }
   function applyRGBSplit(layer, config, beatTime, context) {
     if (!context.comp) return;
+    if (countChannelGhosts(context.comp) >= MAX_CHANNEL_GHOST_LAYERS) {
+      reportWarning(context, "RGB split capped: the comp already holds " + MAX_CHANNEL_GHOST_LAYERS + " channel layers; later cuts skip the split");
+      return;
+    }
     var offset = readNumber(config, ["displacement_px", "offset_px"], 4);
-    var red = addChannelGhost(layer, context, "red", " [RGB-R]");
-    var blue = addChannelGhost(layer, context, "blue", " [RGB-B]");
+    var red = addChannelGhost(layer, context, "red", CHANNEL_GHOST_SUFFIXES[0]);
+    var blue = addChannelGhost(layer, context, "blue", CHANNEL_GHOST_SUFFIXES[1]);
     var ghosts = [{
       layer: red,
       sign: 1
@@ -1413,7 +1474,7 @@ if (!JSON) {
     return null;
   }
   function setLUTPath(lumetri, lutFile, lutName, context) {
-    var candidates = ["ADBE Lumetri Color-0001", "ADBE Lumetri Color 2-0001", 1];
+    var candidates = ["ADBE Lumetri Color-0001", "ADBE Lumetri Color 2-0001"];
     for (var i = 0; i < candidates.length; i++) {
       try {
         var property = lumetri.property(candidates[i]);
@@ -1501,11 +1562,9 @@ if (!JSON) {
     try {
       var parade = probe.property("ADBE Effect Parade");
       for (var i = 0; i < ELEMENT_MATCH_NAMES.length; i++) {
-        try {
-          if (parade.canAddProperty && !parade.canAddProperty(ELEMENT_MATCH_NAMES[i])) continue;
-        } catch (probeError) {
-          // canAddProperty is unavailable here; fall through to addProperty.
-        }
+        // canAddProperty is unreliable across AE versions — it can return false
+        // for third-party effects that are genuinely installed. Always try
+        // addProperty and let the throw distinguish installed from absent.
         try {
           var effect = parade.addProperty(ELEMENT_MATCH_NAMES[i]);
           if (effect) {
@@ -1613,9 +1672,6 @@ if (!JSON) {
   var COMP_WIDE_EFFECTS = ["smoke_fog", "light_leaks", "vhs_overlay", "film_grain", "letterbox", "light_wrap"];
   var MAX_CUTS_PER_BATCH = 30;
   var activeBuild = null;
-
-  // `typeof value.length === "number"` also accepts strings, which is exactly the
-  // shape a malformed evalScript payload arrives in.
   function isArray(value) {
     return Object.prototype.toString.call(value) === "[object Array]";
   }
@@ -1726,8 +1782,28 @@ if (!JSON) {
           skipped++;
           continue;
         }
+        // AE evaluates an un-remapped footage layer at `compTime - startTime`.
+        // Moving startTime back by sourceStart therefore makes the selected
+        // best-moment frame land exactly on the cut's beatTime. Time-remap VFX
+        // use the same relationship (`inPoint - startTime`) as their source-time
+        // origin, so speed ramps, slow motion and freeze frames inherit the
+        // selected offset instead of resetting to source time zero.
+        var clipDuration = Math.max(0, toNumber(clipItem.duration, 0));
+        var sourceStart = Math.max(0, toNumber(cut.sourceStart, 0));
+        if (clipDuration > 0) sourceStart = Math.min(sourceStart, clipDuration);
+        var fallbackSourceEnd = clipDuration > 0 ? clipDuration : sourceStart + (cut.endTime - cut.beatTime);
+        var sourceEnd = Math.max(sourceStart, toNumber(cut.sourceEnd, fallbackSourceEnd));
+        if (clipDuration > 0) sourceEnd = Math.min(sourceEnd, clipDuration);
+        if (sourceEnd <= sourceStart) {
+          activeBuild.warnings.push("Cut skipped: " + cut.clipName + " has no usable selected source window");
+          skipped++;
+          continue;
+        }
+        if (sourceEnd - sourceStart + 0.001 < cut.endTime - cut.beatTime) {
+          activeBuild.warnings.push("Selected source window is shorter than the timeline slot for " + cut.clipName + "; After Effects will preserve the target slot and may hold the final source frame");
+        }
         var clipLayer = activeBuild.comp.layers.add(clipItem);
-        clipLayer.startTime = cut.beatTime;
+        clipLayer.startTime = cut.beatTime - sourceStart;
         clipLayer.inPoint = cut.beatTime;
         clipLayer.outPoint = Math.min(cut.endTime, activeBuild.comp.duration);
         clipLayer.name = cut.clipName + " [" + cut.sectionType + "]";
@@ -1833,6 +1909,16 @@ if (!JSON) {
   // Detect the edit format from the analysed media first: the Python engine
   // already probed every clip, which is more reliable than guessing from
   // whichever item happens to sit first in the project panel.
+  // Snap fractional frame rates (59.94, 29.97, 23.976) to their integer
+  // counterparts so the comp runs at a clean fps and audio stays sample-
+  // accurate. 59.94 → 60, 29.97 → 30, 23.976 → 24.
+  function snapFps(value) {
+    if (value <= 0) return 30;
+    var rounded = Math.round(value);
+    // Only snap when within 0.15 of the integer (59.94 → 60, not 58 → 60).
+    if (Math.abs(value - rounded) < 0.15) return rounded;
+    return rounded;
+  }
   function resolveCompProfile(project, mediaProfile) {
     var width = 1920;
     var height = 1080;
@@ -1845,7 +1931,7 @@ if (!JSON) {
         width = Math.round(profileWidth);
         height = Math.round(profileHeight);
       }
-      if (profileFps > 0) fps = profileFps;
+      if (profileFps > 0) fps = snapFps(profileFps);
       if (profileWidth > 0 && profileHeight > 0 && profileFps > 0) {
         return {
           width: width,
@@ -1861,7 +1947,7 @@ if (!JSON) {
         height = scanned.height;
       }
       if (scanned.fps > 0 && !(mediaProfile && toNumber(mediaProfile.fps, 0) > 0)) {
-        fps = scanned.fps;
+        fps = snapFps(scanned.fps);
       }
     }
     return {
@@ -1946,7 +2032,7 @@ if (!JSON) {
     }
     return result;
   }
-  function swapCut(beatTime, sectionType, clipPath, clipName) {
+  function swapCut(beatTime, sectionType, clipPath, clipName, endTime, sourceStart, sourceEnd) {
     try {
       var comp = findGeneratedComp();
       if (!comp) return JSON.stringify({
@@ -1962,6 +2048,14 @@ if (!JSON) {
           message: "Cut layer not found"
         }
       });
+      var rawSourceStart = Math.max(0, toNumber(sourceStart, 0));
+      var rawSourceEnd = toNumber(sourceEnd, 0);
+      if (rawSourceEnd <= rawSourceStart) {
+        return JSON.stringify({
+          __error: "Replacement clip has no usable selected source window"
+        });
+      }
+      var existingFootage = findProjectFootage(clipPath);
       var footage = findOrImportProjectFootage(clipPath);
       if (!footage) return JSON.stringify({
         __result: {
@@ -1969,16 +2063,33 @@ if (!JSON) {
           message: "Replacement file is missing"
         }
       });
+      var footageDuration = Math.max(0, toNumber(footage.duration, 0));
+      var selectedSourceStart = rawSourceStart;
+      if (footageDuration > 0) selectedSourceStart = Math.min(selectedSourceStart, footageDuration);
+      var selectedSourceEnd = Math.max(selectedSourceStart, rawSourceEnd);
+      if (footageDuration > 0) selectedSourceEnd = Math.min(selectedSourceEnd, footageDuration);
+      if (selectedSourceEnd <= selectedSourceStart) {
+        if (!existingFootage) removeProjectItem(footage);
+        return JSON.stringify({
+          __error: "Replacement clip has no usable selected source window"
+        });
+      }
       app.beginUndoGroup("FlagshipEditor Swap Cut");
       try {
         layer.replaceSource(footage, false);
+        layer.startTime = beatTime - selectedSourceStart;
+        layer.inPoint = beatTime;
+        if (endTime > beatTime) layer.outPoint = Math.min(endTime, comp.duration);
+        retargetTimeRemapSourceOffset(layer, selectedSourceStart, footageDuration);
         layer.name = clipName + " [" + sectionType + "]";
       } finally {
         endUndoGroupSafely();
       }
+      var sourceWarning = selectedSourceEnd - selectedSourceStart + 0.001 < endTime - beatTime ? "Selected source window is shorter than the timeline slot; the target slot was preserved" : "";
       return JSON.stringify({
         __result: {
-          updated: 1
+          updated: 1,
+          message: sourceWarning
         }
       });
     } catch (e) {
@@ -2013,12 +2124,39 @@ if (!JSON) {
             missing++;
             continue;
           }
+          var rawReplacementSourceStart = Math.max(0, toNumber(decision.sourceStart, 0));
+          var rawReplacementSourceEnd = toNumber(decision.sourceEnd, 0);
+          if (rawReplacementSourceEnd <= rawReplacementSourceStart) {
+            missing++;
+            continue;
+          }
+          var existingReplacementFootage = findProjectFootage(decision.clipPath);
           var footage = findOrImportProjectFootage(decision.clipPath);
           if (!footage) {
             missing++;
             continue;
           }
+          var footageDuration = Math.max(0, toNumber(footage.duration, 0));
+          var replacementSourceStart = rawReplacementSourceStart;
+          if (footageDuration > 0) {
+            replacementSourceStart = Math.min(replacementSourceStart, footageDuration);
+          }
+          var replacementSourceEnd = Math.max(replacementSourceStart, rawReplacementSourceEnd);
+          if (footageDuration > 0) {
+            replacementSourceEnd = Math.min(replacementSourceEnd, footageDuration);
+          }
+          if (replacementSourceEnd <= replacementSourceStart) {
+            if (!existingReplacementFootage) removeProjectItem(footage);
+            missing++;
+            continue;
+          }
           layer.replaceSource(footage, false);
+          layer.startTime = decision.beatTime - replacementSourceStart;
+          layer.inPoint = decision.beatTime;
+          if (decision.endTime > decision.beatTime) {
+            layer.outPoint = Math.min(decision.endTime, comp.duration);
+          }
+          retargetTimeRemapSourceOffset(layer, replacementSourceStart, footageDuration);
           layer.name = decision.clipName + " [" + sectionType + "]";
           updated++;
         }
@@ -2077,6 +2215,29 @@ if (!JSON) {
   function cutTag(beatTime, sectionType) {
     return "FlagshipEditorCut|" + sectionType + "|" + beatTime.toFixed(4);
   }
+
+  // Replacing the footage does not reset AE's existing Time Remap keys. Shift
+  // their source-time values as a group so manual swaps, reorders and section
+  // regeneration preserve the speed/slow/freeze pattern while moving its first
+  // rendered frame to the newly selected best-moment offset.
+  function retargetTimeRemapSourceOffset(layer, selectedSourceStart, footageDuration) {
+    if (!layer || layer.timeRemapEnabled !== true) return;
+    var remap = layer.property("ADBE Time Remapping");
+    if (!remap || remap.numKeys < 1) return;
+    var currentSourceAtIn = toNumber(remap.valueAtTime(layer.inPoint, false), selectedSourceStart);
+    var delta = selectedSourceStart - currentSourceAtIn;
+    if (Math.abs(delta) < 0.000001) return;
+    var keyTimes = [];
+    var shiftedValues = [];
+    for (var i = 1; i <= remap.numKeys; i++) {
+      keyTimes.push(remap.keyTime(i));
+      var shifted = toNumber(remap.keyValue(i), 0) + delta;
+      shiftedValues.push(footageDuration > 0 ? Math.max(0, Math.min(footageDuration, shifted)) : Math.max(0, shifted));
+    }
+    for (var keyIndex = 0; keyIndex < keyTimes.length; keyIndex++) {
+      remap.setValueAtTime(keyTimes[keyIndex], shiftedValues[keyIndex]);
+    }
+  }
   function findGeneratedComp() {
     var project = app.project;
     if (!project) return null;
@@ -2108,7 +2269,7 @@ if (!JSON) {
   function normalizeMediaPath(path) {
     return String(path || "").replace(/\\/g, "/").toLowerCase();
   }
-  function findOrImportProjectFootage(path) {
+  function findProjectFootage(path) {
     var project = app.project;
     var expected = normalizeMediaPath(path);
     if (project && typeof project.numItems === "number") {
@@ -2121,6 +2282,12 @@ if (!JSON) {
         } catch (e) {}
       }
     }
+    return null;
+  }
+  function findOrImportProjectFootage(path) {
+    var project = app.project;
+    var existing = findProjectFootage(path);
+    if (existing) return existing;
     var imported = importFile(path);
     if (!imported || !project || typeof project.numItems !== "number") return imported;
     for (var folderIndex = project.numItems; folderIndex >= 1; folderIndex--) {
@@ -2336,7 +2503,7 @@ if (!JSON) {
     return JSON.stringify({
       __result: {
         appId: "com.akestudio.flagshipeditor.bridge",
-        version: "2.0.0",
+        version: "3.0.0",
         hostName: "After Effects",
         hostVersion: app.version
       }
@@ -2386,27 +2553,61 @@ if (!JSON) {
     }
   };
   thisObj.openFileDialog = function (filter) {
-    var file = File.openDialog("Select a file", filter, false);
-    return file ? file.fsName : "null";
+    try {
+      var file = File.openDialog("Select a file", filter, false);
+      if (!file) return JSON.stringify({
+        __result: null
+      });
+      return JSON.stringify({
+        __result: file.fsName
+      });
+    } catch (e) {
+      return JSON.stringify({
+        __error: "File dialog failed: " + String(e)
+      });
+    }
   };
   thisObj.openFilesDialog = function (filter) {
-    var files = File.openDialog("Select files", filter, true);
-    if (!files) return "[]";
-    var paths = [];
-    // ExtendScript may return a File object even when multiSelect is true.
-    // File.length is the byte size, so detect a single file by fsName instead.
-    if (files.fsName) {
-      paths.push(files.fsName);
-      return JSON.stringify(paths);
+    try {
+      var files = File.openDialog("Select files", filter, true);
+      if (!files) return JSON.stringify({
+        __result: []
+      });
+      var paths = [];
+      // ExtendScript may return a File object even when multiSelect is true.
+      // File.length is the byte size, so detect a single file by fsName instead.
+      if (files.fsName) {
+        paths.push(files.fsName);
+        return JSON.stringify({
+          __result: paths
+        });
+      }
+      for (var i = 0; i < files.length; i++) {
+        paths.push(files[i].fsName);
+      }
+      return JSON.stringify({
+        __result: paths
+      });
+    } catch (e) {
+      return JSON.stringify({
+        __error: "File dialog failed: " + String(e)
+      });
     }
-    for (var i = 0; i < files.length; i++) {
-      paths.push(files[i].fsName);
-    }
-    return JSON.stringify(paths);
   };
   thisObj.openFolderDialog = function () {
-    var folder = Folder.selectDialog("Select a media folder");
-    return folder ? folder.fsName : "null";
+    try {
+      var folder = Folder.selectDialog("Select a media folder");
+      if (!folder) return JSON.stringify({
+        __result: null
+      });
+      return JSON.stringify({
+        __result: folder.fsName
+      });
+    } catch (e) {
+      return JSON.stringify({
+        __error: "Folder dialog failed: " + String(e)
+      });
+    }
   };
 
   // Starting the backend is the one job the panel cannot do itself: CEP runs
@@ -2434,6 +2635,25 @@ if (!JSON) {
     list.push(path);
   }
 
+  // The numeric runs in a path's last segment ("...\\2.0.0" -> [2, 0, 0]), for
+  // version-aware folder ordering. A folder without digits yields [] and sorts
+  // oldest.
+  function flagshipEditorVersionParts(path) {
+    var name = path.replace(/[\\\/]+$/, "");
+    var cut = name.lastIndexOf("\\");
+    var slash = name.lastIndexOf("/");
+    if (slash > cut) cut = slash;
+    if (cut !== -1) name = name.substring(cut + 1);
+    var runs = name.match(/\d+/g);
+    var parts = [];
+    if (runs) {
+      for (var i = 0; i < runs.length; i++) {
+        parts[parts.length] = parseInt(runs[i], 10);
+      }
+    }
+    return parts;
+  }
+
   // Every directory a FlagshipEditor *install* can occupy, newest layout first:
   // v2.0.0's MSI is per-machine under Program Files, v0.1.x's .cmd installer was
   // per-user under LOCALAPPDATA, and a dev build runs out of the checkout itself.
@@ -2456,8 +2676,22 @@ if (!JSON) {
         for (i = 0; i < entries.length; i++) {
           if (entries[i] instanceof Folder) versions.push(entries[i].fsName);
         }
-        // Newest install first, so an upgrade wins over a leftover build.
-        versions.sort();
+        // Newest install first, so an upgrade wins over a leftover build. The
+        // entries are full fsName paths, so only the last path segment is
+        // compared, and its digit runs are compared numerically: a plain string
+        // sort put 1.10.0 before 1.9.0. ES3-safe — ExtendScript has no
+        // Array.prototype.map.
+        versions.sort(function (a, b) {
+          var aParts = flagshipEditorVersionParts(a);
+          var bParts = flagshipEditorVersionParts(b);
+          var length = aParts.length > bParts.length ? aParts.length : bParts.length;
+          for (var part = 0; part < length; part++) {
+            var aValue = part < aParts.length ? aParts[part] : 0;
+            var bValue = part < bParts.length ? bParts[part] : 0;
+            if (aValue !== bValue) return aValue - bValue;
+          }
+          return a < b ? -1 : a > b ? 1 : 0;
+        });
         for (var v = versions.length - 1; v >= 0; v--) flagshipEditorPush(roots, seen, versions[v]);
         flagshipEditorPush(roots, seen, installRoot.fsName);
       }

@@ -2,6 +2,14 @@
 
 AI music video editor plugin for After Effects. Auto-cuts to beat, applies VFX, color grading, and 3D setup based on style presets.
 
+## Install (Windows)
+
+Download **FlagshipEditor-3.0.0-Windows.msi** from the [latest release](https://github.com/Network-Ake/flagshipeditor/releases/latest) and double-click it. The installer is fully offline: it bundles Python, all Python libraries, FFmpeg and FFprobe, installs the After Effects panel and the analysis backend, and refuses to run if After Effects 2024+ is not installed. Upgrades, repair and uninstall go through the same MSI (Add/Remove Programs).
+
+The `FlagshipEditor-3.0.0-Windows.zip` + `INSTALL-FLAGSHIPEDITOR.cmd` package remains available as a fallback only.
+
+Build the MSI from macOS with `npm run msi` (requires msitools; validates the artifact with `npm run test:msi-package`).
+
 ## Quick Start
 
 ```bash

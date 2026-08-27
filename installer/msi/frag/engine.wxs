@@ -2,12 +2,18 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Fragment>
     <DirectoryRef Id="ENGINEDIR">
-      <Directory Id="dirD563E0B8A410F1430879E2D54EB495BA" Name=".">
-        <Component Win64="$(var.Win64)" Id="cmpB33892FBDDEFFC3368077B4904AD0B3D" Guid="*">
-          <File Id="fil312866D68517FD67A9277BAA16855BB5" KeyPath="yes" Source="$(var.EngineDir)/VERSION"/>
-        </Component>
+      <Directory Id="dir3AE71BCE4E82D0D100344C41C00A4BD9" Name=".">
         <Component Win64="$(var.Win64)" Id="cmp834354949DAF2B99016AA309B6FA6193" Guid="*">
           <File Id="filD72E95F547F7ECE6C2613B7DD9A9636F" KeyPath="yes" Source="$(var.EngineDir)/analysis_jobs.py"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmp9228EF5D838BC844E0C4201A05A586CA" Guid="*">
+          <File Id="filFC229B9A472C40D41F1BED255431CA77" KeyPath="yes" Source="$(var.EngineDir)/ANALYSIS-beat.md"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmpBEFAC859AD9040AADC1621C85DDAB65E" Guid="*">
+          <File Id="filDB51E0D540392D96F890037A2EA8485C" KeyPath="yes" Source="$(var.EngineDir)/ANALYSIS-clip.md"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmp6C4FC01F25E1D8344C8D9EEB357D71B7" Guid="*">
+          <File Id="fil4509BF09635A83ACEC3CF4944B03148D" KeyPath="yes" Source="$(var.EngineDir)/ANALYSIS-selector.md"/>
         </Component>
         <Component Win64="$(var.Win64)" Id="cmpFF0EBE5F821CA58302DA1A5E042CC55F" Guid="*">
           <File Id="filB0383C8511008DFFC07D91F04D879488" KeyPath="yes" Source="$(var.EngineDir)/backend_launcher.py"/>
@@ -18,8 +24,11 @@
         <Component Win64="$(var.Win64)" Id="cmpBE33B1727ED093D9EDFA179AD17699B5" Guid="*">
           <File Id="fil1F7C8ADAE17B3D2306D951F862EA8F36" KeyPath="yes" Source="$(var.EngineDir)/clip_analysis.py"/>
         </Component>
+        <Component Win64="$(var.Win64)" Id="cmpEE727B4E7CA3D4E069295B71FD91BB3A" Guid="*">
+          <File Id="filE14BEF2FB1D727B4EA1C182AD0299EDE" KeyPath="yes" Source="$(var.EngineDir)/CYBER-FORENSIC-SPEC.md"/>
+        </Component>
       </Directory>
-      <Directory Id="dir829A7151813C1E9843C62AD2D412C727" Name="fixtures">
+      <Directory Id="dirE673EBF153FEFD7DCD47BEB270E2A7A8" Name="fixtures">
         <Component Win64="$(var.Win64)" Id="cmp5375E3705F5D005DDC75016D9E564086" Guid="*">
           <File Id="fil482BABD011FD2722FCE55430A53A4C54" KeyPath="yes" Source="$(var.EngineDir)/fixtures/prores-422-hq.mov"/>
         </Component>
@@ -27,7 +36,574 @@
           <File Id="filCDB10AB85881D9879A26D9B7A527EBF2" KeyPath="yes" Source="$(var.EngineDir)/fixtures/prores-422-standard.mov"/>
         </Component>
       </Directory>
-      <Directory Id="dir4F3E609F222E275CB6D50C4C90A14874" Name=".">
+      <Directory Id="dir267FF1B3A947DEB887A0BE475331905B" Name="forensics">
+        <Component Win64="$(var.Win64)" Id="cmp6FD68EE279F046337BF1A9C5ADF6B2C7" Guid="*">
+          <File Id="filB61E05D90320635B64AB11F45876F31E" KeyPath="yes" Source="$(var.EngineDir)/forensics/baseline.json"/>
+        </Component>
+        <Directory Id="dir34B31BD3C9043EF66B49154AE282AD5E" Name="runs">
+          <Directory Id="dir34BBF96D61FE81785A6CA6FED924BD50" Name="20260825-final-opus5">
+            <Component Win64="$(var.Win64)" Id="cmpC5062EB23A71B68D83BBDE0AC1E7776A" Guid="*">
+              <File Id="filF7DE2F690CDA1BA62D3DA392AC647DDA" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp2DD4AADD7C48D13801B2EF7DCAC8E253" Guid="*">
+              <File Id="filE0A5D9CD03530FA89B2C879F756107F6" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpC22B3B798B90DFE2C39E8B3079CEF443" Guid="*">
+              <File Id="filD109CB99E95C43C0B006AD65EE732F24" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp04CED576319DB206B9E3432EF3AC855C" Guid="*">
+              <File Id="filEBABA78B41E89EBF7D0BC65206C1CCB0" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp6BF43888B9362A2A80827DADF5668DF4" Guid="*">
+              <File Id="fil6A1F16289114BA5B6183C43E08C8D067" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp0B11719807EA4A71D687C31B4635BE78" Guid="*">
+              <File Id="filB73B108F596F10C1FEC736B32D4B867B" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dir094F57E2AD98C4C47B794CE60AA39C02" Name="20260825-final-opus5-r2">
+            <Component Win64="$(var.Win64)" Id="cmp4E5D089136E75AD69856A6A18EA348C0" Guid="*">
+              <File Id="fil82AC076D4F7A15E99D59A4FF3D546A99" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r2/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpCA4AC5735A2634B9021F372A5518B705" Guid="*">
+              <File Id="filCC0B989001410E9C87DBBFD54AF54008" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r2/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpF05F24056F973F94E7BC6B36996972D9" Guid="*">
+              <File Id="filED06BBC7F9D02DDD1BD0B67D1844D612" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r2/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp92FD3459E2764CAC5FCC3FA92EA8670A" Guid="*">
+              <File Id="filDD6FF671550295ED251968A05A07A88F" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r2/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpBB3BB557D9F7ABF236541701954553C5" Guid="*">
+              <File Id="fil156C1164A20D144FDCDF8F1D9239D2A9" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r2/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp449FA097B1176DA8493650B3C1FDF8FF" Guid="*">
+              <File Id="fil27F70AD2E404F431463C6F0EAD27CF6B" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r2/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dirBC120C33A20082E03861A189CA1D0695" Name="20260825-final-opus5-r3">
+            <Component Win64="$(var.Win64)" Id="cmp06668D52FBB7CCDCF81C5D4B1F12BDAB" Guid="*">
+              <File Id="fil821BE9CB4A32213293328D1905085F96" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r3/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp23E370DC7B2E0B887E336B30E024F795" Guid="*">
+              <File Id="fil3E0A90C0E6271129D458CA565675F085" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r3/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp517B18A8304DC01C74B4AD9FA737A7E1" Guid="*">
+              <File Id="fil5CC9B6E3F0AF3B8607FD162E64A03BA5" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r3/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp6538D748FF949A4D1FD7860624B0117F" Guid="*">
+              <File Id="filF9A70746F966E7DEF54443C193A54987" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r3/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpF15B87D4C7C225B3403EA7B8D45540D2" Guid="*">
+              <File Id="fil23E5C83BC739DED0FB676B256F88897E" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r3/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpDC9FCAEC070A4892B5B5197EABDF7BC0" Guid="*">
+              <File Id="fil77D215843943A33ADB2978D3CEEB3932" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825-final-opus5-r3/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dir578E60874A6C6FB161CA6760273CC79F" Name="20260825T051023.611159Z-8f850d71-e1b84ec58c">
+            <Component Win64="$(var.Win64)" Id="cmpAE709347316BB0937592EB2CB0F8E613" Guid="*">
+              <File Id="filA5BAF05088565BD1A2DE63A867729642" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T051023.611159Z-8f850d71-e1b84ec58c/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpAFFE957FBB6D4A6B1401322FD72E55CC" Guid="*">
+              <File Id="fil529D56838F4D15DC8A979A220EA44CD3" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T051023.611159Z-8f850d71-e1b84ec58c/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp129BE2DCF4F8BCBB5C97CA509AF6E5DD" Guid="*">
+              <File Id="filFC89ABF46CBDEFD9ED08BD17EAB55E8E" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T051023.611159Z-8f850d71-e1b84ec58c/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpD783755A2A436AD9C9D9139A38995572" Guid="*">
+              <File Id="fil79E560311C42A253DDCC6FF2CEBF0976" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T051023.611159Z-8f850d71-e1b84ec58c/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpCD60C730030DB3E4764892A254FCC922" Guid="*">
+              <File Id="fil74EEBCCFE288258C9A842F09E2449250" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T051023.611159Z-8f850d71-e1b84ec58c/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpD592A471C21822B8823AB3371D02EFD2" Guid="*">
+              <File Id="fil6BC7DE28CEE282967C11C3863F4CFDBB" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T051023.611159Z-8f850d71-e1b84ec58c/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dirDB33CB96E7ADD172CBED0B3AF576134A" Name="20260825T052830.257360Z-8f850d71-23f63ec653">
+            <Component Win64="$(var.Win64)" Id="cmpE94671584394FDACA54B99B187D572DE" Guid="*">
+              <File Id="fil476882F5C3DC6D1C3EBFDE90AB038F7B" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052830.257360Z-8f850d71-23f63ec653/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpFE5AF0B5051BBA75259C05EB2EC8F2B5" Guid="*">
+              <File Id="filFC3279E22EEC00395C6F39B31105B761" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052830.257360Z-8f850d71-23f63ec653/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp765A94C89C81B5E6E78DA5366D8F865F" Guid="*">
+              <File Id="fil1A9FE6F908B8D97818B49FB51A38DD1B" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052830.257360Z-8f850d71-23f63ec653/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp663383F348D9B38969B4BD7991438175" Guid="*">
+              <File Id="filF4976D24E98D9A1AB0A093B23A403065" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052830.257360Z-8f850d71-23f63ec653/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp5B500220742BCBE55FB43BED07CFF60C" Guid="*">
+              <File Id="fil4664854B311D4880ADBF3230D17A0C00" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052830.257360Z-8f850d71-23f63ec653/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp34559157D720D925613A21F539318981" Guid="*">
+              <File Id="fil503570D631238A200AB8CA4B90BAE559" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052830.257360Z-8f850d71-23f63ec653/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dir8D6BC0352C6D4F9FF61DCAD498A7DC14" Name="20260825T052920.736996Z-8f850d71-23f63ec653">
+            <Component Win64="$(var.Win64)" Id="cmp780E44EFFA5C49913BEDAE110C631D41" Guid="*">
+              <File Id="fil78BDB20BCC478580A1DD9C2A530D9DE3" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052920.736996Z-8f850d71-23f63ec653/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpE5795B18617EFB20D569017CA0BDA303" Guid="*">
+              <File Id="fil4DECFF77A6DDE7955FE36DBF96C065F7" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052920.736996Z-8f850d71-23f63ec653/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpD4832ED8B8ECB71756BF0B6B64BF71EA" Guid="*">
+              <File Id="fil69CE8A0C751EAB30E96B3FCBD813ED81" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052920.736996Z-8f850d71-23f63ec653/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp01F8E08DCD6C237CE55BAD11A6165947" Guid="*">
+              <File Id="fil01AC868E92F8F97D08847BA6B2B3CBBB" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052920.736996Z-8f850d71-23f63ec653/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp3BB721D2138EC651A29DDFCB03EC172D" Guid="*">
+              <File Id="filEF89E2783C6A498728AED1F1396AE7DB" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052920.736996Z-8f850d71-23f63ec653/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp4DEC2D6F750F82524E5C4FC3BB302D8B" Guid="*">
+              <File Id="fil9A66A118B10C68045ADE32F53F0E5479" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T052920.736996Z-8f850d71-23f63ec653/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dir51317B7207AC44B0265A2D62EC184479" Name="20260825T053008.256023Z-8f850d71-8f168f6125">
+            <Component Win64="$(var.Win64)" Id="cmp2F9F93CBCDE1552126EAE27F467D90C2" Guid="*">
+              <File Id="fil4AD893AFFB27AEE65FCA8F2FF2485601" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053008.256023Z-8f850d71-8f168f6125/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp20284D93A8B4A72834F86F6D31612571" Guid="*">
+              <File Id="fil3A71F04393076F25664845EBE4CE143A" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053008.256023Z-8f850d71-8f168f6125/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp24844407548799D23666011BECE55414" Guid="*">
+              <File Id="fil4C53E9896FC66276CA020954688260D9" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053008.256023Z-8f850d71-8f168f6125/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp98CF9A63260DDDEC1BF4650CA5777330" Guid="*">
+              <File Id="fil78A3B4BE898DB7A71015DC9B68BE312D" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053008.256023Z-8f850d71-8f168f6125/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpF4C7C8D34087408A259B5045B7F8CA2E" Guid="*">
+              <File Id="fil80C471B1053571E8239A4048194AA4FF" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053008.256023Z-8f850d71-8f168f6125/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp0BE2763760E494BAD9DD015B787CA488" Guid="*">
+              <File Id="fil846A055BC4329E8FD772FD25B1ADDFBC" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053008.256023Z-8f850d71-8f168f6125/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dirFE3D4FBD44AD44EF4455634E692462F6" Name="20260825T053027.921398Z-8f850d71-3e48e4b7e7">
+            <Component Win64="$(var.Win64)" Id="cmp27598B3A2F71E652B53604DFD79F3F6A" Guid="*">
+              <File Id="fil15A00923B665E7157B574F9F383EF695" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053027.921398Z-8f850d71-3e48e4b7e7/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp74F99D7DABE89C6F4C0B2BC123A5DD51" Guid="*">
+              <File Id="fil17DB723942D94EBEF17351363F71FEAF" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053027.921398Z-8f850d71-3e48e4b7e7/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpA677CBCB20B4308BB17FA0DB41DC36E0" Guid="*">
+              <File Id="fil3674D1896C4C88F039037EAFBC9EF768" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053027.921398Z-8f850d71-3e48e4b7e7/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp15C4CC114AAE3920EA1C6BD31C72220E" Guid="*">
+              <File Id="filFA0F03BC44F558973C21A7A0FDC88BA8" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053027.921398Z-8f850d71-3e48e4b7e7/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp74319FC9C32299EA6B1389280D1ED397" Guid="*">
+              <File Id="fil78E47ADB948590A78A7E86EF54BB3DD1" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053027.921398Z-8f850d71-3e48e4b7e7/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp5D6977F0D5971049CE6119DDF0C13E36" Guid="*">
+              <File Id="filDECF11A077792026CB6B9B4A275CFFAF" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053027.921398Z-8f850d71-3e48e4b7e7/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dir213949E8047599E5C2E31989AC27F676" Name="20260825T053130.128708Z-8f850d71-3e48e4b7e7">
+            <Component Win64="$(var.Win64)" Id="cmp0F71B182A37C0BFD81624015EB623B83" Guid="*">
+              <File Id="filBD3838A7AD0D0D5F5BE1F3DFB2425D70" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053130.128708Z-8f850d71-3e48e4b7e7/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpA24A93C46DBA40CF682A97FE2CA677E5" Guid="*">
+              <File Id="filE3B34F687FC2391A69DDDC2B15717DCF" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053130.128708Z-8f850d71-3e48e4b7e7/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpF65812E05E7FB502CA57B29EF9D4D18B" Guid="*">
+              <File Id="fil6BA62C7C1532B3A5066BF49E821CA9CB" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053130.128708Z-8f850d71-3e48e4b7e7/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpE4A7F08412C088FD7FB83B0F56B46FC1" Guid="*">
+              <File Id="filBCC6B89F2F9F8DAAA7E5CECD65B31D80" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053130.128708Z-8f850d71-3e48e4b7e7/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp6363A40D6CD8724F570B33CD4E27519B" Guid="*">
+              <File Id="fil15E0EDC7B779DD859DE8AD1463A94D19" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053130.128708Z-8f850d71-3e48e4b7e7/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp4E85D405CB8D8ACC71693D43F133D876" Guid="*">
+              <File Id="fil67B8A1197E5BDAA44FAB952FFDB45326" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053130.128708Z-8f850d71-3e48e4b7e7/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dir5644B2101F0D39CE5524D64625EE92CF" Name="20260825T053409.188119Z-8f850d71-495286f657">
+            <Component Win64="$(var.Win64)" Id="cmp602C4BB116D023ADAB7E98784F806D63" Guid="*">
+              <File Id="fil486BA3637992F2B33DFD06272B8D37C5" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053409.188119Z-8f850d71-495286f657/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp7013F6CA5D2A74857987876EED78EFF6" Guid="*">
+              <File Id="filAE02A84CBB0144EED8AAA66E5AD162D8" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053409.188119Z-8f850d71-495286f657/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpF16BE209C6EFB3844C2D8604A7837632" Guid="*">
+              <File Id="fil933C53A1E8A6647E9EAB66C4DB75424B" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053409.188119Z-8f850d71-495286f657/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp419BF4FA809561E6A2CB34D1576B438F" Guid="*">
+              <File Id="filE37841A7F39E0BCE92E01E24F77B81E3" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053409.188119Z-8f850d71-495286f657/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp5013069986911B1CCA34AD3F34B6BD15" Guid="*">
+              <File Id="fil283C893F02D9320B53AED7C9B3D56416" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053409.188119Z-8f850d71-495286f657/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp6D4893E0BF903A9809D68889BF2785C3" Guid="*">
+              <File Id="fil915B365BC4DF77157DFB8D209CA7F010" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053409.188119Z-8f850d71-495286f657/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dirA57AFFB696AEE4CDCF2E738B2037EE1B" Name="20260825T053548.297032Z-8f850d71-83120ee8b2">
+            <Component Win64="$(var.Win64)" Id="cmp517671242B05DB5A372D5AF136F44D8A" Guid="*">
+              <File Id="fil188B93285C2005D57580A2A31BDB6A11" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053548.297032Z-8f850d71-83120ee8b2/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp210F523691FDCBE00DFA00BEAD68F6B9" Guid="*">
+              <File Id="fil25EC638896BF5CF4F7682B5F14F20338" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053548.297032Z-8f850d71-83120ee8b2/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpDE8AEDED13DF4B8DE1675065A5228FF4" Guid="*">
+              <File Id="filE5E58BB8E7077974797CDB598B20B98C" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053548.297032Z-8f850d71-83120ee8b2/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp246709ECE32F96625B85530389E453B2" Guid="*">
+              <File Id="fil5E9492622C31A18CFCEEF268A836ABE7" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053548.297032Z-8f850d71-83120ee8b2/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpAE5124051E2DB77229B241ADE2E8A7D6" Guid="*">
+              <File Id="fil467611096F9AB211D495502647F1046F" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053548.297032Z-8f850d71-83120ee8b2/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpBED4EEA14EA83D219AB6061A909EB347" Guid="*">
+              <File Id="filF60473A163A78E2D3A6005C8EECA2ACB" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053548.297032Z-8f850d71-83120ee8b2/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dirCE8719E871ACABC6C899D4DA99CDF9F0" Name="20260825T053705.946198Z-8f850d71-83120ee8b2">
+            <Component Win64="$(var.Win64)" Id="cmp599EFA0383700BF476C9AE5610AB8BBB" Guid="*">
+              <File Id="filEB704E347BF4AB137992813428473597" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053705.946198Z-8f850d71-83120ee8b2/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp39C5A974F4CE3CCA794176C268EAECAF" Guid="*">
+              <File Id="fil7A1ACD78D6BC791C4A2C7E103FAA20A2" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053705.946198Z-8f850d71-83120ee8b2/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpE244E2FBEB4EFBF940D8B850B9F039E8" Guid="*">
+              <File Id="filFC351CA3EC21B911BA7EDD9AC4502858" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053705.946198Z-8f850d71-83120ee8b2/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp48B308301733F49CDAE4EC5C14D5005C" Guid="*">
+              <File Id="filA4A88153BEC4DA58847990652A8639FF" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053705.946198Z-8f850d71-83120ee8b2/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp43C7D68772B379269D48471BFF3F1BDC" Guid="*">
+              <File Id="fil56F0C44070D8D95A50B1A305D480DB9C" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053705.946198Z-8f850d71-83120ee8b2/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp65BED4A6A5C168AD39FB2B26DF919F8A" Guid="*">
+              <File Id="filF3FEBF22A078F6D66F178EDF07BB70BE" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053705.946198Z-8f850d71-83120ee8b2/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dir311F86140021A0A76F6F9D23DE43CD11" Name="20260825T053725.880054Z-8f850d71-83120ee8b2">
+            <Component Win64="$(var.Win64)" Id="cmp1A75DA2AFC90B2685CD819B52D5453B0" Guid="*">
+              <File Id="fil902F254134D5D7AA488B42A50DE5AFE0" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053725.880054Z-8f850d71-83120ee8b2/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpCD74519CEFDF2288C0EF1773F09E9B88" Guid="*">
+              <File Id="fil1905E733CADC1E42D188215664FC05CF" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053725.880054Z-8f850d71-83120ee8b2/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp52E932E00A520119FD644C51C9FCCBE4" Guid="*">
+              <File Id="fil7978BC56097BD8B1A23D00A2C726623E" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053725.880054Z-8f850d71-83120ee8b2/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpBD8D471E4B44300F93E6A94B7EBBD23A" Guid="*">
+              <File Id="fil14DF3F8CAB148113D4EF745FC39BF9C5" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053725.880054Z-8f850d71-83120ee8b2/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp4682D58894FF73F8DCACE6F629B37173" Guid="*">
+              <File Id="fil9D7F75C5B96168AF4022B5E7B716158A" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053725.880054Z-8f850d71-83120ee8b2/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpC6BFB78849673158B0AA68522FBDD53F" Guid="*">
+              <File Id="fil2A1ED64374153924E3C53E1E4811DD5C" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T053725.880054Z-8f850d71-83120ee8b2/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dir7828401302DC76C2F60DC3E90DB5B824" Name="20260825T134313.573466Z-8f850d71-83120ee8b2">
+            <Component Win64="$(var.Win64)" Id="cmp6A58189C82AE61E3D3016F4BD214F4F2" Guid="*">
+              <File Id="fil3B5AB666523DE89493426A74DA735329" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T134313.573466Z-8f850d71-83120ee8b2/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp2E61400DCC3481ACB7C3A65A18EC003E" Guid="*">
+              <File Id="fil84D7A218F94DBCE945B1F0C6D819C22A" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T134313.573466Z-8f850d71-83120ee8b2/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp8956FD33E77308F8EF28DBB238D01BD2" Guid="*">
+              <File Id="filA25560D92E4AFD473C4E2F9F86E72F56" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T134313.573466Z-8f850d71-83120ee8b2/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpCBD52298862F556F4D4142D00FF750F3" Guid="*">
+              <File Id="filB669915469C30AD0BF4C10B418EAE6AC" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T134313.573466Z-8f850d71-83120ee8b2/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp6B98A20D31A4977C97D6E3DAE9A04BE7" Guid="*">
+              <File Id="filEA8DD58DC3350BB53E5048EEE46935A1" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T134313.573466Z-8f850d71-83120ee8b2/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp52CA60213B35E38A166E3D6BE4584390" Guid="*">
+              <File Id="fil569718FFD2D1042349CF60C11FFBF18B" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T134313.573466Z-8f850d71-83120ee8b2/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dirEBDEDF7EDEA7E8A4B2732814BAFE8698" Name="20260825T140420.593432Z-8f850d71-471b11a07d">
+            <Component Win64="$(var.Win64)" Id="cmp478954BEF1719D313CA569D17C0B6C59" Guid="*">
+              <File Id="fil9B6679AA6C10F29E1CCFBC32E354FC0F" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T140420.593432Z-8f850d71-471b11a07d/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp0B7EC01B796AE72B2B9A116AEC773FDB" Guid="*">
+              <File Id="filBC612F13B7127619EDA404D463DE131C" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T140420.593432Z-8f850d71-471b11a07d/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp03F68D86AC1CDEBAA6089E128036D9DD" Guid="*">
+              <File Id="fil22D50C14FB2690C20D60E070E567766D" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T140420.593432Z-8f850d71-471b11a07d/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp650822E7C8886737EB62DD4DEEB7A617" Guid="*">
+              <File Id="fil438FEAE42D63039BF57361A8D96BCCB3" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T140420.593432Z-8f850d71-471b11a07d/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpCD918B75B0AE9DC2453338BBBA783303" Guid="*">
+              <File Id="filCA69099EA2F07C490713700196E34AFD" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T140420.593432Z-8f850d71-471b11a07d/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpBBADA1D0701CDA7A3943CAAE6103E740" Guid="*">
+              <File Id="filBCA339638EE02DD2342D39E33A7227E5" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T140420.593432Z-8f850d71-471b11a07d/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dir2A1DD7C6444AF23F63D6C886BAAB7FD3" Name="20260825T141328.532934Z-8f850d71-24e8afc905">
+            <Component Win64="$(var.Win64)" Id="cmpC5B37A60DF12E2C36CB598B413DA7C9C" Guid="*">
+              <File Id="fil4A5EE7F55489866A20EA36AB75E0FB2A" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T141328.532934Z-8f850d71-24e8afc905/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpEBDF538D2F7B6BA9B7CDC820B7FEA979" Guid="*">
+              <File Id="fil427169DDD49D8C2B551772A6DED5CCEF" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T141328.532934Z-8f850d71-24e8afc905/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp055C329E3AD995EFE20C85E90A583BA8" Guid="*">
+              <File Id="fil0A94B5CE56DD88BAF33A86D798CBD5F5" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T141328.532934Z-8f850d71-24e8afc905/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpFF9070F7B106BA3241ABB2F37C030CA5" Guid="*">
+              <File Id="fil3E389604CC347D28C5A66C06F1EA2DDF" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T141328.532934Z-8f850d71-24e8afc905/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpE382332EFC540270A144642FF320A06C" Guid="*">
+              <File Id="filB68EAD22ADD4C2023E562EFE1E875404" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T141328.532934Z-8f850d71-24e8afc905/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp0312E797BE561B923BB65D5AE109EDA6" Guid="*">
+              <File Id="fil8C21A3A1275D67A715C18A16D1D8AAB3" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T141328.532934Z-8f850d71-24e8afc905/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dirB4F3188872AE8BE5E8FEE69B203D553A" Name="20260825T142654.712268Z-8f850d71-9a13c4fbcf">
+            <Component Win64="$(var.Win64)" Id="cmpFABDC0F7CAC6FDD29F39E1F972F9FE4C" Guid="*">
+              <File Id="fil6642B424FAA11E7F2627E0BB457A17A0" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T142654.712268Z-8f850d71-9a13c4fbcf/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpDE7C48AD39D715A764E9B4ACA92C497A" Guid="*">
+              <File Id="fil44662D36BF4C044D1FC8FCB348ED45BE" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T142654.712268Z-8f850d71-9a13c4fbcf/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp655110162F30CF43C04143D23625AA9F" Guid="*">
+              <File Id="filB8E826D38C0F103E3183F8298C948796" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T142654.712268Z-8f850d71-9a13c4fbcf/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpA4CBD80ACE053AA62709EB79C274F279" Guid="*">
+              <File Id="filA015C0CCF7BD67A339382512BA7874F7" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T142654.712268Z-8f850d71-9a13c4fbcf/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpD5348CFA005D032DF2D82B9B8B19E36E" Guid="*">
+              <File Id="fil66284E9C54BC71A6CBDE9B43CA6DA519" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T142654.712268Z-8f850d71-9a13c4fbcf/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp94A3A297CD888330D352385883D184D0" Guid="*">
+              <File Id="fil5E76B0FDE8B95E2E93EF155D2267F40A" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T142654.712268Z-8f850d71-9a13c4fbcf/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dirC058E171406DA466712D8ED803C7C914" Name="20260825T232911.362462Z-8f850d71-c29524cbc2">
+            <Component Win64="$(var.Win64)" Id="cmpAED560D1843168F5369E376D89A3CE0D" Guid="*">
+              <File Id="fil25227E304470E099817AE9B926D773C1" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T232911.362462Z-8f850d71-c29524cbc2/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpCFF1DCD2492A2E17C340D039F25095A9" Guid="*">
+              <File Id="filC529082EE17B963B1EE116BEEE535C5F" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T232911.362462Z-8f850d71-c29524cbc2/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpC7B435A7545D0E34FBF5B4C089F08E2F" Guid="*">
+              <File Id="fil581F3D307EB54A66A02E1EA40CCB7B92" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T232911.362462Z-8f850d71-c29524cbc2/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp6C2602F6528D57894734EC58219F0C14" Guid="*">
+              <File Id="filA1C1126D292A8F3EA8DB500C29DB39DA" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T232911.362462Z-8f850d71-c29524cbc2/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpC631609B9F80E703F93BE6D9AC2765CF" Guid="*">
+              <File Id="fil34F601997D238E3432BD7B21813EF1CD" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T232911.362462Z-8f850d71-c29524cbc2/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpF2E5C8F90E9D64866052B721BA6E42AF" Guid="*">
+              <File Id="filCC00D1E077379DB4C9E554C4C98E4E19" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260825T232911.362462Z-8f850d71-c29524cbc2/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dirBFD4D41FD7FB0D59394E142E3125CF30" Name="20260826T025847.206549Z-8f850d71-19d7b8b77d">
+            <Component Win64="$(var.Win64)" Id="cmpA856D58D3C607B20E431A17559700DF8" Guid="*">
+              <File Id="fil2C54B1847E2C518389C0AEEFBB8E6CEC" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260826T025847.206549Z-8f850d71-19d7b8b77d/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpBC97DC6D4407AE97F2357E4CCF61ECDF" Guid="*">
+              <File Id="filAB54946DF79CC3A45C75FCA8639CD4E2" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260826T025847.206549Z-8f850d71-19d7b8b77d/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp4BB403FA9CF75483E07B35EF098EE011" Guid="*">
+              <File Id="fil03D56FF4FC5CBAD61F8F4B94293A0B46" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260826T025847.206549Z-8f850d71-19d7b8b77d/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpE2C734479900C2467CBD67CCC1FFF441" Guid="*">
+              <File Id="filE96A9AEBC19C1C7FD8EF1405CB3DCB5F" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260826T025847.206549Z-8f850d71-19d7b8b77d/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpB3F2621CE4D2D4B7A421EAC700077336" Guid="*">
+              <File Id="fil84F1EB43E2753588F126CFEDA3629023" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260826T025847.206549Z-8f850d71-19d7b8b77d/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpE0B7CEAA44D4972101821DB5B883F98C" Guid="*">
+              <File Id="fil745518ACB327682BEEAEF01F30A8AB93" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260826T025847.206549Z-8f850d71-19d7b8b77d/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dir4133863F784F628FAC78A51878FC111D" Name="20260827T002730.452077Z-8f850d71-b09cd15a70">
+            <Component Win64="$(var.Win64)" Id="cmpBFD9B1668D8FD09FD8F99F0C3762F935" Guid="*">
+              <File Id="filA438AFDD8C2BA3356080F7075154D276" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002730.452077Z-8f850d71-b09cd15a70/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp79A82B8327C2518C87F3E88F0FECFA5A" Guid="*">
+              <File Id="fil39E717CE500C81DFE74E88C9248782F1" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002730.452077Z-8f850d71-b09cd15a70/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpCA4C64AB54AF0D1DE8DE72475850BEF2" Guid="*">
+              <File Id="fil7C93EA40D6D2BFFE6870914CEA81B362" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002730.452077Z-8f850d71-b09cd15a70/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp20D51C6DA4DFB841D7E438D2A6340973" Guid="*">
+              <File Id="fil998CA2B0AEC98EFFA9AFB49917231B40" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002730.452077Z-8f850d71-b09cd15a70/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp9B79DF002DC5062CD70518CB0956FD66" Guid="*">
+              <File Id="fil9A3FF0ABFA6EA61AF346457F417DF745" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002730.452077Z-8f850d71-b09cd15a70/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpB6170E03AEE60891BE2BB298BCCB317C" Guid="*">
+              <File Id="filB94CD71117391DF377B1BBB117D3EF35" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002730.452077Z-8f850d71-b09cd15a70/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dir08872D754C82E0DD7AA0B99EC1961782" Name="20260827T002810.159681Z-8f850d71-b09cd15a70">
+            <Component Win64="$(var.Win64)" Id="cmpFB95372B82D71A0BFE1DCA2227DC66A7" Guid="*">
+              <File Id="fil4B29D8D657B39DF2C2B96668B83AA921" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002810.159681Z-8f850d71-b09cd15a70/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp3E0CFED55ACED015B4B54EAE243D2AC1" Guid="*">
+              <File Id="fil5F7A663C242AE200950A49FC006F19A3" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002810.159681Z-8f850d71-b09cd15a70/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp684E21D72657C017464F657E81EEABDF" Guid="*">
+              <File Id="fil183029594BE7C4059BEE6A8CD24B3F25" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002810.159681Z-8f850d71-b09cd15a70/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpB791E55DA723553D5E21A7A60531F34E" Guid="*">
+              <File Id="fil4287CEE8A3B7BED83BC91E9D97B1FEDF" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002810.159681Z-8f850d71-b09cd15a70/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp9987AFB01B27B6B74E33219A16EC0215" Guid="*">
+              <File Id="fil172F8DFEC75CEED525BA62828B3C2931" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002810.159681Z-8f850d71-b09cd15a70/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp9E870719FF36B83FC9D8C3FCD43FBB21" Guid="*">
+              <File Id="fil97941611280492F8A016E5239FCC5273" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T002810.159681Z-8f850d71-b09cd15a70/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dirF673D84599DFE69D32622C578CC5CB3C" Name="20260827T003015.060161Z-8f850d71-b09cd15a70">
+            <Component Win64="$(var.Win64)" Id="cmp8A9CDEC7A6BEE43AD9D15331740FD784" Guid="*">
+              <File Id="fil6B8AA747490B435E83B1BECD7F27C0BA" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T003015.060161Z-8f850d71-b09cd15a70/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpD0D439E93454884208A6B216E97A4636" Guid="*">
+              <File Id="fil3526057384E8EEB52376C64DAB0AF829" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T003015.060161Z-8f850d71-b09cd15a70/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpB546CA5910226137C69660171B33FFBE" Guid="*">
+              <File Id="fil2153A18F284A3F4257C545A7BC59DD67" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T003015.060161Z-8f850d71-b09cd15a70/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp586D9CE04CF1327AD902D495EE7241F2" Guid="*">
+              <File Id="fil51A3697762D1687628AA1765B9B3CCAF" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T003015.060161Z-8f850d71-b09cd15a70/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp60B79CB60ACDD00816B0628C3762552E" Guid="*">
+              <File Id="fil2697C6092BEC4E5F09147900CEDD1423" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T003015.060161Z-8f850d71-b09cd15a70/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpA1149B4D3BD03837F0AFDF5D35438E3D" Guid="*">
+              <File Id="fil77B13A4C553536EB4692AAA93DC642D7" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T003015.060161Z-8f850d71-b09cd15a70/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dir0117F5C2A7DF2C1ABCAF994D91F64B7A" Name="20260827T015120.337374Z-8f850d71-b09cd15a70">
+            <Component Win64="$(var.Win64)" Id="cmpEFB9C3197918DA80DF972B6C50E8AD27" Guid="*">
+              <File Id="fil772C580832CDB9A328B90863805421E0" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015120.337374Z-8f850d71-b09cd15a70/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp73EA71CBC49184755EC2E5634B35A56B" Guid="*">
+              <File Id="fil170D581BEE0EFC98A0C215307C6315CE" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015120.337374Z-8f850d71-b09cd15a70/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpE8D92F372CCF37B1D26E0466077D4686" Guid="*">
+              <File Id="fil315711D7EB31474343BF498C26983BD3" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015120.337374Z-8f850d71-b09cd15a70/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpEA68FC478D9772EADA2A4912F109962F" Guid="*">
+              <File Id="filA185CDB70E08B6DCB8A3865C7B688DC0" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015120.337374Z-8f850d71-b09cd15a70/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp1187CA8912E5DF2104D56AFA4582CC15" Guid="*">
+              <File Id="fil6916460863FBB08C19726C6D1A4159B9" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015120.337374Z-8f850d71-b09cd15a70/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpDD43A3A7BB26C259F35B5EDBAE26464A" Guid="*">
+              <File Id="fil18A5410ECDF6BC68A383A2D4DCAB2416" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015120.337374Z-8f850d71-b09cd15a70/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dirF3390FE25DB812E7C56B2BE828A4B041" Name="20260827T015450.028410Z-8f850d71-b09cd15a70">
+            <Component Win64="$(var.Win64)" Id="cmpEE3B727299B8112416C005F6DCC15086" Guid="*">
+              <File Id="fil12E7C2968CDCB4F6FCA44F726AFE59E8" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015450.028410Z-8f850d71-b09cd15a70/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpD98E312A6791F6645D931FFF924506A5" Guid="*">
+              <File Id="fil54E053349635052319565EEBAB468864" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015450.028410Z-8f850d71-b09cd15a70/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpD85D23470B90A9D93A023AF807BB339F" Guid="*">
+              <File Id="fil91C16ACA99BB111F7C69BD7737937A46" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015450.028410Z-8f850d71-b09cd15a70/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpF5CB5CC9E4728C17972F61D82833D05C" Guid="*">
+              <File Id="fil94D8216810682355EB9DFF0B7BD7F62D" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015450.028410Z-8f850d71-b09cd15a70/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp9A9CA265A25525E0BB3CDCBCF3C54580" Guid="*">
+              <File Id="fil0204F33893114F1E0FEC4C6B15D3C7D5" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015450.028410Z-8f850d71-b09cd15a70/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp6418312618F9298F146146F93903E763" Guid="*">
+              <File Id="fil874343FD6AC02C80C8A428ADBAFB2681" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T015450.028410Z-8f850d71-b09cd15a70/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dirC9FFA590AE6E9EE6944D1ACA0B652491" Name="20260827T020406.477024Z-8f850d71-31df6ac303">
+            <Component Win64="$(var.Win64)" Id="cmpBFCE786501083D00E94332CEFED9E6B4" Guid="*">
+              <File Id="fil2F00B2B3829355E4F326A2A59AAEAE43" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020406.477024Z-8f850d71-31df6ac303/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpCFF375BFA7D229319630F4C6F06828B1" Guid="*">
+              <File Id="fil850AC2808FF2A75221F1F30FE2C3E88B" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020406.477024Z-8f850d71-31df6ac303/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp5501DC90856169D986D61510132B98CB" Guid="*">
+              <File Id="filECDD0803033BCF2C404DB0E9EB8ADD97" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020406.477024Z-8f850d71-31df6ac303/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp07E79201DC56407F2D5DE78ABA5D73C9" Guid="*">
+              <File Id="fil1703806A8F1FA93C9B35EC645B10DCBA" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020406.477024Z-8f850d71-31df6ac303/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp7B8FC961F74E327F2ED1DDD9BA096FBC" Guid="*">
+              <File Id="fil725FEF3DCF3025FA3AFDCC352717BC72" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020406.477024Z-8f850d71-31df6ac303/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpF4174971C4F60745DCC4647AAAFC1E39" Guid="*">
+              <File Id="filD5BB4F3EE8DBCACABB07168A148F8780" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020406.477024Z-8f850d71-31df6ac303/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dirEB54B6F2134466D952C7DEE0373B0D08" Name="20260827T020513.838089Z-8f850d71-31df6ac303">
+            <Component Win64="$(var.Win64)" Id="cmpA7FAAEFE71B37FA43C3E79835D3FC39D" Guid="*">
+              <File Id="fil26CB87EBF329D1E00326E7BFC6467A53" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020513.838089Z-8f850d71-31df6ac303/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp0F0FF0723EA7D107729DF85F11420A1C" Guid="*">
+              <File Id="filFC8D9EF35019C8A240F74246E1760A49" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020513.838089Z-8f850d71-31df6ac303/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpCD22879A069441823DE833E7AD0306E7" Guid="*">
+              <File Id="fil3E5D3C009D3E6447182B796FD8072F2C" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020513.838089Z-8f850d71-31df6ac303/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp4DFAD339AAFDF4081D8744CECBEAF877" Guid="*">
+              <File Id="fil80A980C5423CB4CB2FAC57F57E7C20B6" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020513.838089Z-8f850d71-31df6ac303/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpF9444182F77AB58B9316A265620E86DC" Guid="*">
+              <File Id="fil02EB2D3975D77A38664605F26EF33CC5" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020513.838089Z-8f850d71-31df6ac303/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp1C95846FA17ED2830DBF38A0EE006EE4" Guid="*">
+              <File Id="filB901E4BAEEB5B425163F93797574AF63" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020513.838089Z-8f850d71-31df6ac303/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dir856BF4FBC92C10123E047EF4970C89B3" Name="20260827T020549.358192Z-8f850d71-31df6ac303">
+            <Component Win64="$(var.Win64)" Id="cmpC1CC7FF1C6EFB9FA539441E47B6CAD93" Guid="*">
+              <File Id="fil32146FDFAAE6393E0F596DCD79DE41FB" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020549.358192Z-8f850d71-31df6ac303/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpED4392D6C5DF474E7D5A48D6CCE24D38" Guid="*">
+              <File Id="filC818778A7F0A29A7041A9811403C0551" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020549.358192Z-8f850d71-31df6ac303/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp4335E58D88D5DD1F309EFC374976118F" Guid="*">
+              <File Id="fil280A9F85DDE81B4066784986CBE3F543" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020549.358192Z-8f850d71-31df6ac303/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpB7CEBD01BE95FA37A3103D0D74379C33" Guid="*">
+              <File Id="filCFD1D418C1D42438DB9A583A33224F30" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020549.358192Z-8f850d71-31df6ac303/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpB8B8D9A8490E1D63884054675B7670AC" Guid="*">
+              <File Id="fil52D1E0D17CAAA6E7CE35897DAA6AF670" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020549.358192Z-8f850d71-31df6ac303/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpEE8AEC2CC79DF754C2D4AD5AF5A30ED1" Guid="*">
+              <File Id="fil9BFC75D200853B0B4828B806A7B2B3C9" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020549.358192Z-8f850d71-31df6ac303/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+          <Directory Id="dir3175EBD95B1067C3E75055CAE7054091" Name="20260827T020601.193116Z-8f850d71-31df6ac303">
+            <Component Win64="$(var.Win64)" Id="cmp6B7C4D80056368D37441C816C8BB8A37" Guid="*">
+              <File Id="filF88F846AC37096F8BA9B08553E5D6FAD" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020601.193116Z-8f850d71-31df6ac303/checks.jsonl"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpE12566F81BE5B5458290C51CEB61873B" Guid="*">
+              <File Id="fil56E7A09C4915C7DC40B0A3113D2C93A3" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020601.193116Z-8f850d71-31df6ac303/manifest.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpED2F6F977A913A25EDF264929A19FC96" Guid="*">
+              <File Id="fil605CD36DBC65A573121E762551B4EC08" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020601.193116Z-8f850d71-31df6ac303/report.json"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp56D0C9B69D919563F63AC244018C8721" Guid="*">
+              <File Id="fil1B6F71EB6E2235898BD05277A60A80A7" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020601.193116Z-8f850d71-31df6ac303/report.md"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmpC70BB09A1668CA2EAC64ED9B9F13BD76" Guid="*">
+              <File Id="fil57078005285BDC6026ED933D4F478C0A" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020601.193116Z-8f850d71-31df6ac303/SHA256SUMS"/>
+            </Component>
+            <Component Win64="$(var.Win64)" Id="cmp9E99BEC39D1D75F47B7631CDBAD40614" Guid="*">
+              <File Id="fil712D98D0225B218599FB6E26F92442FF" KeyPath="yes" Source="$(var.EngineDir)/forensics/runs/20260827T020601.193116Z-8f850d71-31df6ac303/SHA256SUMS.sha256"/>
+            </Component>
+          </Directory>
+        </Directory>
+      </Directory>
+      <Directory Id="dir10C82A3AD9005FBFA4F54A74BFA908F8" Name=".">
         <Component Win64="$(var.Win64)" Id="cmp136CC9DCAE0BC3DDF860367E04840C50" Guid="*">
           <File Id="fil4F916D39972137018AD826EDB935A06C" KeyPath="yes" Source="$(var.EngineDir)/media_tools.py"/>
         </Component>
@@ -46,26 +622,214 @@
         <Component Win64="$(var.Win64)" Id="cmp2B8A0F2B327DC16264AE6A07275246ED" Guid="*">
           <File Id="fil9272E1856D3963371D2E82DEA49471FE" KeyPath="yes" Source="$(var.EngineDir)/shot_selector.py"/>
         </Component>
+        <Component Win64="$(var.Win64)" Id="cmpFA8A0C9FA6331446945F3868440B94C3" Guid="*">
+          <File Id="filCEB1834ABB4CCF84B4EACF3837863678" KeyPath="yes" Source="$(var.EngineDir)/test_cutting_engine.py"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmp72A0B9EBFFB5A77F32DA9A8C87677E34" Guid="*">
+          <File Id="filFEF58D6953308E1B844D37E45165226A" KeyPath="yes" Source="$(var.EngineDir)/test_results.json"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmp158D569E1ADA7A054E7729839BF2E170" Guid="*">
+          <File Id="filD97DBC14C207A7D1D07E004AD920279E" KeyPath="yes" Source="$(var.EngineDir)/test_results.md"/>
+        </Component>
+        <Component Win64="$(var.Win64)" Id="cmpB33892FBDDEFFC3368077B4904AD0B3D" Guid="*">
+          <File Id="fil312866D68517FD67A9277BAA16855BB5" KeyPath="yes" Source="$(var.EngineDir)/VERSION"/>
+        </Component>
       </Directory>
     </DirectoryRef>
   </Fragment>
   <Fragment>
     <ComponentGroup Id="EngineFiles">
-      <ComponentRef Id="cmpB33892FBDDEFFC3368077B4904AD0B3D"/>
       <ComponentRef Id="cmp834354949DAF2B99016AA309B6FA6193"/>
+      <ComponentRef Id="cmp9228EF5D838BC844E0C4201A05A586CA"/>
+      <ComponentRef Id="cmpBEFAC859AD9040AADC1621C85DDAB65E"/>
+      <ComponentRef Id="cmp6C4FC01F25E1D8344C8D9EEB357D71B7"/>
       <ComponentRef Id="cmpFF0EBE5F821CA58302DA1A5E042CC55F"/>
       <ComponentRef Id="cmp011C785937BE05679FD136166496CAD6"/>
       <ComponentRef Id="cmpBE33B1727ED093D9EDFA179AD17699B5"/>
+      <ComponentRef Id="cmpEE727B4E7CA3D4E069295B71FD91BB3A"/>
       <ComponentRef Id="cmp5375E3705F5D005DDC75016D9E564086"/>
       <ComponentRef Id="cmp00269BAE6A4D04C64CDF487D0D43C3A9"/>
+      <ComponentRef Id="cmp6FD68EE279F046337BF1A9C5ADF6B2C7"/>
+      <ComponentRef Id="cmpC5062EB23A71B68D83BBDE0AC1E7776A"/>
+      <ComponentRef Id="cmp2DD4AADD7C48D13801B2EF7DCAC8E253"/>
+      <ComponentRef Id="cmpC22B3B798B90DFE2C39E8B3079CEF443"/>
+      <ComponentRef Id="cmp04CED576319DB206B9E3432EF3AC855C"/>
+      <ComponentRef Id="cmp6BF43888B9362A2A80827DADF5668DF4"/>
+      <ComponentRef Id="cmp0B11719807EA4A71D687C31B4635BE78"/>
+      <ComponentRef Id="cmp4E5D089136E75AD69856A6A18EA348C0"/>
+      <ComponentRef Id="cmpCA4AC5735A2634B9021F372A5518B705"/>
+      <ComponentRef Id="cmpF05F24056F973F94E7BC6B36996972D9"/>
+      <ComponentRef Id="cmp92FD3459E2764CAC5FCC3FA92EA8670A"/>
+      <ComponentRef Id="cmpBB3BB557D9F7ABF236541701954553C5"/>
+      <ComponentRef Id="cmp449FA097B1176DA8493650B3C1FDF8FF"/>
+      <ComponentRef Id="cmp06668D52FBB7CCDCF81C5D4B1F12BDAB"/>
+      <ComponentRef Id="cmp23E370DC7B2E0B887E336B30E024F795"/>
+      <ComponentRef Id="cmp517B18A8304DC01C74B4AD9FA737A7E1"/>
+      <ComponentRef Id="cmp6538D748FF949A4D1FD7860624B0117F"/>
+      <ComponentRef Id="cmpF15B87D4C7C225B3403EA7B8D45540D2"/>
+      <ComponentRef Id="cmpDC9FCAEC070A4892B5B5197EABDF7BC0"/>
+      <ComponentRef Id="cmpAE709347316BB0937592EB2CB0F8E613"/>
+      <ComponentRef Id="cmpAFFE957FBB6D4A6B1401322FD72E55CC"/>
+      <ComponentRef Id="cmp129BE2DCF4F8BCBB5C97CA509AF6E5DD"/>
+      <ComponentRef Id="cmpD783755A2A436AD9C9D9139A38995572"/>
+      <ComponentRef Id="cmpCD60C730030DB3E4764892A254FCC922"/>
+      <ComponentRef Id="cmpD592A471C21822B8823AB3371D02EFD2"/>
+      <ComponentRef Id="cmpE94671584394FDACA54B99B187D572DE"/>
+      <ComponentRef Id="cmpFE5AF0B5051BBA75259C05EB2EC8F2B5"/>
+      <ComponentRef Id="cmp765A94C89C81B5E6E78DA5366D8F865F"/>
+      <ComponentRef Id="cmp663383F348D9B38969B4BD7991438175"/>
+      <ComponentRef Id="cmp5B500220742BCBE55FB43BED07CFF60C"/>
+      <ComponentRef Id="cmp34559157D720D925613A21F539318981"/>
+      <ComponentRef Id="cmp780E44EFFA5C49913BEDAE110C631D41"/>
+      <ComponentRef Id="cmpE5795B18617EFB20D569017CA0BDA303"/>
+      <ComponentRef Id="cmpD4832ED8B8ECB71756BF0B6B64BF71EA"/>
+      <ComponentRef Id="cmp01F8E08DCD6C237CE55BAD11A6165947"/>
+      <ComponentRef Id="cmp3BB721D2138EC651A29DDFCB03EC172D"/>
+      <ComponentRef Id="cmp4DEC2D6F750F82524E5C4FC3BB302D8B"/>
+      <ComponentRef Id="cmp2F9F93CBCDE1552126EAE27F467D90C2"/>
+      <ComponentRef Id="cmp20284D93A8B4A72834F86F6D31612571"/>
+      <ComponentRef Id="cmp24844407548799D23666011BECE55414"/>
+      <ComponentRef Id="cmp98CF9A63260DDDEC1BF4650CA5777330"/>
+      <ComponentRef Id="cmpF4C7C8D34087408A259B5045B7F8CA2E"/>
+      <ComponentRef Id="cmp0BE2763760E494BAD9DD015B787CA488"/>
+      <ComponentRef Id="cmp27598B3A2F71E652B53604DFD79F3F6A"/>
+      <ComponentRef Id="cmp74F99D7DABE89C6F4C0B2BC123A5DD51"/>
+      <ComponentRef Id="cmpA677CBCB20B4308BB17FA0DB41DC36E0"/>
+      <ComponentRef Id="cmp15C4CC114AAE3920EA1C6BD31C72220E"/>
+      <ComponentRef Id="cmp74319FC9C32299EA6B1389280D1ED397"/>
+      <ComponentRef Id="cmp5D6977F0D5971049CE6119DDF0C13E36"/>
+      <ComponentRef Id="cmp0F71B182A37C0BFD81624015EB623B83"/>
+      <ComponentRef Id="cmpA24A93C46DBA40CF682A97FE2CA677E5"/>
+      <ComponentRef Id="cmpF65812E05E7FB502CA57B29EF9D4D18B"/>
+      <ComponentRef Id="cmpE4A7F08412C088FD7FB83B0F56B46FC1"/>
+      <ComponentRef Id="cmp6363A40D6CD8724F570B33CD4E27519B"/>
+      <ComponentRef Id="cmp4E85D405CB8D8ACC71693D43F133D876"/>
+      <ComponentRef Id="cmp602C4BB116D023ADAB7E98784F806D63"/>
+      <ComponentRef Id="cmp7013F6CA5D2A74857987876EED78EFF6"/>
+      <ComponentRef Id="cmpF16BE209C6EFB3844C2D8604A7837632"/>
+      <ComponentRef Id="cmp419BF4FA809561E6A2CB34D1576B438F"/>
+      <ComponentRef Id="cmp5013069986911B1CCA34AD3F34B6BD15"/>
+      <ComponentRef Id="cmp6D4893E0BF903A9809D68889BF2785C3"/>
+      <ComponentRef Id="cmp517671242B05DB5A372D5AF136F44D8A"/>
+      <ComponentRef Id="cmp210F523691FDCBE00DFA00BEAD68F6B9"/>
+      <ComponentRef Id="cmpDE8AEDED13DF4B8DE1675065A5228FF4"/>
+      <ComponentRef Id="cmp246709ECE32F96625B85530389E453B2"/>
+      <ComponentRef Id="cmpAE5124051E2DB77229B241ADE2E8A7D6"/>
+      <ComponentRef Id="cmpBED4EEA14EA83D219AB6061A909EB347"/>
+      <ComponentRef Id="cmp599EFA0383700BF476C9AE5610AB8BBB"/>
+      <ComponentRef Id="cmp39C5A974F4CE3CCA794176C268EAECAF"/>
+      <ComponentRef Id="cmpE244E2FBEB4EFBF940D8B850B9F039E8"/>
+      <ComponentRef Id="cmp48B308301733F49CDAE4EC5C14D5005C"/>
+      <ComponentRef Id="cmp43C7D68772B379269D48471BFF3F1BDC"/>
+      <ComponentRef Id="cmp65BED4A6A5C168AD39FB2B26DF919F8A"/>
+      <ComponentRef Id="cmp1A75DA2AFC90B2685CD819B52D5453B0"/>
+      <ComponentRef Id="cmpCD74519CEFDF2288C0EF1773F09E9B88"/>
+      <ComponentRef Id="cmp52E932E00A520119FD644C51C9FCCBE4"/>
+      <ComponentRef Id="cmpBD8D471E4B44300F93E6A94B7EBBD23A"/>
+      <ComponentRef Id="cmp4682D58894FF73F8DCACE6F629B37173"/>
+      <ComponentRef Id="cmpC6BFB78849673158B0AA68522FBDD53F"/>
+      <ComponentRef Id="cmp6A58189C82AE61E3D3016F4BD214F4F2"/>
+      <ComponentRef Id="cmp2E61400DCC3481ACB7C3A65A18EC003E"/>
+      <ComponentRef Id="cmp8956FD33E77308F8EF28DBB238D01BD2"/>
+      <ComponentRef Id="cmpCBD52298862F556F4D4142D00FF750F3"/>
+      <ComponentRef Id="cmp6B98A20D31A4977C97D6E3DAE9A04BE7"/>
+      <ComponentRef Id="cmp52CA60213B35E38A166E3D6BE4584390"/>
+      <ComponentRef Id="cmp478954BEF1719D313CA569D17C0B6C59"/>
+      <ComponentRef Id="cmp0B7EC01B796AE72B2B9A116AEC773FDB"/>
+      <ComponentRef Id="cmp03F68D86AC1CDEBAA6089E128036D9DD"/>
+      <ComponentRef Id="cmp650822E7C8886737EB62DD4DEEB7A617"/>
+      <ComponentRef Id="cmpCD918B75B0AE9DC2453338BBBA783303"/>
+      <ComponentRef Id="cmpBBADA1D0701CDA7A3943CAAE6103E740"/>
+      <ComponentRef Id="cmpC5B37A60DF12E2C36CB598B413DA7C9C"/>
+      <ComponentRef Id="cmpEBDF538D2F7B6BA9B7CDC820B7FEA979"/>
+      <ComponentRef Id="cmp055C329E3AD995EFE20C85E90A583BA8"/>
+      <ComponentRef Id="cmpFF9070F7B106BA3241ABB2F37C030CA5"/>
+      <ComponentRef Id="cmpE382332EFC540270A144642FF320A06C"/>
+      <ComponentRef Id="cmp0312E797BE561B923BB65D5AE109EDA6"/>
+      <ComponentRef Id="cmpFABDC0F7CAC6FDD29F39E1F972F9FE4C"/>
+      <ComponentRef Id="cmpDE7C48AD39D715A764E9B4ACA92C497A"/>
+      <ComponentRef Id="cmp655110162F30CF43C04143D23625AA9F"/>
+      <ComponentRef Id="cmpA4CBD80ACE053AA62709EB79C274F279"/>
+      <ComponentRef Id="cmpD5348CFA005D032DF2D82B9B8B19E36E"/>
+      <ComponentRef Id="cmp94A3A297CD888330D352385883D184D0"/>
+      <ComponentRef Id="cmpAED560D1843168F5369E376D89A3CE0D"/>
+      <ComponentRef Id="cmpCFF1DCD2492A2E17C340D039F25095A9"/>
+      <ComponentRef Id="cmpC7B435A7545D0E34FBF5B4C089F08E2F"/>
+      <ComponentRef Id="cmp6C2602F6528D57894734EC58219F0C14"/>
+      <ComponentRef Id="cmpC631609B9F80E703F93BE6D9AC2765CF"/>
+      <ComponentRef Id="cmpF2E5C8F90E9D64866052B721BA6E42AF"/>
+      <ComponentRef Id="cmpA856D58D3C607B20E431A17559700DF8"/>
+      <ComponentRef Id="cmpBC97DC6D4407AE97F2357E4CCF61ECDF"/>
+      <ComponentRef Id="cmp4BB403FA9CF75483E07B35EF098EE011"/>
+      <ComponentRef Id="cmpE2C734479900C2467CBD67CCC1FFF441"/>
+      <ComponentRef Id="cmpB3F2621CE4D2D4B7A421EAC700077336"/>
+      <ComponentRef Id="cmpE0B7CEAA44D4972101821DB5B883F98C"/>
+      <ComponentRef Id="cmpBFD9B1668D8FD09FD8F99F0C3762F935"/>
+      <ComponentRef Id="cmp79A82B8327C2518C87F3E88F0FECFA5A"/>
+      <ComponentRef Id="cmpCA4C64AB54AF0D1DE8DE72475850BEF2"/>
+      <ComponentRef Id="cmp20D51C6DA4DFB841D7E438D2A6340973"/>
+      <ComponentRef Id="cmp9B79DF002DC5062CD70518CB0956FD66"/>
+      <ComponentRef Id="cmpB6170E03AEE60891BE2BB298BCCB317C"/>
+      <ComponentRef Id="cmpFB95372B82D71A0BFE1DCA2227DC66A7"/>
+      <ComponentRef Id="cmp3E0CFED55ACED015B4B54EAE243D2AC1"/>
+      <ComponentRef Id="cmp684E21D72657C017464F657E81EEABDF"/>
+      <ComponentRef Id="cmpB791E55DA723553D5E21A7A60531F34E"/>
+      <ComponentRef Id="cmp9987AFB01B27B6B74E33219A16EC0215"/>
+      <ComponentRef Id="cmp9E870719FF36B83FC9D8C3FCD43FBB21"/>
+      <ComponentRef Id="cmp8A9CDEC7A6BEE43AD9D15331740FD784"/>
+      <ComponentRef Id="cmpD0D439E93454884208A6B216E97A4636"/>
+      <ComponentRef Id="cmpB546CA5910226137C69660171B33FFBE"/>
+      <ComponentRef Id="cmp586D9CE04CF1327AD902D495EE7241F2"/>
+      <ComponentRef Id="cmp60B79CB60ACDD00816B0628C3762552E"/>
+      <ComponentRef Id="cmpA1149B4D3BD03837F0AFDF5D35438E3D"/>
+      <ComponentRef Id="cmpEFB9C3197918DA80DF972B6C50E8AD27"/>
+      <ComponentRef Id="cmp73EA71CBC49184755EC2E5634B35A56B"/>
+      <ComponentRef Id="cmpE8D92F372CCF37B1D26E0466077D4686"/>
+      <ComponentRef Id="cmpEA68FC478D9772EADA2A4912F109962F"/>
+      <ComponentRef Id="cmp1187CA8912E5DF2104D56AFA4582CC15"/>
+      <ComponentRef Id="cmpDD43A3A7BB26C259F35B5EDBAE26464A"/>
+      <ComponentRef Id="cmpEE3B727299B8112416C005F6DCC15086"/>
+      <ComponentRef Id="cmpD98E312A6791F6645D931FFF924506A5"/>
+      <ComponentRef Id="cmpD85D23470B90A9D93A023AF807BB339F"/>
+      <ComponentRef Id="cmpF5CB5CC9E4728C17972F61D82833D05C"/>
+      <ComponentRef Id="cmp9A9CA265A25525E0BB3CDCBCF3C54580"/>
+      <ComponentRef Id="cmp6418312618F9298F146146F93903E763"/>
+      <ComponentRef Id="cmpBFCE786501083D00E94332CEFED9E6B4"/>
+      <ComponentRef Id="cmpCFF375BFA7D229319630F4C6F06828B1"/>
+      <ComponentRef Id="cmp5501DC90856169D986D61510132B98CB"/>
+      <ComponentRef Id="cmp07E79201DC56407F2D5DE78ABA5D73C9"/>
+      <ComponentRef Id="cmp7B8FC961F74E327F2ED1DDD9BA096FBC"/>
+      <ComponentRef Id="cmpF4174971C4F60745DCC4647AAAFC1E39"/>
+      <ComponentRef Id="cmpA7FAAEFE71B37FA43C3E79835D3FC39D"/>
+      <ComponentRef Id="cmp0F0FF0723EA7D107729DF85F11420A1C"/>
+      <ComponentRef Id="cmpCD22879A069441823DE833E7AD0306E7"/>
+      <ComponentRef Id="cmp4DFAD339AAFDF4081D8744CECBEAF877"/>
+      <ComponentRef Id="cmpF9444182F77AB58B9316A265620E86DC"/>
+      <ComponentRef Id="cmp1C95846FA17ED2830DBF38A0EE006EE4"/>
+      <ComponentRef Id="cmpC1CC7FF1C6EFB9FA539441E47B6CAD93"/>
+      <ComponentRef Id="cmpED4392D6C5DF474E7D5A48D6CCE24D38"/>
+      <ComponentRef Id="cmp4335E58D88D5DD1F309EFC374976118F"/>
+      <ComponentRef Id="cmpB7CEBD01BE95FA37A3103D0D74379C33"/>
+      <ComponentRef Id="cmpB8B8D9A8490E1D63884054675B7670AC"/>
+      <ComponentRef Id="cmpEE8AEC2CC79DF754C2D4AD5AF5A30ED1"/>
+      <ComponentRef Id="cmp6B7C4D80056368D37441C816C8BB8A37"/>
+      <ComponentRef Id="cmpE12566F81BE5B5458290C51CEB61873B"/>
+      <ComponentRef Id="cmpED2F6F977A913A25EDF264929A19FC96"/>
+      <ComponentRef Id="cmp56D0C9B69D919563F63AC244018C8721"/>
+      <ComponentRef Id="cmpC70BB09A1668CA2EAC64ED9B9F13BD76"/>
+      <ComponentRef Id="cmp9E99BEC39D1D75F47B7631CDBAD40614"/>
       <ComponentRef Id="cmp136CC9DCAE0BC3DDF860367E04840C50"/>
       <ComponentRef Id="cmp055D69350D8938BBD93BDA992F8733B6"/>
       <ComponentRef Id="cmp19359A61AE2446B51B549167B014DA2F"/>
       <ComponentRef Id="cmpD23E0D3B971806F3C90816A4D09AE326"/>
       <ComponentRef Id="cmp37F78D9E69DFF05B443A39C32175987B"/>
       <ComponentRef Id="cmp2B8A0F2B327DC16264AE6A07275246ED"/>
+      <ComponentRef Id="cmpFA8A0C9FA6331446945F3868440B94C3"/>
+      <ComponentRef Id="cmp72A0B9EBFFB5A77F32DA9A8C87677E34"/>
+      <ComponentRef Id="cmp158D569E1ADA7A054E7729839BF2E170"/>
+      <ComponentRef Id="cmpB33892FBDDEFFC3368077B4904AD0B3D"/>
     </ComponentGroup>
   </Fragment>
 </Wix>
 <!-- generated with msitools 0.106 -->
-<!-- wixl-heat -var var.EngineDir -directory-ref ENGINEDIR -component-group EngineFiles -prefix /private/tmp/claude-501/-Users-issandre-openclaw-workspace-projects-flagshipeditor/b4f421b3-d433-40b6-bc88-3d8e75c12519/scratchpad/msi/stage/engine/ -win64 -->
+<!-- wixl-heat -var var.EngineDir -directory-ref ENGINEDIR -component-group EngineFiles -prefix /Users/issandre/.openclaw/workspace/projects/flagshipeditor/.build/msi/stage/engine/ -win64 -->

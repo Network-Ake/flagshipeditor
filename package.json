@@ -11,6 +11,7 @@
     "zxp": "rimraf dist/cep dist/zxp && cross-env ZXP_PACKAGE=true vite build && node scripts/postbuild.mjs",
     "generate:luts": "node scripts/generate-luts.mjs",
     "zip": "npm run build && node scripts/package-windows.mjs",
+    "msi": "node scripts/build-msi.mjs",
     "test:ae-bridge": "node scripts/test-ae-bridge.mjs",
     "test:backend-search": "node scripts/test-backend-search.mjs",
     "test:engine-contracts": "node scripts/run-engine-contracts.mjs",
@@ -18,6 +19,7 @@
     "test:ui-recovery": "node scripts/test-ui-job-recovery.mjs",
     "test:prores": "python3 scripts/test-prores-fixtures.py",
     "test:windows-package": "node scripts/test-windows-package.mjs",
+    "test:msi-package": "node scripts/test-msi-package.mjs",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
