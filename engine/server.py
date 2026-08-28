@@ -69,6 +69,46 @@ try:
 except ImportError as error:  # numpy missing from the runtime
     IMPORT_ERRORS["shot_selector"] = str(error)
 
+# Lyric analysis is imported separately and is allowed to be absent: the editor
+# must still be able to cut a track when it is, so a failure here degrades the
+# lyric tier rather than taking down shot selection.
+LYRIC_ANALYSIS_AVAILABLE = False
+try:
+    import lyric_analysis
+
+    LYRIC_ANALYSIS_AVAILABLE = True
+except ImportError as error:  # numpy missing from the runtime
+    IMPORT_ERRORS["lyric_analysis"] = str(error)
+
+    class _LyricAnalysisUnavailable:
+        """Stands in for the module so callers need no availability checks."""
+
+        @staticmethod
+        def empty_analysis(reason: str = "module_unavailable"):
+            class _Empty:
+                tier = "vocal_only"
+                lines = ()
+                vocal_segments = ()
+                hook_lines = ()
+                languages: Dict[str, float] = {}
+                overall_confidence = 0.0
+                can_interpret = False
+                diagnostics = {"verdict": reason}
+
+                @staticmethod
+                def as_dict() -> Dict[str, Any]:
+                    return {"tier": "vocal_only", "diagnostics": {"verdict": reason}}
+
+            return _Empty()
+
+        @staticmethod
+        def analyse_lyrics(**_kwargs):
+            return _LyricAnalysisUnavailable.empty_analysis()
+
+        VocalSegment = tuple
+
+    lyric_analysis = _LyricAnalysisUnavailable()  # type: ignore[assignment]
+
 if OPENCV_AVAILABLE:
     THUMBNAIL_DIR = ANALYSIS_THUMBNAIL_DIR
 else:
@@ -155,6 +195,30 @@ class ShotSelectionRequest(BaseModel):
     energyTimes: List[float] = Field(default_factory=list)
     energyHopLength: Optional[float] = None
     energySampleRate: Optional[float] = None
+    # Lyric evidence. Every field is optional and the engine degrades one tier
+    # at a time: supplied timecoded lyrics beat a local transcription, which
+    # beats aligning plain lyrics to the measured vocal, which beats knowing
+    # only where the voice is. A caller that sends none of this gets the vocal
+    # phrasing that beat analysis measured anyway.
+    lyrics: str = ""
+    lyricsFilename: str = ""
+    audioPath: str = ""
+    allowAsr: bool = True
+    #: Measured vocal segments from ``/analyze-beat``, forwarded so the selector
+    #: does not have to re-open the audio.
+    vocalSegments: List[Dict[str, Any]] = Field(default_factory=list)
+    beamWidth: int = 8
+
+
+class LyricRequest(BaseModel):
+    """Body of ``POST /analyze-lyrics``."""
+
+    lyrics: str = ""
+    lyricsFilename: str = ""
+    audioPath: str = ""
+    duration: float = 0.0
+    allowAsr: bool = True
+    vocalSegments: List[Dict[str, Any]] = Field(default_factory=list)
 
 
 class ScoreRequest(BaseModel):
@@ -364,6 +428,75 @@ def scan_media_folder(req: FolderScanRequest) -> Dict[str, Any]:
     }
 
 
+def _resolve_lyrics(req: "ShotSelectionRequest"):
+    """Build the lyric analysis for a selection request, never failing the edit.
+
+    Lyric acquisition is an enhancement, not a precondition. Anything that goes
+    wrong here — an unreadable lyric file, an ASR adapter that throws — degrades
+    to the next tier and is reported, because an edit without lyric evidence is
+    still a valid edit and refusing to plan one would be the wrong trade.
+    """
+    segments = []
+    for entry in req.vocalSegments or []:
+        try:
+            segments.append(
+                lyric_analysis.VocalSegment(
+                    float(entry["start"]),
+                    float(entry["end"]),
+                    float(entry.get("confidence", 0.5)),
+                    float(entry.get("peak", 0.0)),
+                )
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    try:
+        return lyric_analysis.analyse_lyrics(
+            lyric_text=req.lyrics or "",
+            lyric_filename=req.lyricsFilename or "",
+            audio_path=req.audioPath or "",
+            duration=float(req.duration or 0.0),
+            vocal_segments=segments,
+            allow_asr=bool(req.allowAsr),
+        )
+    except Exception as error:
+        return lyric_analysis.empty_analysis(f"lyric_analysis_failed: {error}")
+
+
+@app.post("/analyze-lyrics")
+def analyze_lyrics_endpoint(req: LyricRequest) -> Dict[str, Any]:
+    """Acquire and analyse lyrics on their own, so the panel can preview them.
+
+    Separate from ``/select-shots`` because the editor should be able to see
+    what the engine understood — and correct it — *before* committing to an
+    edit built on it.
+    """
+    segments = []
+    for entry in req.vocalSegments or []:
+        try:
+            segments.append(
+                lyric_analysis.VocalSegment(
+                    float(entry["start"]),
+                    float(entry["end"]),
+                    float(entry.get("confidence", 0.5)),
+                    float(entry.get("peak", 0.0)),
+                )
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    try:
+        result = lyric_analysis.analyse_lyrics(
+            lyric_text=req.lyrics or "",
+            lyric_filename=req.lyricsFilename or "",
+            audio_path=req.audioPath or "",
+            duration=float(req.duration or 0.0),
+            vocal_segments=segments,
+            allow_asr=bool(req.allowAsr),
+        )
+    except Exception as error:
+        raise HTTPException(status_code=500, detail=f"Lyric analysis failed: {error}") from error
+    return result.as_dict()
+
+
 @app.post("/select-shots")
 def select_shots(req: ShotSelectionRequest) -> Dict[str, Any]:
     """Plan the cut grid for the whole track and pick a clip for every cut."""
@@ -375,6 +508,7 @@ def select_shots(req: ShotSelectionRequest) -> Dict[str, Any]:
     if not req.clips:
         raise HTTPException(status_code=400, detail="No analysed clips were supplied")
     try:
+        lyric_analysis_result = _resolve_lyrics(req)
         selections = select_best_clips(
             clips=req.clips,
             beats=req.beats,
@@ -391,6 +525,8 @@ def select_shots(req: ShotSelectionRequest) -> Dict[str, Any]:
             energy_hop_length=req.energyHopLength,
             energy_sample_rate=req.energySampleRate,
             downbeats=req.downbeats,
+            lyrics=lyric_analysis_result,
+            beam_width=max(1, min(24, int(req.beamWidth or 8))),
         )
     except ValueError as error:
         raise HTTPException(status_code=422, detail=f"Invalid shot-selection input: {error}") from error
@@ -405,6 +541,19 @@ def select_shots(req: ShotSelectionRequest) -> Dict[str, Any]:
         "selections": selections,
         "mediaProfile": resolve_media_profile(req.clips),
         "cutCount": len(selections),
+        # What the engine actually knew about the words. Published separately
+        # from the cuts so the panel can show the tier and confidence without
+        # digging through provenance, and so a reviewer can see at a glance
+        # whether lyrics influenced this edit at all.
+        "lyrics": {
+            "tier": lyric_analysis_result.tier,
+            "overallConfidence": round(lyric_analysis_result.overall_confidence, 4),
+            "canInterpret": lyric_analysis_result.can_interpret,
+            "lineCount": len(lyric_analysis_result.lines),
+            "vocalSegmentCount": len(lyric_analysis_result.vocal_segments),
+            "languages": lyric_analysis_result.languages,
+            "diagnostics": lyric_analysis_result.diagnostics,
+        },
     }
 
 

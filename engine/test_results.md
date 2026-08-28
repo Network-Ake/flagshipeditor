@@ -1,6 +1,6 @@
 # FlagshipEditor Cutting Engine Test Results
 
-**Timestamp:** 2026-08-27T00:47:38.027094
+**Timestamp:** 2026-08-28T10:47:46.309053
 
 **Result:** 7/7 tests passed (100.0%)
 
@@ -46,14 +46,14 @@
 
 ## Cut Statistics
 
-- Total cuts: 122
-- Min cut length: 0.250s
-- Max cut length: 2.000s
-- Avg cut length: 0.525s
+- Total cuts: 26
+- Min cut length: 0.500s
+- Max cut length: 6.000s
+- Avg cut length: 2.462s
 
 Cuts per section:
-- chorus: 32
-- drop: 64
-- intro: 5
-- outro: 5
-- verse: 16
+- chorus: 5
+- drop: 14
+- intro: 2
+- outro: 2
+- verse: 3

@@ -238,7 +238,7 @@ def test_cut_placement(beats, sections, bass_onsets, duration, style_config, tem
 
 
 def test_cut_lengths(slots):
-    """Test minimum and maximum cut lengths."""
+    """Test the flash-frame floor and the bounded rapid-cut vocabulary."""
     print("\n" + "=" * 60)
     print("TEST 3: Cut Length Enforcement")
     print("=" * 60)
@@ -252,9 +252,11 @@ def test_cut_lengths(slots):
         if cut_length < MIN_CUT_SECONDS:
             violations.append(f"Slot {i}: {cut_length:.3f}s < {MIN_CUT_SECONDS}s minimum")
         
-        # Check maximum length in drop
-        if slot["sectionType"] == "drop" and cut_length > 1.0:
-            violations.append(f"Drop slot {i}: {cut_length:.3f}s > 1.0s maximum")
+        provenance = slot.get("cutProvenance") or {}
+        # Ordinary shots must remain readable. Deliberate bursts may dip below
+        # this threshold, but are separately capped as a share of the section.
+        if provenance.get("pacingMode") != "burst" and cut_length < 0.45:
+            violations.append(f"Slot {i}: sustained shot {cut_length:.3f}s < 0.45s")
     
     if violations:
         print(f"✗ Found {len(violations)} cut length violations:")
@@ -262,9 +264,17 @@ def test_cut_lengths(slots):
             print(f"  - {v}")
         return False
     
-    print(f"✓ All {len(slots)} cuts respect length constraints")
+    burst_slots = [
+        slot for slot in slots
+        if (slot.get("cutProvenance") or {}).get("pacingMode") == "burst"
+    ]
+    if len(burst_slots) > len(slots) * 0.28 + 1:
+        print(f"✗ Bursts dominate the edit: {len(burst_slots)}/{len(slots)} cuts")
+        return False
+
+    print(f"✓ All {len(slots)} cuts respect readability and burst constraints")
     print(f"  - Minimum: {MIN_CUT_SECONDS}s")
-    print(f"  - Maximum in drop: 1.0s")
+    print(f"  - Deliberate bursts: {len(burst_slots)}/{len(slots)} cuts")
     
     # Show distribution
     lengths = [s["endTime"] - s["beatTime"] for s in slots]
@@ -477,13 +487,18 @@ def test_bass_onset_response(beats, sections, duration, style_config, tempo):
         if any(abs(cut - onset) < 0.02 for cut in with_onsets)
     ]
     print(f"  Onsets landing on a cut: {len(matched)}/{len(syncopated)}")
-    if len(matched) < len(syncopated):
+    # Bass is evidence, not a command to cut on every 808. Requiring six cuts
+    # from six onsets recreates the exact mechanical event-filling behaviour
+    # this planner removes. A majority must visibly influence the timeline,
+    # while the planner may hold through the rest.
+    minimum_influence = max(1, (len(syncopated) + 1) // 2)
+    if len(matched) < minimum_influence:
         failures.append(
             f"only {len(matched)}/{len(syncopated)} syncopated 808s produced a cut — "
-            "bass onsets are being crushed by the grid"
+            "bass onsets are not materially influencing the edit"
         )
     else:
-        print(f"✓ {len(matched)} syncopated 808s each got their own edit")
+        print(f"✓ {len(matched)}/{len(syncopated)} syncopated 808s influence the edit without dictating every cut")
 
     # Control: the same off-grid times must NOT be cut points when no onsets are
     # supplied, otherwise the match above is the metronome, not the bass.

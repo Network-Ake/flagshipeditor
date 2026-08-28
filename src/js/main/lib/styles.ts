@@ -37,10 +37,29 @@ export interface CutStrategyEntry {
   [key: string]: unknown;
 }
 
+/** How long shots run in a section, in bars, and how the section varies. */
+export interface PacingEntry {
+  min_bars: number;
+  target_bars: number;
+  max_bars: number;
+  burstiness: number;
+  breath: number;
+  burst_bars: number;
+  [key: string]: number;
+}
+
 export interface StyleConfig {
   style_name: string;
   display_name: string;
   cut_strategy: Record<string, CutStrategyEntry>;
+  /**
+   * The section pacing ranges the engine actually cuts to. Replaces the former
+   * `cut_strategy.cut_interval`, which named a fixed beat subdivision and is
+   * why every section produced one shot length.
+   */
+  pacing?: Record<string, PacingEntry>;
+  /** Sequence-level preferences: continuity, repetition tolerance, and so on. */
+  selection?: Record<string, number>;
   color_grading?: ColorGradingConfig;
   element_3d?: EffectConfig;
   [key: string]: unknown;
@@ -222,17 +241,40 @@ function scaleMagnitudes(config: EffectConfig, factor: number): void {
 export function buildRuntimeStyle(base: StyleConfig, params: EditingParameters): StyleConfig {
   const style = clone(base);
 
-  // Cut density: a higher intensity halves the interval, a lower one doubles it.
-  const densityFactor = Math.pow(2, (5 - params.cutIntensity) / 5);
-  const subdivision = params.beatSubdivision > 0 ? params.beatSubdivision : 1;
-  const strategy = style.cut_strategy || {};
-  for (const section of Object.keys(strategy)) {
-    const entry = strategy[section] || {};
-    const interval = parseCutInterval(entry.cut_interval) * densityFactor * subdivision;
-    entry.cut_interval = `${Math.max(0.0625, Math.min(64, Math.round(interval * 10000) / 10000))}_beat`;
-    strategy[section] = entry;
+  // Cut density. The engine no longer takes a subdivision — a fixed 1/4, 1/8 or
+  // 1/16 interval is what produced the mechanical timeline — so intensity now
+  // scales the *pacing range* each section works in. A higher intensity pulls
+  // the whole range shorter and raises appetite for bursts; a lower one lets
+  // shots run. The range is preserved either way, so no setting can collapse
+  // the edit back onto a grid.
+  const lengthFactor = params.beatSubdivision > 0 ? params.beatSubdivision : 1;
+  const densityFactor = Math.pow(2, (5 - params.cutIntensity) / 5) * lengthFactor;
+  const pacing: Record<string, PacingEntry> = style.pacing || {};
+  for (const section of Object.keys(pacing)) {
+    const entry = pacing[section];
+    if (!entry || typeof entry !== "object") continue;
+    const scaled: Record<string, number> = { ...entry };
+    for (const key of ["min_bars", "target_bars", "max_bars"]) {
+      const value = Number(scaled[key]);
+      if (Number.isFinite(value) && value > 0) {
+        // Floored at an eighth of a bar: below that a "shot" is a flash frame,
+        // and the planner would only clamp it back anyway.
+        scaled[key] = Math.max(0.125, Math.round(value * densityFactor * 1000) / 1000);
+      }
+    }
+    const burstiness = Number(scaled.burstiness);
+    if (Number.isFinite(burstiness)) {
+      const shift = (params.cutIntensity - 5) / 10;
+      scaled.burstiness = Math.max(0, Math.min(0.6, burstiness + shift * 0.3));
+    }
+    const breath = Number(scaled.breath);
+    if (Number.isFinite(breath)) {
+      const shift = (5 - params.cutIntensity) / 10;
+      scaled.breath = Math.max(0, Math.min(0.95, breath + shift * 0.3));
+    }
+    pacing[section] = scaled as PacingEntry;
   }
-  style.cut_strategy = strategy;
+  style.pacing = pacing;
 
   // A user can switch on an effect the preset never declared; the bridge only
   // routes effects that exist as objects, so create one with engine defaults.

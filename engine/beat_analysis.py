@@ -22,7 +22,7 @@ from scipy.sparse import diags
 # the extracted signals themselves change, otherwise a project re-opened after
 # an engine upgrade silently replays evidence produced by the previous
 # algorithm. Old rows keep their old key and are simply never read again.
-BEAT_ANALYSIS_SCHEMA_VERSION = "4"
+BEAT_ANALYSIS_SCHEMA_VERSION = "5"
 
 # Everything the analysis is measured at. These are part of the cache identity,
 # so changing one of them retires the rows produced by the previous setting
@@ -238,6 +238,9 @@ def separate_percussion(y: np.ndarray, sr: int) -> Dict[str, Any]:
             "bass_band": magnitude[low_band],
             "hihat_band": magnitude[high_band],
             "harmonic_bass_band": harmonic[low_band],
+            # The full harmonic magnitude, kept so vocal detection can reuse
+            # this decomposition instead of paying for its own transform.
+            "harmonic_full_band": harmonic,
             "hop_length": HPSS_HOP_LENGTH,
         }
 
@@ -250,6 +253,7 @@ def separate_percussion(y: np.ndarray, sr: int) -> Dict[str, Any]:
             "bass_band": None,
             "hihat_band": None,
             "harmonic_bass_band": None,
+            "harmonic_full_band": None,
             "hop_length": HPSS_HOP_LENGTH,
         }
 
@@ -628,6 +632,24 @@ def analyze_track(audio_path: str, progress_callback: Optional[Any] = None) -> D
     # curve stay on the full mix, where they describe what the listener hears.
     rhythm = separate_percussion(y, sr)
 
+    _progress("Measuring vocal activity", 0.13)
+    # Where the lead vocal actually is. This costs one extra STFT on a signal
+    # HPSS has already produced, adds no dependency and no package weight, and
+    # is the evidence that lets the editor cut on a vocal entry, ride a
+    # sustained line and breathe in a rest — for every track, with no lyrics
+    # supplied and no model installed.
+    try:
+        from lyric_analysis import detect_vocal_activity
+
+        vocal_segments, vocal_diagnostics = detect_vocal_activity(
+            y,
+            sr,
+            hop_length=rhythm.get("hop_length", 512),
+            harmonic_spectrum=rhythm.get("harmonic_full_band"),
+        )
+    except Exception as error:  # pragma: no cover - never fail analysis over this
+        vocal_segments, vocal_diagnostics = [], {"error": str(error), "available": False}
+
     _progress("Detecting beats", 0.15)
     # Beat tracking
     tempo_result, beats = librosa.beat.beat_track(y=rhythm["signal"], sr=sr)
@@ -829,7 +851,25 @@ def analyze_track(audio_path: str, progress_callback: Optional[Any] = None) -> D
         "key": key,
         "mode": mode,
         "duration": duration,
+        # Measured vocal phrasing. Entries and exits become cut opportunities
+        # in the event lattice; rests become permission to hold a shot.
+        "vocal_segments": [
+            {
+                "start": round(float(segment.start), 4),
+                "end": round(float(segment.end), 4),
+                "confidence": float(segment.confidence),
+            }
+            for segment in vocal_segments
+        ],
+        "vocal_diagnostics": vocal_diagnostics,
     }
+    result["labels"]["vocal"] = label_provenance(
+        "harmonic_band_energy_and_peakiness",
+        float(np.mean([segment.confidence for segment in vocal_segments])) if vocal_segments else 0.0,
+        "presence of a harmonic lead in the 180-4000 Hz band; not speaker or lyric identification",
+        segments=len(vocal_segments),
+        verdict=str(vocal_diagnostics.get("verdict", "unknown")),
+    )
 
     # Save to cache. A cache failure is not an analysis failure, but it is not
     # nothing either: it is recorded on the result instead of being swallowed.

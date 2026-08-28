@@ -110,6 +110,13 @@ interface TimelineCutPayload {
   clipPath: string;
   clipName: string;
   sectionType: string;
+  /**
+   * Only the type travels. The bridge caps a call at 24 KB and the AE side
+   * reads nothing else off the transition, so the reason and the adjacent-shot
+   * evidence stay in the panel's provenance record rather than being paid for
+   * on every cut in every batch.
+   */
+  transition?: { type: string };
 }
 
 const TABS: { id: Tab; icon: string; label: string }[] = [
@@ -172,7 +179,7 @@ function delay(milliseconds: number): Promise<void> {
 }
 
 function toPayload(cut: CutDecision): TimelineCutPayload {
-  return {
+  const payload: TimelineCutPayload = {
     beatTime: cut.beatTime,
     endTime: cut.endTime,
     sourceStart: cut.sourceStart,
@@ -181,6 +188,12 @@ function toPayload(cut: CutDecision): TimelineCutPayload {
     clipName: cut.clipName,
     sectionType: cut.sectionType,
   };
+  // Without this the engine's transition decision stopped here: aeft.ts has
+  // always implemented `applyTransitionToLayer`, but the payload never carried
+  // a transition to apply, so every dissolve and phrase transition the engine
+  // justified was silently rebuilt as a hard cut.
+  if (cut.transition && cut.transition.type) payload.transition = { type: cut.transition.type };
+  return payload;
 }
 
 /**
@@ -211,6 +224,10 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>("media");
   const [clips, setClips] = useState<ClipInfo[]>([]);
   const [audioPath, setAudioPath] = useState("");
+  // The song's words, pasted or loaded by the editor. Optional: with nothing
+  // here the engine still cuts to the vocal phrasing it measured, it just
+  // cannot reason about what is being said.
+  const [lyrics, setLyrics] = useState("");
   const [styleId, setStyleId] = useState("cmd_command_drill");
   const [customStyles, setCustomStyles] = useState<Record<string, StyleConfig>>({});
   const [params, setParams] = useState<EditingParameters>(() => ({
@@ -218,6 +235,7 @@ const App: React.FC = () => {
     vfxIntensity: 5,
     colorGrading: 6,
     seed: 1,
+    // 1 = "Natural": use the preset's own pacing range unscaled.
     beatSubdivision: 1,
     effects: defaultEffectToggles(loadStyle("cmd_command_drill")),
   }));
@@ -726,6 +744,9 @@ const App: React.FC = () => {
           energyTimes: beat.energy_times,
           energyHopLength: beat.energy_hop_length,
           energySampleRate: beat.energy_sample_rate,
+          vocalSegments: beat.vocal_segments,
+          lyrics: lyrics,
+          audioPath,
         })
       );
       checkpoint();
@@ -763,6 +784,7 @@ const App: React.FC = () => {
     busy,
     checkpoint,
     hostAvailable,
+    lyrics,
     params,
     pushNotice,
     serverOnline,
@@ -980,6 +1002,12 @@ const App: React.FC = () => {
             energyTimes: analysis.energy_times,
             energyHopLength: analysis.energy_hop_length,
             energySampleRate: analysis.energy_sample_rate,
+            // The same lyric and vocal evidence the first pass used, so a
+            // regenerated section is still planned against the words and the
+            // vocal phrasing rather than silently dropping back to the music.
+            vocalSegments: analysis.vocal_segments,
+            lyrics: lyrics,
+            audioPath,
             // A fresh seed is what makes a regeneration produce a new take.
             seed: 1 + Math.floor(Math.random() * 999998),
           })
@@ -1040,7 +1068,19 @@ const App: React.FC = () => {
         setPhase("idle");
       }
     },
-    [activeStyle, analysis, analyzedClips, busy, cuts, hostAvailable, params, pushNotice, updateStatus]
+    [
+      activeStyle,
+      analysis,
+      analyzedClips,
+      audioPath,
+      busy,
+      cuts,
+      hostAvailable,
+      lyrics,
+      params,
+      pushNotice,
+      updateStatus,
+    ]
   );
 
   // --- Render --------------------------------------------------------------
@@ -1140,6 +1180,8 @@ const App: React.FC = () => {
               onRemoveClip={handleRemoveClip}
               onClearClips={handleClearClips}
               onRetryFailed={handleRetryFailed}
+              lyrics={lyrics}
+              onLyricsChange={setLyrics}
             />
           )}
           {activeTab === "style" && (

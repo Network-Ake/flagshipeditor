@@ -36,11 +36,14 @@ const SLIDERS: { key: "cutIntensity" | "vfxIntensity" | "colorGrading"; label: s
   { key: "colorGrading", label: "Color grading", hint: "Opacity of the LUT adjustment layer. 0 skips grading." },
 ];
 
-// The engine reads a beat multiplier, so a shorter note means a smaller factor.
-const SUBDIVISIONS: { label: string; value: number }[] = [
-  { label: "1/4", value: 1 },
-  { label: "1/8", value: 0.5 },
-  { label: "1/16", value: 0.25 },
+// Multiplies the preset's pacing range. The engine works in bars and varies
+// each shot inside the range, so this shifts the *feel* rather than selecting a
+// subdivision — the fixed 1/4, 1/8, 1/16 picker this replaces is precisely what
+// made every section cut at one rate.
+const SHOT_LENGTH_PRESETS: { label: string; value: number }[] = [
+  { label: "Long", value: 1.6 },
+  { label: "Natural", value: 1 },
+  { label: "Short", value: 0.65 },
 ];
 
 const GROUP_ICONS: Record<EffectGroup, string> = {
@@ -159,10 +162,10 @@ const Parameters: React.FC<Props> = ({ params, style, disabled, onChange, onRese
         </div>
         <div className="param-row">
           <div className="slider-label-row">
-            <span className="slider-label">Beat subdivision</span>
+            <span className="slider-label">Shot length</span>
           </div>
           <div className="segmented">
-            {SUBDIVISIONS.map((option) => (
+            {SHOT_LENGTH_PRESETS.map((option) => (
               <button
                 key={option.label}
                 type="button"
@@ -175,7 +178,9 @@ const Parameters: React.FC<Props> = ({ params, style, disabled, onChange, onRese
             ))}
           </div>
           <div className="param-hint">
-            1/16 cuts four times as often as the preset's grid; 1/4 keeps one cut per beat.
+            Scales how long shots run, in bars. The engine varies every shot inside
+            that range and lands each cut on a real musical event, so no setting
+            produces a fixed 1/4, 1/8 or 1/16 grid.
           </div>
         </div>
 

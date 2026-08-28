@@ -3,32 +3,26 @@
   "display_name": "Jack Rottier (Cinematic)",
   "cut_strategy": {
     "intro": {
-      "cut_interval": "8_beat",
       "variation": "very_slow",
       "double_time_on_drop": false
     },
     "verse": {
-      "cut_interval": "4_beat",
       "variation": "slow_cinematic",
       "double_time_on_drop": false
     },
     "chorus": {
-      "cut_interval": "2_beat",
       "variation": "measured",
       "double_time_on_drop": false
     },
     "drop": {
-      "cut_interval": "1_beat",
       "variation": "controlled_energy",
       "double_time_on_drop": true
     },
     "bridge": {
-      "cut_interval": "8_beat",
       "variation": "very_slow",
       "double_time_on_drop": false
     },
     "outro": {
-      "cut_interval": "8_beat",
       "variation": "fade",
       "double_time_on_drop": false
     }
@@ -60,7 +54,9 @@
   "camera_shake": {
     "frequency_hz": 8,
     "displacement_px": 3,
-    "sections": ["drop"]
+    "sections": [
+      "drop"
+    ]
   },
   "freeze_frame": {
     "enabled": false,
@@ -71,7 +67,10 @@
     "speed_in": 100,
     "speed_out": 60,
     "ramp_duration_beats": 4,
-    "sections": ["verse", "bridge"]
+    "sections": [
+      "verse",
+      "bridge"
+    ]
   },
   "light_leaks": {
     "enabled": false
@@ -97,7 +96,10 @@
   "slow_mo": {
     "enabled": true,
     "speed_factor": 0.5,
-    "sections": ["bridge", "outro"],
+    "sections": [
+      "bridge",
+      "outro"
+    ],
     "trigger": "punchline"
   },
   "beat_flash": {
@@ -123,6 +125,67 @@
     "enabled": true,
     "scale_start": 100,
     "scale_end": 115,
-    "sections": ["verse", "bridge"]
+    "sections": [
+      "verse",
+      "bridge"
+    ]
+  },
+  "pacing": {
+    "intro": {
+      "min_bars": 2.0,
+      "target_bars": 3.25,
+      "max_bars": 7.0,
+      "burstiness": 0.07,
+      "breath": 0.7,
+      "burst_bars": 0.4
+    },
+    "verse": {
+      "min_bars": 1.1,
+      "target_bars": 2.4,
+      "max_bars": 4.75,
+      "burstiness": 0.26,
+      "breath": 0.4,
+      "burst_bars": 0.3
+    },
+    "chorus": {
+      "min_bars": 0.7,
+      "target_bars": 1.5,
+      "max_bars": 3.25,
+      "burstiness": 0.42,
+      "breath": 0.22,
+      "burst_bars": 0.25
+    },
+    "drop": {
+      "min_bars": 0.5,
+      "target_bars": 1.15,
+      "max_bars": 2.5,
+      "burstiness": 0.52,
+      "breath": 0.18,
+      "burst_bars": 0.22
+    },
+    "bridge": {
+      "min_bars": 1.5,
+      "target_bars": 2.75,
+      "max_bars": 5.5,
+      "burstiness": 0.12,
+      "breath": 0.55,
+      "burst_bars": 0.35
+    },
+    "outro": {
+      "min_bars": 2.0,
+      "target_bars": 3.5,
+      "max_bars": 8.0,
+      "burstiness": 0.04,
+      "breath": 0.75,
+      "burst_bars": 0.45
+    }
+  },
+  "selection": {
+    "continuity": 0.4,
+    "performance_ratio": 0.65,
+    "lyric_sensitivity": 0.55,
+    "repetition_tolerance": 0.3,
+    "narrative_directness": 0.45,
+    "subject_persistence": 0.45
   }
 }

@@ -76,6 +76,11 @@ export interface BeatAnalysis {
   energy_frame_length?: number;
   labels?: Record<string, BeatLabel>;
   cache_state?: string;
+  // Measured vocal phrasing. Present from analysis schema 5 onward; a result
+  // restored from an older cache has neither and the editor falls back to
+  // cutting without vocal evidence.
+  vocal_segments?: VocalSegment[];
+  vocal_diagnostics?: Record<string, unknown>;
 }
 
 export interface BeatProgress {
@@ -212,6 +217,18 @@ export interface CutProvenance {
   energySource?: "measured_curve" | "section_default";
 }
 
+/**
+ * How a shot joins the one before it. Decided by the engine from the two
+ * adjacent shots, the lyric line and the musical mode — never sprinkled at a
+ * configured percentage. Most types resolve to a plain hard cut in After
+ * Effects and exist to record *why* the cut is hard; only `dissolve` and
+ * `phrase_transition` build a real overlap.
+ */
+export interface CutTransition {
+  type: string;
+  reason: string;
+}
+
 export interface CutDecision {
   beatTime: number;
   endTime: number;
@@ -231,6 +248,8 @@ export interface CutDecision {
   scores: ClipScores;
   locked: boolean;
   alternatives: CutAlternative[];
+  // Optional so a project saved before transitions existed still type-checks.
+  transition?: CutTransition;
 }
 
 export interface MediaProfile {
@@ -243,6 +262,8 @@ export interface ShotSelection {
   selections: CutDecision[];
   mediaProfile: MediaProfile;
   cutCount: number;
+  /** What the engine knew about the words, and how far it trusted itself. */
+  lyrics?: LyricSummary;
 }
 
 export interface MediaScan {
@@ -427,6 +448,64 @@ export interface ShotSelectionInput {
   energyTimes?: number[];
   energyHopLength?: number;
   energySampleRate?: number;
+  // Lyric evidence. All optional. Supplying `lyrics` as plain text is enough
+  // for the engine to align it against the vocal phrasing measured during beat
+  // analysis; supplying an .lrc/.srt/.vtt gives exact timings. Sending nothing
+  // still gets vocal-phrasing-aware cutting from `vocalSegments`.
+  lyrics?: string;
+  lyricsFilename?: string;
+  audioPath?: string;
+  allowAsr?: boolean;
+  vocalSegments?: VocalSegment[];
+  beamWidth?: number;
+}
+
+export interface VocalSegment {
+  start: number;
+  end: number;
+  confidence: number;
+}
+
+export interface LyricSummary {
+  tier: "timecoded" | "asr" | "aligned" | "vocal_only";
+  overallConfidence: number;
+  canInterpret: boolean;
+  lineCount: number;
+  vocalSegmentCount: number;
+  languages: Record<string, number>;
+  diagnostics: Record<string, unknown>;
+}
+
+export interface LyricAnalysisResult {
+  tier: string;
+  overallConfidence: number;
+  canInterpret: boolean;
+  lines: Array<{
+    index: number;
+    text: string;
+    start: number | null;
+    end: number | null;
+    timingConfidence: number;
+    interpretationConfidence: number;
+    imagery: string[];
+    isAdLib: boolean;
+    address: string;
+  }>;
+  vocalSegments: VocalSegment[];
+  hookLines: string[];
+  languages: Record<string, number>;
+  diagnostics: Record<string, unknown>;
+}
+
+export function analyzeLyrics(input: {
+  lyrics?: string;
+  lyricsFilename?: string;
+  audioPath?: string;
+  duration?: number;
+  allowAsr?: boolean;
+  vocalSegments?: VocalSegment[];
+}): Promise<LyricAnalysisResult> {
+  return postJson<LyricAnalysisResult>("/analyze-lyrics", input, RESULT_TIMEOUT_MS);
 }
 
 export function selectShots(input: ShotSelectionInput): Promise<ShotSelection> {

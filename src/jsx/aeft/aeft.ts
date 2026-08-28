@@ -67,6 +67,11 @@ interface SectionSpan {
   end: number;
 }
 
+interface CutTransition {
+  type: string;
+  reason: string;
+}
+
 interface CutDecision {
   beatTime: number;
   endTime: number;
@@ -75,6 +80,13 @@ interface CutDecision {
   clipPath: string;
   clipName: string;
   sectionType: string;
+  /**
+   * How this shot joins the one before it, decided by the engine from the two
+   * adjacent shots rather than sprinkled at a configured percentage. Optional:
+   * a payload from an older backend has none and every cut is a hard cut,
+   * exactly as before.
+   */
+  transition?: CutTransition;
 }
 
 interface TimelineCut extends CutDecision {
@@ -277,6 +289,13 @@ export function appendCutBatch(cuts: TimelineCut[]): string {
       clipLayer.outPoint = Math.min(cut.endTime, activeBuild.comp.duration);
       clipLayer.name = cut.clipName + " [" + cut.sectionType + "]";
       clipLayer.comment = cutTag(cut.beatTime, cut.sectionType);
+      try {
+        applyTransitionToLayer(clipLayer, cut, activeBuild.comp);
+      } catch (transitionError) {
+        activeBuild.warnings.push(
+          "Transition skipped on " + cut.clipName + ": " + String(transitionError)
+        );
+      }
       try {
         applyVFXToLayer(clipLayer, activeBuild.styleConfig, cut.sectionType, cut.beatTime, activeBuild.context);
       } catch (vfxError) {
@@ -651,6 +670,39 @@ function applyParameterOverrides(
     style.element_3d.parallax_depth = toNumber(element3D.parallaxDepth, 0);
   }
   return style;
+}
+
+/**
+ * Realise the engine's transition decision on the timeline.
+ *
+ * Only the transitions that are genuinely a *layer* operation are built here.
+ * A hard cut, a cut on action and a match cut are all "the next shot simply
+ * starts" — the editorial difference is in which shots were chosen to sit next
+ * to each other, which selection already decided. Building a dissolve where the
+ * engine asked for a hard cut would be exactly the "use effects to hide bad
+ * selection" failure this replaces, so those branches deliberately do nothing.
+ *
+ * A dissolve and a phrase transition are real overlaps and are built as opacity
+ * ramps: short, and only where the engine found semantic grounds for them.
+ */
+function applyTransitionToLayer(layer: AVLayer, cut: CutDecision, comp: CompItem): void {
+  if (!cut.transition || !cut.transition.type) return;
+  var kind = String(cut.transition.type);
+  if (kind !== "dissolve" && kind !== "phrase_transition") return;
+
+  var slot = cut.endTime - cut.beatTime;
+  if (!(slot > 0)) return;
+  // A transition may never eat more than a quarter of its own shot, and is
+  // capped in absolute time so a long held shot does not fade for two seconds.
+  var span = Math.min(kind === "dissolve" ? 0.5 : 0.28, slot * 0.25);
+  if (span < 1 / comp.frameRate) return;
+
+  var opacity = layer.property("ADBE Transform Group").property("ADBE Opacity") as Property;
+  if (!opacity) return;
+  // The layer already starts at the cut, so the ramp runs forward from it and
+  // the outgoing shot below stays visible underneath for the overlap.
+  opacity.setValueAtTime(cut.beatTime, 0);
+  opacity.setValueAtTime(cut.beatTime + span, 100);
 }
 
 function cutTag(beatTime: number, sectionType: string): string {

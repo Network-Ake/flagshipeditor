@@ -13,6 +13,8 @@ interface Props {
   onRemoveClip: (path: string) => void;
   onClearClips: () => void;
   onRetryFailed: () => void;
+  lyrics: string;
+  onLyricsChange: (lyrics: string) => void;
 }
 
 const SCENE_BADGES: Record<string, string> = {
@@ -47,6 +49,8 @@ const MediaImport: React.FC<Props> = ({
   onImportClips,
   onImportFolder,
   onImportMusic,
+  lyrics,
+  onLyricsChange,
   onRemoveClip,
   onClearClips,
   onRetryFailed,
@@ -180,6 +184,33 @@ const MediaImport: React.FC<Props> = ({
           </div>
         ) : (
           <div className="empty-state">No music imported. Click Import music to load a track.</div>
+        )}
+      </div>
+
+      <div className="music-section">
+        <span className="section-title">Lyrics (optional)</span>
+        <textarea
+          className="lyrics-input"
+          value={lyrics}
+          onChange={(event) => onLyricsChange(event.target.value)}
+          disabled={busy}
+          rows={6}
+          spellCheck={false}
+          placeholder={
+            "Paste the lyrics, or an .lrc / .srt with timestamps.\n\n" +
+            "With plain text the engine aligns lines against the vocal it measured " +
+            "in the track. With timestamps it uses them exactly. With nothing at all " +
+            "it still cuts to the vocal phrasing — it just cannot reason about what " +
+            "is being said."
+          }
+        />
+        {lyrics.trim() !== "" && (
+          <div className="param-hint">
+            {lyrics.trim().split(/\n+/).length} lines ·{" "}
+            {/\[\d+:\d{2}/.test(lyrics) || /-->/.test(lyrics)
+              ? "timestamps detected, they will be used exactly"
+              : "plain text, aligned to the measured vocal and reported at reduced confidence"}
+          </div>
         )}
       </div>
     </div>

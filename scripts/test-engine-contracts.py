@@ -445,12 +445,18 @@ def main() -> None:
         [],
         [0.5, 2.5, 4.5, 6.5],
     )
-    measured_grid_times = [
-        slot["beatTime"]
+    measured_downbeat_slots = [
+        slot
         for slot in phase_shifted
-        if slot["cutProvenance"]["origin"] == "grid"
+        if slot["cutProvenance"]["eventKind"] == "downbeat"
     ]
-    assert measured_grid_times and measured_grid_times[0] == 0.5
+    # The event-aware planner is free to hold across the first downbeat when a
+    # sustained shot is stronger; what must remain contractual is that any
+    # chosen downbeat comes from the measured, phase-shifted lattice rather
+    # than from an assumed first-beat grid.
+    assert measured_downbeat_slots
+    assert all(slot["beatTime"] in [0.5, 2.5, 4.5, 6.5] for slot in measured_downbeat_slots)
+    assert all(slot["cutProvenance"]["measuredEvent"] for slot in measured_downbeat_slots)
     labelled = assign_section_types(
         [
             {"type": "verse", "start": 0.0, "end": 1.0},
@@ -739,9 +745,11 @@ def main() -> None:
     with_phrases = plan_cuts(
         signal_beats, signal_sections, {}, 24.0, 120.0, [], [4.0, 8.0, 16.0]
     )
-    origins_without = {slot["cutProvenance"]["origin"] for slot in without_phrases}
-    origins_with = {slot["cutProvenance"]["origin"] for slot in with_phrases}
-    assert "phrase" not in origins_without and "phrase" in origins_with
+    events_without = {slot["cutProvenance"]["eventKind"] for slot in without_phrases}
+    events_with = {slot["cutProvenance"]["eventKind"] for slot in with_phrases}
+    # Origins now distinguish boundary/event/fallback; the musical reason lives
+    # in eventKind so phrase, lyric and accent provenance share one schema.
+    assert "phrase" not in events_without and "phrase" in events_with
     # Phrase records straight from beat analysis carry a time, not a float.
     assert plan_cuts(
         signal_beats, signal_sections, {}, 24.0, 120.0, [], [{"time": 8.0}]
@@ -826,7 +834,9 @@ def main() -> None:
         if round(float(slot["beatTime"]), 6) in section_starts
     )
     onset_slots = [
-        slot for slot in provenance_slots if slot["cutProvenance"]["origin"] == "onset"
+        slot
+        for slot in provenance_slots
+        if slot["cutProvenance"]["eventKind"] == "accent"
     ]
     # An "808-synced" cut has to name the attack it came from, and how far
     # quantisation moved it from where it was played.

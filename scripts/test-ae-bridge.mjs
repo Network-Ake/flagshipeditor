@@ -694,3 +694,76 @@ console.log(
   "Compiled After Effects bridge simulation passed (24 routed effects, composed scale/opacity, " +
     "source-time remapping, adjustment-layer grading, Element 3D detection, seeded determinism, rollback).",
 );
+
+// --- The engine's transition decision must survive the CEP payload ----------
+//
+// aeft.ts has always implemented `applyTransitionToLayer`, but the panel's
+// `toPayload` rebuilt each cut field by field and never copied `transition`,
+// so every dissolve and phrase transition the engine justified from adjacent
+// shots arrived in After Effects as a plain hard cut. The bridge was correct
+// and the decision was correct; the wire between them dropped it.
+{
+  const panel = fs.readFileSync(path.join(root, "src", "js", "main", "App.tsx"), "utf8");
+  const payloadShape = panel.slice(
+    panel.indexOf("interface TimelineCutPayload"),
+    panel.indexOf("const TABS"),
+  );
+  assert.ok(
+    /transition\?:\s*\{\s*type:\s*string\s*\}/.test(payloadShape),
+    "TimelineCutPayload must declare the transition the AE bridge consumes",
+  );
+  const toPayloadBody = panel.slice(
+    panel.indexOf("function toPayload("),
+    panel.indexOf("function toPayload(") + 1200,
+  );
+  assert.ok(
+    /payload\.transition\s*=\s*\{\s*type:\s*cut\.transition\.type\s*\}/.test(toPayloadBody),
+    "toPayload must forward the engine's transition type to After Effects",
+  );
+
+  // And the bridge has to act on it. A transition-free style isolates the
+  // opacity ramp to the transition itself.
+  const bareStyle = {
+    style_name: "bare",
+    display_name: "Bare",
+    cut_strategy: {},
+    color_grading: { global_lut: "", params: {}, section_luts: {} },
+  };
+  const dissolveAt = 4;
+  const withTransition = [
+    { beatTime: 0, endTime: 4, sourceStart: 0, sourceEnd: 4, clipPath: "C:/media/a.mov", clipName: "a.mov", sectionType: "verse" },
+    { beatTime: dissolveAt, endTime: 8, sourceStart: 0, sourceEnd: 4, clipPath: "C:/media/b.mov", clipName: "b.mov", sectionType: "verse", transition: { type: "dissolve" } },
+  ];
+  const hardOnly = withTransition.map((cut) => ({ ...cut, transition: { type: "hard_cut" } }));
+
+  function opacityKeysFor(batch) {
+    const { context, project } = loadBridge();
+    unwrap(
+      context.beginComp(8, "C:/media/song.wav", bareStyle, baseParams(), {}, SECTIONS, "C:/extension", MEDIA_PROFILE, 140),
+      "beginComp",
+    );
+    unwrap(context.appendCutBatch(batch), "appendCutBatch");
+    unwrap(context.finishComp(), "finishComp");
+    const layer = project.comps[0].layerList
+      .filter((item) => /FlagshipEditorCut\|/.test(item.comment))
+      .find((item) => item.inPoint === dissolveAt);
+    assert.ok(layer, "The second cut must be on the timeline");
+    const opacity = layer.transform("ADBE Opacity");
+    return opacity ? opacity.keys : [];
+  }
+
+  const dissolveKeys = opacityKeysFor(withTransition);
+  assert.ok(dissolveKeys.length >= 2, "A dissolve must build an opacity ramp");
+  assert.equal(dissolveKeys[0].value, 0, "A dissolve must start the incoming shot transparent");
+  assert.equal(
+    dissolveKeys[dissolveKeys.length - 1].value,
+    100,
+    "A dissolve must finish fully opaque",
+  );
+
+  assert.equal(
+    opacityKeysFor(hardOnly).length,
+    0,
+    "A hard cut must not animate opacity — transitions are decided, not sprinkled",
+  );
+}

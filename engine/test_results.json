@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-27T00:47:38.027094",
+  "timestamp": "2026-08-28T10:47:46.309053",
   "tests": {
     "imports": true,
     "cut_placement": true,
@@ -14,136 +14,216 @@
     "total": 7,
     "success_rate": 1.0
   },
-  "cut_slots_count": 122,
+  "cut_slots_count": 26,
   "cut_slots_sample": [
     {
       "beatTime": 0.0,
-      "endTime": 1.5,
+      "endTime": 4.0,
       "sectionType": "intro",
       "cutProvenance": {
         "origin": "boundary",
+        "eventKind": "section",
         "sourceTime": 0.0,
         "snapDelta": 0.0,
         "beatDelta": 0.0,
         "beatAligned": true,
-        "snapTolerance": 0.08
+        "snapTolerance": 0.08,
+        "measuredEvent": true,
+        "pacingMode": "breath",
+        "targetBars": 7.1317,
+        "actualBars": 2.0,
+        "tension": 0.0,
+        "beatsPerBar": 4,
+        "gridRegularity": 1.0
       }
     },
     {
-      "beatTime": 1.5,
-      "endTime": 3.0,
-      "sectionType": "intro",
-      "cutProvenance": {
-        "origin": "grid",
-        "sourceTime": 1.5,
-        "snapDelta": 0.0,
-        "beatDelta": 0.0,
-        "beatAligned": true,
-        "snapTolerance": 0.08
-      }
-    },
-    {
-      "beatTime": 3.0,
-      "endTime": 4.5,
-      "sectionType": "intro",
-      "cutProvenance": {
-        "origin": "grid",
-        "sourceTime": 3.0,
-        "snapDelta": 0.0,
-        "beatDelta": 0.0,
-        "beatAligned": true,
-        "snapTolerance": 0.08
-      }
-    },
-    {
-      "beatTime": 4.5,
-      "endTime": 6.0,
-      "sectionType": "intro",
-      "cutProvenance": {
-        "origin": "grid",
-        "sourceTime": 4.5,
-        "snapDelta": 0.0,
-        "beatDelta": 0.0,
-        "beatAligned": true,
-        "snapTolerance": 0.08
-      }
-    },
-    {
-      "beatTime": 6.0,
+      "beatTime": 4.0,
       "endTime": 8.0,
       "sectionType": "intro",
       "cutProvenance": {
-        "origin": "grid",
-        "sourceTime": 6.0,
+        "origin": "event",
+        "eventKind": "downbeat",
+        "sourceTime": 4.0,
         "snapDelta": 0.0,
         "beatDelta": 0.0,
         "beatAligned": true,
-        "snapTolerance": 0.08
+        "snapTolerance": 0.08,
+        "measuredEvent": false,
+        "pacingMode": "sustain",
+        "targetBars": 4.9259,
+        "actualBars": 2.0,
+        "tension": 0.0,
+        "beatsPerBar": 4,
+        "gridRegularity": 1.0
       }
     },
     {
       "beatTime": 8.0,
-      "endTime": 9.0,
+      "endTime": 13.0,
       "sectionType": "verse",
       "cutProvenance": {
         "origin": "boundary",
+        "eventKind": "section",
         "sourceTime": 8.0,
         "snapDelta": 0.0,
         "beatDelta": 0.0,
         "beatAligned": true,
-        "snapTolerance": 0.08
+        "snapTolerance": 0.08,
+        "measuredEvent": true,
+        "pacingMode": "sustain",
+        "targetBars": 2.5014,
+        "actualBars": 2.5,
+        "tension": 0.0,
+        "beatsPerBar": 4,
+        "gridRegularity": 1.0
       }
     },
     {
-      "beatTime": 9.0,
-      "endTime": 10.0,
+      "beatTime": 13.0,
+      "endTime": 18.0,
       "sectionType": "verse",
       "cutProvenance": {
-        "origin": "grid",
-        "sourceTime": 9.0,
+        "origin": "event",
+        "eventKind": "beat",
+        "sourceTime": 13.0,
         "snapDelta": 0.0,
         "beatDelta": 0.0,
         "beatAligned": true,
-        "snapTolerance": 0.08
+        "snapTolerance": 0.08,
+        "measuredEvent": true,
+        "pacingMode": "sustain",
+        "targetBars": 3.9817,
+        "actualBars": 2.5,
+        "tension": 0.0,
+        "beatsPerBar": 4,
+        "gridRegularity": 1.0
       }
     },
     {
-      "beatTime": 10.0,
-      "endTime": 11.0,
+      "beatTime": 18.0,
+      "endTime": 24.0,
       "sectionType": "verse",
       "cutProvenance": {
-        "origin": "grid",
-        "sourceTime": 10.0,
+        "origin": "event",
+        "eventKind": "downbeat",
+        "sourceTime": 18.0,
         "snapDelta": 0.0,
         "beatDelta": 0.0,
         "beatAligned": true,
-        "snapTolerance": 0.08
+        "snapTolerance": 0.08,
+        "measuredEvent": false,
+        "pacingMode": "sustain",
+        "targetBars": 3.0669,
+        "actualBars": 3.0,
+        "tension": 0.0,
+        "beatsPerBar": 4,
+        "gridRegularity": 1.0
       }
     },
     {
-      "beatTime": 11.0,
-      "endTime": 12.0,
-      "sectionType": "verse",
+      "beatTime": 24.0,
+      "endTime": 26.5,
+      "sectionType": "chorus",
       "cutProvenance": {
-        "origin": "grid",
-        "sourceTime": 11.0,
+        "origin": "boundary",
+        "eventKind": "section",
+        "sourceTime": 24.0,
         "snapDelta": 0.0,
         "beatDelta": 0.0,
         "beatAligned": true,
-        "snapTolerance": 0.08
+        "snapTolerance": 0.08,
+        "measuredEvent": true,
+        "pacingMode": "sustain",
+        "targetBars": 1.1874,
+        "actualBars": 1.25,
+        "tension": 0.0,
+        "beatsPerBar": 4,
+        "gridRegularity": 1.0
       }
     },
     {
-      "beatTime": 12.0,
-      "endTime": 13.0,
-      "sectionType": "verse",
+      "beatTime": 26.5,
+      "endTime": 30.5,
+      "sectionType": "chorus",
       "cutProvenance": {
-        "origin": "grid",
-        "sourceTime": 12.0,
+        "origin": "event",
+        "eventKind": "beat",
+        "sourceTime": 26.5,
         "snapDelta": 0.0,
         "beatDelta": 0.0,
         "beatAligned": true,
-        "snapTolerance": 0.08
+        "snapTolerance": 0.08,
+        "measuredEvent": true,
+        "pacingMode": "sustain",
+        "targetBars": 2.0042,
+        "actualBars": 2.0,
+        "tension": 0.0,
+        "beatsPerBar": 4,
+        "gridRegularity": 1.0
+      }
+    },
+    {
+      "beatTime": 30.5,
+      "endTime": 33.5,
+      "sectionType": "chorus",
+      "cutProvenance": {
+        "origin": "event",
+        "eventKind": "beat",
+        "sourceTime": 30.5,
+        "snapDelta": 0.0,
+        "beatDelta": 0.0,
+        "beatAligned": true,
+        "snapTolerance": 0.08,
+        "measuredEvent": true,
+        "pacingMode": "sustain",
+        "targetBars": 1.4994,
+        "actualBars": 1.5,
+        "tension": 0.0,
+        "beatsPerBar": 4,
+        "gridRegularity": 1.0
+      }
+    },
+    {
+      "beatTime": 33.5,
+      "endTime": 35.5,
+      "sectionType": "chorus",
+      "cutProvenance": {
+        "origin": "event",
+        "eventKind": "beat",
+        "sourceTime": 33.5,
+        "snapDelta": 0.0,
+        "beatDelta": 0.0,
+        "beatAligned": true,
+        "snapTolerance": 0.08,
+        "measuredEvent": true,
+        "pacingMode": "sustain",
+        "targetBars": 0.9946,
+        "actualBars": 1.0,
+        "tension": 0.0,
+        "beatsPerBar": 4,
+        "gridRegularity": 1.0
+      }
+    },
+    {
+      "beatTime": 35.5,
+      "endTime": 40.0,
+      "sectionType": "chorus",
+      "cutProvenance": {
+        "origin": "event",
+        "eventKind": "beat",
+        "sourceTime": 35.5,
+        "snapDelta": 0.0,
+        "beatDelta": 0.0,
+        "beatAligned": true,
+        "snapTolerance": 0.08,
+        "measuredEvent": true,
+        "pacingMode": "sustain",
+        "targetBars": 1.8114,
+        "actualBars": 2.25,
+        "tension": 0.0,
+        "beatsPerBar": 4,
+        "gridRegularity": 1.0
       }
     }
   ]

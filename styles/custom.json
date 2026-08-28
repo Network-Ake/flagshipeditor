@@ -2,26 +2,156 @@
   "style_name": "custom",
   "display_name": "Custom",
   "cut_strategy": {
-    "intro": { "cut_interval": "4_beat", "variation": "build" },
-    "verse": { "cut_interval": "1_beat", "variation": "dynamic" },
-    "chorus": { "cut_interval": "0.5_beat", "variation": "high_energy" },
-    "drop": { "cut_interval": "0.25_beat", "variation": "rapid_fire" },
-    "bridge": { "cut_interval": "2_beat", "variation": "slow" },
-    "outro": { "cut_interval": "4_beat", "variation": "fade" }
+    "intro": {
+      "variation": "build"
+    },
+    "verse": {
+      "variation": "dynamic"
+    },
+    "chorus": {
+      "variation": "high_energy"
+    },
+    "drop": {
+      "variation": "rapid_fire"
+    },
+    "bridge": {
+      "variation": "slow"
+    },
+    "outro": {
+      "variation": "fade"
+    }
   },
-  "zoom_punch": { "enabled": true, "scale_target": 130, "scale_duration_frames": 4, "ease_out_frames": 10, "sections": ["chorus", "drop"] },
-  "whip_pan": { "enabled": true, "displacement_px": 2000, "duration_frames": 5, "sections": ["verse"] },
-  "text_overlays": { "enabled": false, "sections": [] },
-  "color_grading": { "global_lut": null, "params": { "temperature_k": 5000, "contrast": 10, "saturation": 0 }, "section_luts": {} },
-  "camera_shake": { "frequency_hz": 20, "displacement_px": 10, "sections": ["drop"] },
-  "freeze_frame": { "enabled": false, "sections": [] },
-  "speed_ramp": { "enabled": false, "sections": [] },
-  "light_leaks": { "enabled": false },
-  "vhs_overlay": { "enabled": false },
-  "glitch_effect": { "enabled": false, "sections": [] },
-  "element_3d": { "enabled": false, "solid_name": "FlagshipEditor_3D_Solid", "parallax_depth": 0.2 },
-  "face_mask": { "enabled": false },
-  "smoke_fog": { "enabled": false },
-  "slow_mo": { "enabled": false, "sections": [] },
-  "beat_flash": { "enabled": false, "sections": [] }
+  "zoom_punch": {
+    "enabled": true,
+    "scale_target": 130,
+    "scale_duration_frames": 4,
+    "ease_out_frames": 10,
+    "sections": [
+      "chorus",
+      "drop"
+    ]
+  },
+  "whip_pan": {
+    "enabled": true,
+    "displacement_px": 2000,
+    "duration_frames": 5,
+    "sections": [
+      "verse"
+    ]
+  },
+  "text_overlays": {
+    "enabled": false,
+    "sections": []
+  },
+  "color_grading": {
+    "global_lut": null,
+    "params": {
+      "temperature_k": 5000,
+      "contrast": 10,
+      "saturation": 0
+    },
+    "section_luts": {}
+  },
+  "camera_shake": {
+    "frequency_hz": 20,
+    "displacement_px": 10,
+    "sections": [
+      "drop"
+    ]
+  },
+  "freeze_frame": {
+    "enabled": false,
+    "sections": []
+  },
+  "speed_ramp": {
+    "enabled": false,
+    "sections": []
+  },
+  "light_leaks": {
+    "enabled": false
+  },
+  "vhs_overlay": {
+    "enabled": false
+  },
+  "glitch_effect": {
+    "enabled": false,
+    "sections": []
+  },
+  "element_3d": {
+    "enabled": false,
+    "solid_name": "FlagshipEditor_3D_Solid",
+    "parallax_depth": 0.2
+  },
+  "face_mask": {
+    "enabled": false
+  },
+  "smoke_fog": {
+    "enabled": false
+  },
+  "slow_mo": {
+    "enabled": false,
+    "sections": []
+  },
+  "beat_flash": {
+    "enabled": false,
+    "sections": []
+  },
+  "pacing": {
+    "intro": {
+      "min_bars": 2.0,
+      "target_bars": 3.5,
+      "max_bars": 7.0,
+      "burstiness": 0.05,
+      "breath": 0.75,
+      "burst_bars": 0.5
+    },
+    "verse": {
+      "min_bars": 1.25,
+      "target_bars": 2.75,
+      "max_bars": 5.0,
+      "burstiness": 0.18,
+      "breath": 0.5,
+      "burst_bars": 0.4
+    },
+    "chorus": {
+      "min_bars": 0.75,
+      "target_bars": 1.75,
+      "max_bars": 3.5,
+      "burstiness": 0.32,
+      "breath": 0.3,
+      "burst_bars": 0.3
+    },
+    "drop": {
+      "min_bars": 0.5,
+      "target_bars": 1.25,
+      "max_bars": 3.0,
+      "burstiness": 0.5,
+      "breath": 0.25,
+      "burst_bars": 0.25
+    },
+    "bridge": {
+      "min_bars": 1.5,
+      "target_bars": 3.0,
+      "max_bars": 6.0,
+      "burstiness": 0.08,
+      "breath": 0.7,
+      "burst_bars": 0.45
+    },
+    "outro": {
+      "min_bars": 2.0,
+      "target_bars": 4.0,
+      "max_bars": 9.0,
+      "burstiness": 0.03,
+      "breath": 0.8,
+      "burst_bars": 0.5
+    }
+  },
+  "selection": {
+    "continuity": 0.5,
+    "performance_ratio": 0.5,
+    "lyric_sensitivity": 0.7,
+    "repetition_tolerance": 0.25,
+    "narrative_directness": 0.5,
+    "subject_persistence": 0.45
+  }
 }

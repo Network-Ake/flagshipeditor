@@ -2850,3 +2850,34 @@ body {
   fill: var(--accent-primary);
   opacity: 0.15;
 }
+
+/* Lyrics input. Plain and quiet — the words matter, the control should not. */
+.lyrics-input {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #2a2a32);
+  background: var(--surface-sunken, #17171c);
+  color: var(--text, #e8e8ee);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.55;
+  resize: vertical;
+  min-height: 96px;
+}
+
+.lyrics-input::placeholder {
+  color: var(--text-muted, #6c6c78);
+  line-height: 1.5;
+}
+
+.lyrics-input:focus {
+  outline: none;
+  border-color: var(--accent, #6c5ce7);
+}
+
+.lyrics-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

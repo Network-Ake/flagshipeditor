@@ -23,6 +23,40 @@ from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Tuple
 
 import numpy as np
 
+from cut_planner import (
+    MIN_SUSTAINED_SECONDS,
+    PlannedCut,
+    duration_histogram,
+    material_pacing_scale,
+    plan_musical_cuts,
+    resolve_pacing,
+)
+from musical_structure import (
+    build_event_lattice,
+    infer_beats_per_bar,
+    musical_grid,
+    tension_curve,
+)
+from narrative import (
+    MotifLedger,
+    build_narrative_plan,
+    classify_clip_roles,
+    primary_role,
+)
+import lyric_analysis
+import sequence_selector
+from sequence_selector import (
+    MAX_WINDOWS_PER_CLIP,
+    WINDOW_SEPARATION_SECONDS,
+    SlotContext,
+    build_similarity_matrix,
+    canonical_path as _sequence_path,
+    candidate_windows,
+    decide_transition,
+    select_sequence,
+    visual_signature,
+)
+
 # Weight profiles per section. A verse wants the artist on screen, a drop wants
 # motion, an intro or bridge wants atmosphere.
 SECTION_WEIGHTS: Dict[str, Dict[str, float]] = {
@@ -188,10 +222,11 @@ _CUT_PHRASE = 1
 _CUT_ONSET = 2
 _CUT_BOUNDARY = 3
 
-# What put a cut where it is. Published on every slot so a claim about the edit
-# — "this lands on the 808", "this is on the bar line" — can be traced to the
-# input event that produced it instead of being asserted.
-CUT_ORIGINS = ("boundary", "onset", "phrase", "grid", "subdivision")
+# Top-level provenance distinguishes how the planner resolved the boundary;
+# the musical reason is published separately as ``eventKind``. This keeps one
+# stable schema for downbeats, phrases, lyrics, played accents and action cues
+# instead of overloading ``origin`` with both mechanism and meaning.
+CUT_ORIGINS = ("boundary", "event", "fallback")
 _ORIGIN_BY_PRIORITY = {
     _CUT_BOUNDARY: "boundary",
     _CUT_ONSET: "onset",
@@ -207,6 +242,117 @@ CUT_SNAP_TOLERANCE_SECONDS = 0.08
 # stays a chorus, but a bar where the mix drops out stops asking for the most
 # frantic clip in the library.
 ENERGY_CURVE_WEIGHT = 0.35
+
+# How much a trusted lyric line may move a clip's fit, on the 0..100 scale.
+# Deliberately modest. A lyric is one input among several, and an engine that
+# lets the words dominate produces the literal, on-the-nose result the brief
+# explicitly rules out — "car" fetching a car every time is not direction, it
+# is illustration.
+LYRIC_WEIGHT = 9.0
+
+# Maps a lyric's imagery onto the narrative roles footage can play. This is the
+# indirection that keeps the edit from being literal: a line about money does
+# not ask for a shot of money, it raises detail and celebration footage, and
+# everything else about the cut still gets a vote.
+LYRIC_IMAGERY_ROLES: Dict[str, Tuple[str, ...]] = {
+    "environment": ("environment", "establishing"),
+    "establishing": ("establishing", "environment"),
+    "architecture": ("establishing", "environment"),
+    "low_light": ("environment", "symbolic"),
+    "neon": ("environment", "detail"),
+    "vehicle": ("action", "bridge"),
+    "travel": ("bridge", "action", "establishing"),
+    "motion": ("action", "escalation"),
+    "face": ("emotional", "character", "performance"),
+    "closeness": ("emotional", "character"),
+    "touch": ("detail", "emotional"),
+    "direct_address": ("performance", "character"),
+    "performance": ("performance",),
+    "crowd": ("action", "environment"),
+    "light": ("symbolic", "environment"),
+    "excess": ("detail", "action"),
+    "cash": ("detail",),
+    "jewellery": ("detail",),
+    "exchange": ("detail", "action"),
+    "tension": ("escalation", "reaction"),
+    "confrontation": ("action", "reaction"),
+    "threat": ("escalation", "symbolic"),
+    "group": ("action", "environment"),
+    "gesture": ("detail", "reaction"),
+    "absence": ("environment", "symbolic"),
+    "memory": ("symbolic", "resolution"),
+    "stillness": ("resolution", "symbolic", "emotional"),
+    "ascent": ("escalation", "establishing"),
+    "work": ("action", "detail"),
+    "distance": ("establishing", "environment"),
+    "effort": ("action", "escalation"),
+    "weight": ("emotional", "symbolic"),
+    "endurance": ("emotional", "resolution"),
+    "haze": ("environment", "symbolic"),
+    "close_detail": ("detail",),
+    "slow": ("resolution", "emotional"),
+    "isolation": ("symbolic", "environment"),
+    "turning_away": ("reaction", "symbolic"),
+    "elevation": ("establishing", "symbolic"),
+    "passage": ("bridge", "environment"),
+    "contrast": ("symbolic",),
+}
+
+# How a lyric is allowed to be answered. Rotating deterministically through
+# these — rather than always taking the first — is what stops the same line
+# producing the same kind of image every time it recurs, which is the specific
+# failure the brief calls "excessive literalism".
+LYRIC_RESPONSES = ("literal", "emotional", "symbolic", "performance", "contrast", "restraint")
+
+
+def _lyric_affinity(line: Any, roles: Dict[str, float], clip: Dict[str, Any]) -> float:
+    """Return −1..1 for how well a clip answers a lyric line.
+
+    The answer is not always literal correspondence. The response mode is
+    chosen deterministically from the line's own index, its intensity and its
+    address, so a hook that recurs four times is answered four different ways —
+    once by illustrating it, once by the face delivering it, once by an image
+    that stands for it, once by holding back. A human editor does exactly this;
+    matching every line the same way is what reads as a machine.
+    """
+    mode = LYRIC_RESPONSES[
+        int(
+            (line.index * 2 + int(line.intensity * 3) + (1 if line.address == "first_person" else 0))
+            % len(LYRIC_RESPONSES)
+        )
+    ]
+
+    if mode == "restraint":
+        # Deliberately no opinion: the words are left to carry the moment.
+        return 0.0
+
+    if mode == "performance":
+        return float(roles.get("performance", 0.0) * 0.9 + roles.get("character", 0.0) * 0.5) - 0.15
+
+    wanted: Dict[str, float] = {}
+    for item in line.imagery:
+        for rank, role in enumerate(LYRIC_IMAGERY_ROLES.get(item, ())):
+            wanted[role] = max(wanted.get(role, 0.0), 1.0 - 0.25 * rank)
+    if not wanted:
+        return 0.0
+
+    match = 0.0
+    for role, weight in wanted.items():
+        match = max(match, roles.get(role, 0.0) * weight)
+
+    if mode == "literal":
+        return float(match) - 0.15
+    if mode == "emotional":
+        # Answer the feeling rather than the noun: intensity and valence steer
+        # towards emotional or escalating footage instead of the named object.
+        emotional = roles.get("emotional", 0.0) if line.valence < 0 else roles.get("escalation", 0.0)
+        return float(0.55 * match + 0.65 * emotional) - 0.15
+    if mode == "symbolic":
+        return float(0.35 * match + 0.85 * roles.get("symbolic", 0.0)) - 0.15
+    # contrast: reward footage that does *not* illustrate the line, which is
+    # how an editor undercuts a lyric on purpose.
+    return float(0.55 * (1.0 - min(1.0, match)) * roles.get("neutral", 0.0) * 2.0) - 0.2
+
 
 
 class _Candidate(NamedTuple):
@@ -1142,6 +1288,53 @@ def _cut_provenance(
     }
 
 
+def available_material_scale(
+    clips: Sequence[Dict[str, Any]],
+    duration: float,
+    style_config: Optional[Dict[str, Any]] = None,
+) -> float:
+    """How much the pacing must stretch for the library the editor actually has.
+
+    Counts the distinct source windows the library can offer — the same
+    ``WINDOW_SEPARATION_SECONDS`` rule the selector uses, so the planner and the
+    selector agree on what "different material" means — and asks the planner to
+    slow down if the song wants more cuts than that material can carry.
+
+    A normal shoot returns 1.0 and nothing changes. It is one clip, or four,
+    that used to produce a timeline indistinguishable from a hundred-clip one.
+    """
+    if not clips or duration <= 0:
+        return 1.0
+
+    targets = [
+        resolve_pacing(section_type, style_config).target_bars
+        for section_type in ("verse", "chorus", "drop", "intro", "outro")
+    ]
+    # A bar in seconds is not known here, so work from the style's mean target
+    # in bars against a nominal four-beat bar at the track's own tempo. The
+    # ratio is what matters, and it is tempo-invariant either way.
+    mean_target_bars = float(np.mean(targets)) if targets else 2.5
+
+    windows = 0
+    for clip in clips:
+        clip_duration = bounded_duration(clip.get("duration"))
+        if clip_duration <= 0:
+            windows += 1
+            continue
+        analysed = clip.get("moment_windows")
+        offered = len(analysed) if isinstance(analysed, (list, tuple)) and analysed else 0
+        spread = 1 + int(max(0.0, clip_duration - MIN_SUSTAINED_SECONDS) / WINDOW_SEPARATION_SECONDS)
+        windows += max(1, min(MAX_WINDOWS_PER_CLIP, max(offered, spread)))
+
+    # Nominal shot length in seconds for the scale calculation: bars are only
+    # meaningful against a tempo, and the caller's tempo cancels out of the
+    # ratio, so a 2 s bar is used consistently on both sides.
+    nominal_bar_seconds = 2.0
+    return material_pacing_scale(
+        windows, duration, mean_target_bars * nominal_bar_seconds
+    )
+
+
 def plan_cuts(
     beats: Sequence[float],
     sections: Sequence[Dict[str, Any]],
@@ -1151,85 +1344,125 @@ def plan_cuts(
     bass_onsets: Optional[Sequence[float]] = None,
     phrase_boundaries: Optional[Sequence[Any]] = None,
     downbeats: Optional[Sequence[float]] = None,
+    energy: Optional[Sequence[Any]] = None,
+    energy_times: Optional[Sequence[Any]] = None,
+    lyrics: Any = None,
+    material_scale: float = 1.0,
 ) -> List[Dict[str, Any]]:
-    """Turn the beat grid and the style's cut strategy into timed cut slots.
+    """Lay out the timeline from musical events at a varying, section-led pace.
 
-    The rules, in the order they are applied:
+    This used to walk a metronome — ``position += interval_beats`` from the
+    style's ``cut_interval`` — and that is what produced the mechanical result:
+    857 cuts on a 3:30 track, nine distinct shot lengths, 636 of them identical,
+    a 0.21 s median across verses and choruses alike.
 
-    * every section boundary is a cut, whether or not a beat lands there;
-    * a drop cuts on its bass onsets, quantised onto the beat when they are a
-      near miss, so the edit follows the 808 rather than a metronome;
-    * a phrase boundary is a cut in every section, and outranks the grid tick
-      beside it when the two are too close to both survive;
-    * every other section walks the beat grid at its own interval — one cut per
-      bar in a verse, one per beat in a chorus, one per bar in intro and outro;
-    * no slot is shorter than ``MIN_CUT_SECONDS`` or longer than its section's
-      maximum, and the slots tile ``[0, duration]`` with no gap or overlap.
+    The walk is now over the *musical event lattice*: bar lines, phrase turns,
+    played accents, vocal entries and section boundaries, which are unevenly
+    spaced by construction. Each shot draws its own target length from the
+    section's pacing range in bars, modulated by measured tension, and then
+    lands on the best real event near that target. Fast runs still happen, as
+    bounded bursts entered on measured evidence, not as the baseline.
 
-    Every slot carries a start, an end, and the provenance of its own cut, so
-    After Effects can trim each clip and any claim made about the edit can be
-    traced back to the input event behind it.
+    The returned shape is unchanged — ``beatTime``, ``endTime``,
+    ``sectionType`` and ``cutProvenance`` — so the After Effects bridge and the
+    panel need no translation. ``cutProvenance`` now also carries the pacing
+    mode, the requested and achieved length in bars, and the local tension, so
+    any claim about why a cut is where it is can be checked.
     """
     duration = float(duration) if np.isfinite(duration) else 0.0
     if duration <= 0:
         return []
 
     beat_times = _clean_times(beats)
-    period = _median_beat_period(beat_times, tempo)
-    if not np.isfinite(period) or period <= 0:
-        period = 0.5
-    onsets = _clean_times(bass_onsets)
-    phrases = [
-        value for value in _phrase_times(phrase_boundaries) if 0.0 < value < duration
-    ]
     downbeat_times = _clean_times(downbeats)
+    onsets = _clean_times(bass_onsets)
+    phrases = [value for value in _phrase_times(phrase_boundaries) if 0.0 < value < duration]
     style_config = style_config or {}
 
     ordered_sections = normalize_sections(sections, duration)
     if not ordered_sections:
         return []
 
-    candidates: List[_Candidate] = []
-    for section in ordered_sections:
-        candidates.extend(
-            _section_cut_candidates(
-                section,
-                beat_times,
-                onsets,
-                period,
-                style_config,
-                phrases,
-                downbeat_times,
-            )
-        )
+    beats_per_bar = infer_beats_per_bar(beat_times, downbeat_times)
+    grid = musical_grid(beat_times, tempo, beats_per_bar)
 
-    if not candidates:
-        return []
-
-    candidates = _dedupe_times(candidates)
-    candidates = _enforce_min_spacing(candidates, MIN_CUT_SECONDS)
-    candidates = _subdivide_long_slots(
-        candidates, duration, beat_times, period, style_config
+    curve = tension_curve(
+        duration,
+        energy=energy,
+        energy_times=energy_times,
+        onsets=onsets,
+        accents=onsets,
+        vocal_segments=[
+            {"start": segment.start, "end": segment.end}
+            for segment in getattr(lyrics, "vocal_segments", ()) or ()
+        ],
     )
-    candidates = _dedupe_times(candidates)
-    candidates = _enforce_min_spacing(candidates, MIN_CUT_SECONDS)
-    candidates = _absorb_runt_tails(candidates, duration, period, style_config)
 
-    if len(candidates) > MAX_CUTS:
-        candidates = candidates[:MAX_CUTS]
+    lattice = build_event_lattice(
+        duration=duration,
+        grid=grid,
+        beats=beat_times,
+        downbeats=downbeat_times,
+        phrase_boundaries=phrases,
+        section_boundaries=[float(section["start"]) for section in ordered_sections],
+        accents=onsets,
+        vocal_entries=lyrics.vocal_entries() if lyrics is not None else (),
+        vocal_exits=lyrics.vocal_exits() if lyrics is not None else (),
+        lyric_lines=[
+            {"start": line.start}
+            for line in getattr(lyrics, "lines", ()) or ()
+            if line.start is not None
+            and line.timing_confidence >= lyric_analysis.MIN_TIMING_CONFIDENCE
+        ],
+    )
 
-    snap_tolerance = min(CUT_SNAP_TOLERANCE_SECONDS, period * 0.25)
+    planned = plan_musical_cuts(
+        sections=ordered_sections,
+        lattice=lattice,
+        grid=grid,
+        duration=duration,
+        style_config=style_config,
+        tension=curve,
+        lyrics=lyrics,
+        accents=onsets,
+        material_scale=material_scale,
+    )
+    if not planned:
+        return []
+    if len(planned) > MAX_CUTS:
+        planned = planned[:MAX_CUTS]
+
+    snap_tolerance = min(CUT_SNAP_TOLERANCE_SECONDS, grid.period * 0.25)
+    beat_array = np.asarray(beat_times, dtype=np.float64) if beat_times else np.asarray([])
+
     slots: List[Dict[str, Any]] = []
-    for index, candidate in enumerate(candidates):
-        slot_end = candidates[index + 1].time if index + 1 < len(candidates) else duration
-        if slot_end - candidate.time < MIN_CUT_SECONDS:
-            continue
+    for cut in planned:
+        beat_delta = (
+            float(np.min(np.abs(beat_array - cut.start))) if beat_array.size else None
+        )
         slots.append(
             {
-                "beatTime": round(float(candidate.time), 6),
-                "endTime": round(float(slot_end), 6),
-                "sectionType": candidate.section_type,
-                "cutProvenance": _cut_provenance(candidate, beat_times, snap_tolerance),
+                "beatTime": round(float(cut.start), 6),
+                "endTime": round(float(cut.end), 6),
+                "sectionType": cut.section_type,
+                "cutProvenance": {
+                    "origin": cut.origin,
+                    "eventKind": cut.event_kind,
+                    "sourceTime": round(float(cut.source_time), 6),
+                    "snapDelta": round(float(cut.start - cut.source_time), 6),
+                    "beatDelta": round(beat_delta, 6) if beat_delta is not None else None,
+                    "beatAligned": bool(
+                        beat_delta is not None and beat_delta <= snap_tolerance
+                    ),
+                    "snapTolerance": round(float(snap_tolerance), 6),
+                    "measuredEvent": bool(cut.measured),
+                    "pacingMode": cut.mode,
+                    "targetBars": cut.target_bars,
+                    "actualBars": cut.actual_bars,
+                    "tension": round(float(cut.tension), 4),
+                    "beatsPerBar": grid.beats_per_bar,
+                    "gridRegularity": round(float(grid.regularity), 4),
+                },
             }
         )
     return slots
@@ -1553,44 +1786,33 @@ def select_best_clips(
     energy_hop_length: Optional[float] = None,
     energy_sample_rate: Optional[float] = None,
     downbeats: Optional[Sequence[float]] = None,
+    lyrics: Any = None,
+    beam_width: int = sequence_selector.DEFAULT_BEAM_WIDTH,
 ) -> List[Dict[str, Any]]:
-    """Plan the cut grid and choose the best clip for every slot.
+    """Plan the timeline and choose the whole sequence of shots.
 
-    Selection is deterministic — no sampling, no exploration — so the same
-    inputs always yield the same edit and a re-run never reshuffles an approved
-    sequence. ``seed`` is accepted for API compatibility and deliberately
-    unused.
+    The order of operations is the point. Before any clip is picked the engine
+    establishes what the song *is*: where the musical events are, how hard it is
+    pushing at each moment, what the words say when they can be trusted, and
+    what narrative arc that evidence supports. Only then are shots chosen — and
+    chosen as a sequence, by beam search, so a locally weaker pick that leaves
+    the hook with fresh footage can win.
 
-    Three rules shape the sequence: a clip cannot return within
-    ``REPEAT_WINDOW`` cuts, a clip that has already carried several cuts is
-    progressively penalised so the library gets used, and ties are broken by
-    least-recently-used then by path, which keeps the result stable.
+    This replaces per-slot greedy scoring. That approach was not merely
+    suboptimal: with a four-cut no-repeat window and a least-recently-used
+    tie-break it degenerated into a round-robin, and because the source window
+    was a pure function of the clip, a reused clip showed identical frames every
+    time. 94.3 % of cuts on the measured baseline reused a window.
 
-    A fourth rule shapes *where* the good footage lands. Scoring each cut on its
-    own merits spends the strongest clips on whatever comes first, so by the
-    time the hook arrives they have already been seen two or three times and are
-    carrying an overuse penalty. The strongest third of the library is therefore
-    held back through the run-up and released at the hook — the section
-    ``beat_analysis`` measured as the track's peak, or the selector's own
-    estimate when no analysis was supplied. ``hook`` is optional and the
-    reservation disables itself entirely on a library too small to spare
-    anything, so a small or uniform project behaves exactly as it did before.
+    Selection remains fully deterministic — no sampling, no exploration — so a
+    re-run never reshuffles an approved sequence. ``seed`` is accepted for API
+    compatibility and deliberately unused.
 
-    Two more beat signals shape the result when the caller has them.
-    ``phrase_boundaries`` become cut points, so the edit turns over where the
-    music does. The ``energy`` curve — with the time base the beat engine
-    publishes alongside it — moves each cut's energy target towards what the
-    track measurably does at that moment, instead of every cut in a section
-    asking for the same thing. Both are optional and inert when absent, so a
-    caller that supplies neither gets exactly the previous behaviour.
-
-    The result is ordered by time and uses the same camelCase field names the
-    After Effects bridge consumes, so no translation layer can drift.
+    Every returned cut carries its musical, lyrical, visual, narrative, source
+    and decision provenance, which is what makes the result reviewable and what
+    lets a later learning pass reconstruct why each choice was made.
     """
     style_config = style_config or {}
-    # Identity must be validated before any path-keyed dictionary or counter is
-    # constructed. Otherwise duplicate/empty paths alias one another and make
-    # repeat prevention and usage penalties dishonest.
     usable_clips = normalize_motion_evidence(_validated_usable_clips(clips))
     if not usable_clips:
         return []
@@ -1613,186 +1835,320 @@ def select_best_clips(
         bass_onsets,
         phrase_boundaries,
         downbeats,
+        energy=energy,
+        energy_times=energy_times,
+        lyrics=lyrics,
+        material_scale=available_material_scale(usable_clips, duration, style_config),
     )
     if not slots:
         return []
 
+    ordered_sections = normalize_sections(sections, duration)
     energy_curve = track_energy_curve(
         energy, energy_times, duration, energy_hop_length, energy_sample_rate
     )
+    tension = tension_curve(
+        duration,
+        energy=energy,
+        energy_times=energy_times,
+        onsets=_clean_times(bass_onsets),
+        accents=_clean_times(bass_onsets),
+        vocal_segments=[
+            {"start": segment.start, "end": segment.end}
+            for segment in getattr(lyrics, "vocal_segments", ()) or ()
+        ],
+    )
 
     hook_window = resolve_hook_window(
-        hook,
-        normalize_sections(sections, duration),
-        _clean_times(bass_onsets),
-        duration,
+        hook, ordered_sections, _clean_times(bass_onsets), duration
     )
-    reserved = reserved_clip_paths(usable_clips) if hook_window else set()
-    # Each reserved clip may carry half the cuts an unreserved one would, which
-    # scales the reservation to the track rather than to a fixed number: a
-    # sixteen-bar intro and a four-minute run-up cannot share one budget.
-    run_up_cuts = (
-        sum(
-            1
-            for slot in slots
-            if float(slot["endTime"]) <= hook_window[0]
-            and slot["sectionType"] not in HOOK_SECTIONS
-        )
-        if hook_window
-        else 0
-    )
-    reservation_budget = (
-        max(1, int(round(run_up_cuts * RESERVATION_EXPOSURE_RATIO / len(usable_clips))))
-        if reserved
-        else 0
+    plan = build_narrative_plan(
+        ordered_sections, duration, tension, lyrics, hook_window
     )
 
-    selections: List[Dict[str, Any]] = []
-    recent: List[str] = []
-    prev_clip: Optional[Dict[str, Any]] = None
-    clips_by_path = {str(clip.get("path", "")): clip for clip in usable_clips}
-    preferred_by_section: Dict[str, set] = {}
-    clip_usage_count: Dict[str, int] = {str(clip.get("path", "")): 0 for clip in usable_clips}
-    last_used_at: Dict[str, int] = {}
+    reserved_paths = reserved_clip_paths(usable_clips) if hook_window else set()
+    clip_paths = [str(clip.get("path", "")) for clip in usable_clips]
+    clip_roles = [classify_clip_roles(clip) for clip in usable_clips]
+    reserved_flags = [path in reserved_paths for path in clip_paths]
+    similarity = build_similarity_matrix(usable_clips)
 
-    for cut_index, slot in enumerate(slots):
+    style_selection = dict(style_config.get("selection") or {})
+    lyric_sensitivity = float(style_selection.get("lyric_sensitivity", 0.7))
+    lyric_usable = bool(lyrics is not None and getattr(lyrics, "can_interpret", False))
+    hook_line_keys = set(getattr(lyrics, "hook_lines", ()) or ())
+
+    # --- build the per-slot context and the fit matrix ---------------------
+    contexts: List[SlotContext] = []
+    hook_slots: List[bool] = []
+    section_score_cache: Dict[str, List[Dict[str, Any]]] = {}
+    base_scores = np.zeros((len(slots), len(usable_clips)), dtype=np.float64)
+
+    for index, slot in enumerate(slots):
         section_type = slot["sectionType"]
-        if section_type not in preferred_by_section:
-            preferred_by_section[section_type] = {
-                str(clip.get("path", ""))
-                for clip in filter_clips_for_section(usable_clips, section_type, style_config)
-            }
-        preferred = preferred_by_section[section_type]
+        slot_start = float(slot["beatTime"])
+        slot_end = float(slot["endTime"])
+        slot_length = max(MIN_CUT_SECONDS, slot_end - slot_start)
+        provenance = slot.get("cutProvenance") or {}
+
+        stage = plan.stage_at(slot_start)
+        line = lyrics.line_at(slot_start) if lyrics is not None else None
+        line_is_hook = bool(
+            line is not None
+            and hook_line_keys
+            and " ".join(lyric_analysis.tokenize(line.text)) in hook_line_keys
+        )
+        in_rest = bool(
+            lyrics is not None
+            and getattr(lyrics, "vocal_segments", ())
+            and lyrics.in_vocal_rest(slot_start, slot_end)
+        )
+        in_hook = bool(hook_window) and slot_start < hook_window[1] and slot_end > hook_window[0]
+
+        contexts.append(
+            SlotContext(
+                index=index,
+                start=slot_start,
+                end=slot_end,
+                section_type=section_type,
+                mode=str(provenance.get("pacingMode", "sustain")),
+                opens_section=str(provenance.get("origin", "")) == "boundary",
+                stage=stage,
+                lyric_line=line,
+                lyric_is_hook=line_is_hook,
+                in_vocal_rest=in_rest,
+                tension=float(provenance.get("tension", 0.5)),
+            )
+        )
+        hook_slots.append(in_hook)
+
+        energy_target = cut_energy_target(
+            energy_curve, section_type, slot_start, slot_end, style_config
+        )
         affinity = section_affinity(section_type, style_config)
         shots = shot_affinity(section_type, style_config)
         movements = movement_affinity(section_type, style_config)
 
-        slot_start = float(slot["beatTime"])
-        slot_end_time = float(slot["endTime"])
-        # A cut counts as part of the hook when it overlaps the hook window at
-        # all, and as run-up only when it finishes before the hook opens.
-        in_hook = bool(hook_window) and slot_start < hook_window[1] and slot_end_time > hook_window[0]
-        before_hook = bool(hook_window) and slot_end_time <= hook_window[0]
-        # A chorus on the way to the hook is still a peak of its own, so it is
-        # never asked to hand its footage over.
-        holding_back = before_hook and section_type not in HOOK_SECTIONS
+        # The section-dependent part of the score is identical for every slot
+        # in a section, so it is computed once. Only the energy term, which
+        # tracks the measured curve cut by cut, is recomputed per slot. On a
+        # 500-clip library this is the difference between scoring the library
+        # once per section and once per cut.
+        cached = section_score_cache.get(section_type)
+        if cached is None:
+            cached = [
+                score_clip(
+                    clip, None, section_type, affinity, shots, movements,
+                    style_config, None,
+                )
+                for clip in usable_clips
+            ]
+            section_score_cache[section_type] = cached
 
-        slot_length = max(MIN_CUT_SECONDS, slot_end_time - slot_start)
-        energy_target = cut_energy_target(
-            energy_curve, section_type, slot_start, slot_end_time, style_config
-        )
-        # Every usable clip is scored so the panel's swap picker can offer real
-        # alternatives; the section preference only steers which one is taken.
-        scored: List[Dict[str, Any]] = []
-        for clip in usable_clips:
-            result = score_clip(
-                clip,
-                prev_clip,
-                section_type,
-                affinity,
-                shots,
-                movements,
-                style_config,
-                energy_target,
+        for clip_index, clip in enumerate(usable_clips):
+            result = cached[clip_index]
+            composite = result["composite"] + energy_match_adjustment(
+                clip, section_type, style_config, energy_target
             )
 
-            # Reservation is a penalty rather than a filter: a reserved clip
-            # that is still far better than anything else available will win the
-            # cut anyway, so the run-up can never be starved.
-            if reserved and result["clipPath"] in reserved:
-                if holding_back:
-                    result["composite"] = max(0.0, result["composite"] - RESERVATION_PENALTY)
-                elif in_hook:
-                    result["composite"] = min(100.0, result["composite"] + HOOK_RELEASE_BONUS)
-
-            usage = clip_usage_count.get(result["clipPath"], 0)
-            if usage > 2:
-                result["composite"] = max(0.0, result["composite"] - usage * OVERUSE_PENALTY)
-
-            # A clip shorter than the slot has to be stretched or leaves a gap,
-            # so rank it below an equally good clip that covers the whole cut.
+            # A clip shorter than the slot has to be stretched or leaves a gap.
             clip_length = bounded_duration(clip.get("duration"))
             if clip_length and clip_length < slot_length:
                 shortfall = min(1.0, (slot_length - clip_length) / slot_length)
-                result["composite"] = max(0.0, result["composite"] - SHORT_CLIP_PENALTY * shortfall)
+                composite = max(0.0, composite - SHORT_CLIP_PENALTY * shortfall)
 
-            result["clipDuration"] = clip_length
-            scored.append(result)
+            # Lyric influence. Gated on interpretation confidence: a line the
+            # lexicon did not understand may not choose a shot, and a line
+            # whose alignment is weak may not either. Imagery is matched
+            # against the clip's narrative roles rather than literally, so a
+            # line about a car does not demand a car — it raises movement and
+            # action footage and leaves the choice to the rest of the evidence.
+            if lyric_usable and line is not None and not line.is_ad_lib:
+                if line.interpretation_confidence >= lyric_analysis.MIN_INTERPRETATION_CONFIDENCE:
+                    composite += _lyric_affinity(
+                        line, clip_roles[clip_index], clip
+                    ) * LYRIC_WEIGHT * lyric_sensitivity
 
-        # Rank once, deterministically: score first, then the clip that has
-        # carried the fewest cuts, then the one idle the longest, then path.
-        order = sorted(
-            range(len(scored)),
-            key=lambda index: (
-                -scored[index]["composite"],
-                clip_usage_count.get(scored[index]["clipPath"], 0),
-                last_used_at.get(scored[index]["clipPath"], -1),
-                scored[index]["clipPath"],
+            base_scores[index][clip_index] = max(0.0, min(100.0, composite))
+
+    picks, ledger, search_diagnostics = select_sequence(
+        slots=contexts,
+        clips=usable_clips,
+        base_scores=base_scores,
+        similarity=similarity,
+        clip_roles=clip_roles,
+        reserved=reserved_flags,
+        hook_slots=hook_slots,
+        style_selection=style_selection,
+        beam_width=beam_width,
+    )
+    if not picks:
+        return []
+
+    # --- publish -----------------------------------------------------------
+    selections: List[Dict[str, Any]] = []
+    previous_published: Optional[Dict[str, Any]] = None
+    previous_index = -1
+
+    for index, pick in enumerate(picks):
+        context = contexts[index]
+        slot = slots[index]
+        clip_index = pick["clipIndex"]
+        clip = usable_clips[clip_index]
+        window = pick["window"]
+        role_name, role_confidence = primary_role(clip_roles[clip_index])
+
+        entry = score_clip(
+            clip,
+            usable_clips[previous_index] if previous_index >= 0 else None,
+            context.section_type,
+            section_affinity(context.section_type, style_config),
+            shot_affinity(context.section_type, style_config),
+            movement_affinity(context.section_type, style_config),
+            style_config,
+            cut_energy_target(
+                energy_curve, context.section_type, context.start, context.end, style_config
             ),
         )
-        scored = [scored[index] for index in order]
-
-        rationed = (
-            {
-                path
-                for path in reserved
-                if clip_usage_count.get(path, 0) >= reservation_budget
-            }
-            if holding_back and reserved
-            else None
-        )
-        eligible = _eligible_indices(scored, recent, preferred, rationed)
-        choice = eligible[0]
-        best = dict(scored[choice])
-
-        source_start, source_end = best_moment_window(
-            clips_by_path.get(best["clipPath"], {}), slot_length
-        )
-
+        best: Dict[str, Any] = dict(entry)
         best["beatTime"] = slot["beatTime"]
         best["endTime"] = slot["endTime"]
-        best["sectionType"] = section_type
-        # The cut keeps the provenance of its own boundary: what put it there,
-        # which input event it came from, and how far quantisation moved it.
+        best["sectionType"] = context.section_type
+        best["sourceStart"] = window.start
+        best["sourceEnd"] = window.end
+        best["clipDuration"] = bounded_duration(clip.get("duration"))
+        best["score"] = round(float(base_scores[index][clip_index]), 2)
+        best.pop("composite", None)
+        best["locked"] = False
+
+        adjacency = (
+            float(similarity[previous_index][clip_index]) if previous_index >= 0 else 0.0
+        )
+        best["transition"] = decide_transition(
+            previous_published, best, context, adjacency, style_selection
+        )
+
         best["cutProvenance"] = dict(
             slot.get("cutProvenance") or {},
-            energyTarget=round(float(energy_target), 4),
+            energyTarget=round(
+                float(
+                    cut_energy_target(
+                        energy_curve, context.section_type, context.start, context.end, style_config
+                    )
+                ),
+                4,
+            ),
             energySource="measured_curve" if energy_curve is not None else "section_default",
         )
-        best["sourceStart"] = source_start
-        best["sourceEnd"] = source_end
-        best["score"] = round(best.pop("composite"), 2)
-        best["locked"] = False
+        best["narrative"] = {
+            "stage": context.stage.name if context.stage else "unknown",
+            "stageConfidence": round(context.stage.confidence, 4) if context.stage else 0.0,
+            "role": role_name,
+            "roleConfidence": round(role_confidence, 4),
+            "roleAffinity": round(float(pick["roleAffinity"]), 4),
+            "planConfidence": round(plan.confidence, 4),
+        }
+        best["sourceProvenance"] = {
+            "windowRank": window.rank,
+            "windowReason": window.reason,
+            "windowQuality": round(float(window.quality), 4),
+            "windowExhausted": bool(pick["notes"].get("windowExhausted", False)),
+            "clipDuration": best["clipDuration"],
+        }
+        best["repetition"] = {
+            "reuseDistance": pick["notes"].get("reuseDistance"),
+            "signatureRepeat": bool(pick["notes"].get("signatureRepeat", False)),
+            "nearDuplicateOfPrevious": pick["notes"].get("nearDuplicateOfPrevious"),
+            "visualSignature": list(visual_signature(clip)),
+            "signatureMethod": "descriptor_buckets_not_identity",
+            "intentional": pick.get("motif"),
+        }
+        line = context.lyric_line
+        if line is not None:
+            best["lyric"] = {
+                "text": line.text,
+                "start": line.start,
+                "end": line.end,
+                "timingConfidence": round(line.timing_confidence, 4),
+                "interpretationConfidence": round(line.interpretation_confidence, 4),
+                "fields": [name for name, _weight in line.fields],
+                "imagery": list(line.imagery),
+                "isAdLib": line.is_ad_lib,
+                "isHookLine": context.lyric_is_hook,
+                "influencedSelection": bool(
+                    lyric_usable
+                    and not line.is_ad_lib
+                    and line.interpretation_confidence
+                    >= lyric_analysis.MIN_INTERPRETATION_CONFIDENCE
+                ),
+                "timingSource": line.timing_source,
+                "alternatives": [name for name, _weight in line.alternatives],
+            }
+        elif lyrics is not None and getattr(lyrics, "vocal_segments", ()):
+            best["lyric"] = {
+                "text": None,
+                "inVocalRest": context.in_vocal_rest,
+                "influencedSelection": False,
+                "timingSource": getattr(lyrics, "tier", "vocal_only"),
+            }
+
+        # Alternatives for the panel's swap picker, ranked by the same fit the
+        # sequence used, with their own distinct source windows so a swap does
+        # not silently reintroduce a frame the timeline already spent.
+        order = np.argsort(-base_scores[index], kind="stable")
         alternatives: List[Dict[str, Any]] = []
-        for index, entry in enumerate(scored):
-            if index == choice:
+        for other in order:
+            other = int(other)
+            if other == clip_index:
                 continue
-            alternative_start, alternative_end = best_moment_window(
-                clips_by_path.get(entry["clipPath"], {}), slot_length
+            other_clip = usable_clips[other]
+            other_windows = candidate_windows(other_clip, context.end - context.start)
+            other_window = other_windows[0]
+            other_role, other_confidence = primary_role(clip_roles[other])
+            alternatives.append(
+                {
+                    "clipPath": str(other_clip.get("path", "")),
+                    "clipName": str(other_clip.get("name", "")),
+                    "thumbnailId": str(other_clip.get("thumbnail_id", "")),
+                    "sceneType": str(other_clip.get("scene_type", "unknown")),
+                    "shotType": str(other_clip.get("shot_type", "unknown")),
+                    "cameraMovement": str(other_clip.get("camera_movement", "unknown")),
+                    "clipDuration": bounded_duration(other_clip.get("duration")),
+                    "sourceStart": other_window.start,
+                    "sourceEnd": other_window.end,
+                    "score": round(float(base_scores[index][other]), 2),
+                    "narrativeRole": other_role,
+                    "roleConfidence": round(other_confidence, 4),
+                    "similarityToChosen": round(float(similarity[clip_index][other]), 4),
+                }
             )
-            alternatives.append({
-                "clipPath": entry["clipPath"],
-                "clipName": entry["clipName"],
-                "thumbnailId": entry["thumbnailId"],
-                "sceneType": entry["sceneType"],
-                "shotType": entry["shotType"],
-                "cameraMovement": entry["cameraMovement"],
-                "clipDuration": entry["clipDuration"],
-                "sourceStart": alternative_start,
-                "sourceEnd": alternative_end,
-                "score": round(entry["composite"], 2),
-            })
             if len(alternatives) >= 4:
                 break
         best["alternatives"] = alternatives
 
         selections.append(best)
-        if best["clipPath"]:
-            recent.append(best["clipPath"])
-            clip_usage_count[best["clipPath"]] = clip_usage_count.get(best["clipPath"], 0) + 1
-            last_used_at[best["clipPath"]] = cut_index
-            prev_clip = clips_by_path.get(best["clipPath"], prev_clip)
+        previous_published = best
+        previous_index = clip_index
 
+    if selections:
+        selections[0]["editProvenance"] = {
+            "planner": "musical_event_lattice",
+            "selector": "beam_search_global_sequence",
+            "narrativePlan": plan.as_dict(),
+            "motifs": ledger.as_dict(),
+            "search": search_diagnostics,
+            "lyrics": lyrics.as_dict() if lyrics is not None else {"tier": "none"},
+            "pacing": duration_histogram(
+                [
+                    PlannedCut(
+                        float(slot["beatTime"]), float(slot["endTime"]),
+                        slot["sectionType"], "", 0.0, "", True,
+                        str((slot.get("cutProvenance") or {}).get("pacingMode", "sustain")),
+                        0.0, 0.0, 0.0,
+                    )
+                    for slot in slots
+                ]
+            ),
+        }
     return selections
 
 
