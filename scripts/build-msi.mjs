@@ -111,6 +111,23 @@ for (const vbs of [
   fs.copyFileSync(path.join(msiDir, vbs), path.join(msiStage, "root", vbs));
 }
 fs.cpSync(path.join(stage, "engine"), path.join(msiStage, "engine"), { recursive: true, filter: copyFilter });
+// The installer's ProRes gate decodes these with the bundled FFmpeg before it
+// commits an install, so the MSI has to carry exactly the reviewed media.
+for (const entry of JSON.parse(
+  fs.readFileSync(path.join(root, "engine", "fixtures", "manifest.json"), "utf8"),
+).fixtures) {
+  const staged = path.join(msiStage, "engine", "fixtures", entry.file);
+  if (!fs.existsSync(staged)) {
+    throw new Error(`MSI engine payload is missing the media fixture: engine/fixtures/${entry.file}`);
+  }
+  const hash = sha256(staged);
+  if (hash !== entry.sha256) {
+    throw new Error(
+      `MSI fixture engine/fixtures/${entry.file} does not match the committed manifest ` +
+      `(${hash} != ${entry.sha256}). Regenerate with "npm run generate:fixtures".`,
+    );
+  }
+}
 // backend_launcher.py redirects every writable path out of Program Files
 // before importing the server; it only exists in the MSI layout.
 fs.copyFileSync(path.join(msiDir, "backend_launcher.py"), path.join(msiStage, "engine", "backend_launcher.py"));

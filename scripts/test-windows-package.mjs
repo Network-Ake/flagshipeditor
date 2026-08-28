@@ -42,6 +42,43 @@ for (const relativePath of required) {
   assert.ok(fs.existsSync(path.join(stage, relativePath)), `Missing packaged file: ${relativePath}`);
 }
 
+// The installer decodes these two files with the bundled FFmpeg before it
+// commits an install, so the payload has to carry exactly the media that was
+// reviewed. Packaging used to synthesise them at build time with whatever
+// FFmpeg the build machine had, which made the bytes depend on the builder and
+// left a source checkout unable to run engine/self_test.py at all.
+{
+  const manifestPath = path.join(root, "engine", "fixtures", "manifest.json");
+  assert.ok(fs.existsSync(manifestPath), "engine/fixtures/manifest.json is missing from the source tree");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  assert.ok(manifest.fixtures.length >= 2, "the fixture manifest must cover Standard and HQ");
+
+  const stagedManifest = path.join(stage, "engine", "fixtures", "manifest.json");
+  assert.ok(fs.existsSync(stagedManifest), "the fixture manifest must ship with the payload");
+
+  const checksums = JSON.parse(fs.readFileSync(path.join(stage, "payload-checksums.json"), "utf8"));
+  const byPath = new Map(checksums.map((entry) => [entry.path, entry.sha256]));
+
+  for (const entry of manifest.fixtures) {
+    const relative = `engine/fixtures/${entry.file}`;
+    const staged = path.join(stage, "engine", "fixtures", entry.file);
+    const source = path.join(root, "engine", "fixtures", entry.file);
+    assert.ok(fs.existsSync(staged), `Missing packaged fixture: ${relative}`);
+
+    const stagedHash = crypto.createHash("sha256").update(fs.readFileSync(staged)).digest("hex");
+    const sourceHash = crypto.createHash("sha256").update(fs.readFileSync(source)).digest("hex");
+    assert.equal(sourceHash, entry.sha256, `${relative}: the source tree drifted from its manifest`);
+    assert.equal(stagedHash, entry.sha256, `${relative}: the packaged copy is not the reviewed media`);
+    assert.equal(
+      fs.statSync(staged).size, entry.bytes,
+      `${relative}: packaged size does not match the manifest`,
+    );
+    // payload-checksums.json is what the installer verifies on the target
+    // machine, so the fixtures have to be inside it and agree.
+    assert.equal(byPath.get(relative), entry.sha256, `${relative} is not covered by payload-checksums.json`);
+  }
+}
+
 const installer = fs.readFileSync(path.join(stage, "INSTALL-FLAGSHIPEDITOR.cmd"), "utf8");
 for (const forbidden of ["powershell", "winget", "Python.Python.3.12"]) {
   assert.ok(!installer.includes(forbidden), `Installer still depends on ${forbidden}`);

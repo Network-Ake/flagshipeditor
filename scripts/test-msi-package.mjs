@@ -28,6 +28,25 @@ const msiStage = path.join(root, ".build", "msi", "stage");
 const cepSrc = path.join(root, "installer", "msi", "cep-src");
 
 assert.ok(fs.existsSync(msiPath), `MSI is missing: ${msiPath}. Run scripts/build-msi.mjs first.`);
+
+// The ProRes fixtures the installer decodes must be the committed media, not
+// something the build machine synthesised on the day. The manifest itself is a
+// source-tree build artifact and is not required inside the payload.
+for (const entry of JSON.parse(
+  fs.readFileSync(path.join(root, "engine", "fixtures", "manifest.json"), "utf8"),
+).fixtures) {
+  const staged = path.join(msiStage, "engine", "fixtures", entry.file);
+  assert.ok(fs.existsSync(staged), `MSI payload is missing engine/fixtures/${entry.file}`);
+  assert.equal(
+    crypto.createHash("sha256").update(fs.readFileSync(staged)).digest("hex"),
+    entry.sha256,
+    `engine/fixtures/${entry.file} in the MSI payload is not the reviewed media`,
+  );
+  assert.equal(
+    fs.statSync(staged).size, entry.bytes,
+    `engine/fixtures/${entry.file} in the MSI payload has the wrong size`,
+  );
+}
 const msiSize = fs.statSync(msiPath).size;
 assert.ok(msiSize > 150 * 1024 * 1024, `MSI is suspiciously small: ${msiSize} bytes.`);
 assert.ok(msiSize < 2 * 1024 * 1024 * 1024, `MSI exceeds the 2 GB release-asset limit: ${msiSize} bytes.`);

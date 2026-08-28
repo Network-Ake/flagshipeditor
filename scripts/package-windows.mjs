@@ -116,14 +116,35 @@ for (const executable of ["ffmpeg.exe", "ffprobe.exe"]) {
   if (!source) throw new Error(`${executable} is missing from the verified FFmpeg archive.`);
   fs.copyFileSync(source, path.join(runtimeBin, executable));
 }
+// The ProRes fixtures the installer's self-test decodes are committed media,
+// copied in with the rest of `engine/` above. They used to be re-synthesised
+// here with whatever `ffmpeg` sat on the build machine, which made the payload
+// depend on the builder and left a source checkout with no fixtures at all —
+// `engine/self_test.py` could not run outside a package. Verify the staged
+// bytes against the committed manifest instead, and fail the build closed.
 const fixtureDirectory = path.join(stage, "engine", "fixtures");
-fs.mkdirSync(fixtureDirectory, { recursive: true });
-for (const [filename, profile] of [["prores-422-standard.mov", "2"], ["prores-422-hq.mov", "3"]]) {
-  execFileSync("ffmpeg", [
-    "-v", "error", "-f", "lavfi", "-i", "testsrc2=size=320x180:rate=24000/1001",
-    "-t", "1", "-c:v", "prores_ks", "-profile:v", profile, "-pix_fmt", "yuv422p10le",
-    "-y", path.join(fixtureDirectory, filename),
-  ]);
+const fixtureManifest = JSON.parse(
+  fs.readFileSync(path.join(root, "engine", "fixtures", "manifest.json"), "utf8"),
+);
+for (const entry of fixtureManifest.fixtures) {
+  const sourceFixture = path.join(root, "engine", "fixtures", entry.file);
+  const stagedFixture = path.join(fixtureDirectory, entry.file);
+  if (!fs.existsSync(sourceFixture)) {
+    throw new Error(
+      `Packaged media fixture is missing from the source tree: engine/fixtures/${entry.file}. ` +
+      `Run "npm run generate:fixtures".`,
+    );
+  }
+  if (!fs.existsSync(stagedFixture)) {
+    throw new Error(`Packaged media fixture did not reach the stage: engine/fixtures/${entry.file}`);
+  }
+  const stagedHash = sha256(stagedFixture);
+  if (stagedHash !== entry.sha256) {
+    throw new Error(
+      `Staged fixture engine/fixtures/${entry.file} does not match the committed manifest ` +
+      `(${stagedHash} != ${entry.sha256}). Regenerate with "npm run generate:fixtures".`,
+    );
+  }
 }
 fs.writeFileSync(path.join(stage, "runtime", "THIRD-PARTY-NOTICES.txt"), [
   "Python 3.12.10 embeddable runtime — Python Software Foundation License",

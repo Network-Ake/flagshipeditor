@@ -10,6 +10,7 @@
     "build": "rimraf dist/cep && vite build && node scripts/postbuild.mjs",
     "zxp": "rimraf dist/cep dist/zxp && cross-env ZXP_PACKAGE=true vite build && node scripts/postbuild.mjs",
     "generate:luts": "node scripts/generate-luts.mjs",
+    "generate:fixtures": "node scripts/generate-prores-fixtures.mjs",
     "zip": "npm run build && node scripts/package-windows.mjs",
     "msi": "node scripts/build-msi.mjs",
     "test:ae-bridge": "node scripts/test-ae-bridge.mjs",

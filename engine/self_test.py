@@ -22,7 +22,14 @@ def main() -> None:
         source = fixtures / filename
         if not source.is_file():
             raise RuntimeError(f"Packaged media fixture is missing: {filename}")
-        result = classify_clip(str(source))
+        # A corrupt or truncated fixture makes the analyser raise rather than
+        # return a verdict. Without this the installer printed "The file is
+        # corrupt or incompletely written" and never said which file, which is
+        # not something an operator can act on.
+        try:
+            result = classify_clip(str(source))
+        except Exception as error:
+            raise RuntimeError(f"Packaged ProRes decode failed for {filename}: {error}") from error
         if result.get("codec") != "prores" or result.get("decoder") != "ffmpeg" or not result.get("usable"):
             raise RuntimeError(f"Packaged ProRes decode failed for {filename}: {result}")
         if profile not in str(result.get("profile", "")).lower():
