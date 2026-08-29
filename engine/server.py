@@ -29,7 +29,7 @@ from media_tools import FFMPEG, FFPROBE, describe as describe_media_tools, missi
 
 APP_ID = "com.akestudio.flagshipeditor.backend"
 VERSION_FILE = Path(__file__).resolve().parent / "VERSION"
-APP_VERSION = VERSION_FILE.read_text(encoding="utf-8").strip() if VERSION_FILE.exists() else "3.0.0"
+APP_VERSION = VERSION_FILE.read_text(encoding="utf-8").strip() if VERSION_FILE.exists() else "3.1.0"
 PID_FILE = Path(__file__).resolve().parent / ".flagshipeditor.pid"
 SERVER_PORT = int(os.environ.get("FLAGSHIPEDITOR_PORT", "18791"))
 BEAT_TIMEOUT_SECONDS = max(30, int(os.environ.get("FLAGSHIPEDITOR_BEAT_TIMEOUT", "180")))

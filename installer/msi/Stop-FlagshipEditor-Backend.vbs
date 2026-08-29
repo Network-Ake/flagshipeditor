@@ -1,4 +1,4 @@
-' FlagshipEditor 3.0.0 - stop the local analysis backend.
+' FlagshipEditor 3.1.0 - stop the local analysis backend.
 '
 ' /shutdown is the clean path: the backend flushes its response, removes its PID
 ' file and exits. The PID file is the fallback for a wedged process.

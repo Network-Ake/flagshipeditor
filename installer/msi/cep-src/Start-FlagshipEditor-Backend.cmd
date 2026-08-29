@@ -1,5 +1,5 @@
 @echo off
-rem FlagshipEditor 3.0.0 - bridge from the CEP panel to the installed backend.
+rem FlagshipEditor 3.1.0 - bridge from the CEP panel to the installed backend.
 rem
 rem The panel looks for this file inside its own extension folder and shells out
 rem to it. The backend itself lives under Program Files, so all this does is find
@@ -15,7 +15,7 @@ if exist "%INSTALL_DIR%\Start-FlagshipEditor-Backend.vbs" goto :launch
 set "INSTALL_DIR=%ProgramFiles%\FlagshipEditor"
 if exist "%INSTALL_DIR%\Start-FlagshipEditor-Backend.vbs" goto :launch
 
-echo ERROR 60: FlagshipEditor is not installed. Run FlagshipEditor-3.0.0-Windows.msi again.
+echo ERROR 60: FlagshipEditor is not installed. Run FlagshipEditor-3.1.0-Windows.msi again.
 exit /b 60
 
 :launch

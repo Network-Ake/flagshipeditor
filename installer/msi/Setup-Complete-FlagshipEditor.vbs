@@ -1,4 +1,4 @@
-' FlagshipEditor 3.0.0 - post-install confirmation and finishing pass.
+' FlagshipEditor 3.1.0 - post-install confirmation and finishing pass.
 '
 ' wixl cannot author MSI dialogs, so the package installs with the Windows
 ' Installer native progress UI. This script is the success page. It runs from
@@ -52,13 +52,13 @@ On Error GoTo 0
 
 ' ── 2. Wait for the install transaction to finish writing ───────────
 If Not WaitForCommittedPayload() Then
-  MsgBox "FlagshipEditor 3.0.0 has not finished installing its files yet." & vbCrLf & vbCrLf & _
+  MsgBox "FlagshipEditor 3.1.0 has not finished installing its files yet." & vbCrLf & vbCrLf & _
          "Still missing: " & FirstMissingPiece() & vbCrLf & vbCrLf & _
          "Wait for the installer window to finish. If it finishes without an error, " & _
          "start the backend from the Start Menu (Start FlagshipEditor Backend) or just open the panel in After Effects." & vbCrLf & _
          "If the installer window reported an error, the installation was rolled back - run the installer again. " & _
          "No uninstall is needed first.", _
-         vbExclamation, "FlagshipEditor 3.0.0"
+         vbExclamation, "FlagshipEditor 3.1.0"
   WScript.Quit 0
 End If
 
@@ -86,15 +86,15 @@ Loop
 
 If aeBestMajor >= 24 Then
   icon = vbInformation
-  message = "FlagshipEditor 3.0.0 is installed for After Effects " & AeYear(aeBestMajor) & "."
+  message = "FlagshipEditor 3.1.0 is installed for After Effects " & AeYear(aeBestMajor) & "."
 ElseIf aeBestMajor > 0 Then
   icon = vbExclamation
-  message = "FlagshipEditor 3.0.0 is installed, but the newest Adobe After Effects on this computer (version " & _
+  message = "FlagshipEditor 3.1.0 is installed, but the newest Adobe After Effects on this computer (version " & _
             aeBestMajor & ") is older than After Effects 2024." & vbCrLf & _
             "Update After Effects to 2024 or newer and the panel will appear."
 Else
   icon = vbExclamation
-  message = "FlagshipEditor 3.0.0 is installed, but Adobe After Effects was not detected on this computer." & vbCrLf & _
+  message = "FlagshipEditor 3.1.0 is installed, but Adobe After Effects was not detected on this computer." & vbCrLf & _
             "Install After Effects 2024 or newer from Creative Cloud and the panel will appear."
 End If
 
@@ -110,7 +110,7 @@ End If
 
 MsgBox message & vbCrLf & vbCrLf & _
        "Open After Effects, then Window > Extensions > FlagshipEditor.", _
-       icon, "FlagshipEditor 3.0.0"
+       icon, "FlagshipEditor 3.1.0"
 
 WScript.Quit 0
 
@@ -130,7 +130,7 @@ Function PayloadReady()
   stamp = shell.RegRead("HKLM\SOFTWARE\ake-studio\FlagshipEditor\Version")
   Err.Clear
   On Error GoTo 0
-  If stamp <> "3.0.0" Then Exit Function
+  If stamp <> "3.1.0" Then Exit Function
   PayloadReady = True
 End Function
 

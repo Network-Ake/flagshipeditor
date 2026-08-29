@@ -33,7 +33,7 @@ thisObj.getBridgeHealth = function () {
   return JSON.stringify({
     __result: {
       appId: "com.akestudio.flagshipeditor.bridge",
-      version: "3.0.0",
+      version: "3.1.0",
       hostName: "After Effects",
       hostVersion: app.version,
     },

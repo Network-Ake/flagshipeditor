@@ -11,7 +11,7 @@ if errorlevel 1 (
 )
 set "PACKAGE_ROOT_PUSHED=1"
 
-set "FLAGSHIP_VERSION=3.0.0"
+set "FLAGSHIP_VERSION=3.1.0"
 set "EXTENSION_ID=com.akestudio.flagshipeditor"
 set "BACKEND_ID=com.akestudio.flagshipeditor.backend"
 set "PROJECT_ROOT=%CD%"

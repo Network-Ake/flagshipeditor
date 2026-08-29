@@ -6,7 +6,7 @@
 // sentence the ExtendScript bridge produced, never as a silent `null`.
 
 export const BRIDGE_ID = "com.akestudio.flagshipeditor.bridge";
-export const BRIDGE_VERSION = "3.0.0";
+export const BRIDGE_VERSION = "3.1.0";
 
 // CEPHtmlEngine drops evalScript payloads beyond roughly 24 KB.
 const MAX_PAYLOAD = 24000;
